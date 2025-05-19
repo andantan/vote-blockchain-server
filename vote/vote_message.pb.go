@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.30.2
-// source: transaction.proto
+// source: vote_message.proto
 
-package protobuf
+package vote
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -32,7 +32,7 @@ type VoteRequest struct {
 
 func (x *VoteRequest) Reset() {
 	*x = VoteRequest{}
-	mi := &file_transaction_proto_msgTypes[0]
+	mi := &file_vote_message_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *VoteRequest) String() string {
 func (*VoteRequest) ProtoMessage() {}
 
 func (x *VoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transaction_proto_msgTypes[0]
+	mi := &file_vote_message_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +57,7 @@ func (x *VoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VoteRequest.ProtoReflect.Descriptor instead.
 func (*VoteRequest) Descriptor() ([]byte, []int) {
-	return file_transaction_proto_rawDescGZIP(), []int{0}
+	return file_vote_message_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *VoteRequest) GetVoteHash() string {
@@ -90,7 +90,7 @@ type VoteResponse struct {
 
 func (x *VoteResponse) Reset() {
 	*x = VoteResponse{}
-	mi := &file_transaction_proto_msgTypes[1]
+	mi := &file_vote_message_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -102,7 +102,7 @@ func (x *VoteResponse) String() string {
 func (*VoteResponse) ProtoMessage() {}
 
 func (x *VoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transaction_proto_msgTypes[1]
+	mi := &file_vote_message_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -115,7 +115,7 @@ func (x *VoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VoteResponse.ProtoReflect.Descriptor instead.
 func (*VoteResponse) Descriptor() ([]byte, []int) {
-	return file_transaction_proto_rawDescGZIP(), []int{1}
+	return file_vote_message_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *VoteResponse) GetBlockHeight() int64 {
@@ -125,11 +125,11 @@ func (x *VoteResponse) GetBlockHeight() int64 {
 	return 0
 }
 
-var File_transaction_proto protoreflect.FileDescriptor
+var File_vote_message_proto protoreflect.FileDescriptor
 
-const file_transaction_proto_rawDesc = "" +
+const file_vote_message_proto_rawDesc = "" +
 	"\n" +
-	"\x11transaction.proto\x12\bprotobuf\"l\n" +
+	"\x12vote_message.proto\x12\x04vote\"l\n" +
 	"\vVoteRequest\x12\x1b\n" +
 	"\tvote_hash\x18\x01 \x01(\tR\bvoteHash\x12\x1f\n" +
 	"\vvote_option\x18\x02 \x01(\tR\n" +
@@ -137,31 +137,31 @@ const file_transaction_proto_rawDesc = "" +
 	"\velection_id\x18\x03 \x01(\tR\n" +
 	"electionId\"1\n" +
 	"\fVoteResponse\x12!\n" +
-	"\fblock_height\x18\x01 \x01(\x03R\vblockHeight2P\n" +
-	"\x11BlockchainService\x12;\n" +
+	"\fblock_height\x18\x01 \x01(\x03R\vblockHeight2H\n" +
+	"\x11BlockchainService\x123\n" +
 	"\n" +
-	"SubmitVote\x12\x15.protobuf.VoteRequest\x1a\x16.protobuf.VoteResponseB5Z3github.com/andantan/vote-blockchain-server/protobufb\x06proto3"
+	"SubmitVote\x12\x11.vote.VoteRequest\x1a\x12.vote.VoteResponseB\tZ\a../voteb\x06proto3"
 
 var (
-	file_transaction_proto_rawDescOnce sync.Once
-	file_transaction_proto_rawDescData []byte
+	file_vote_message_proto_rawDescOnce sync.Once
+	file_vote_message_proto_rawDescData []byte
 )
 
-func file_transaction_proto_rawDescGZIP() []byte {
-	file_transaction_proto_rawDescOnce.Do(func() {
-		file_transaction_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_transaction_proto_rawDesc), len(file_transaction_proto_rawDesc)))
+func file_vote_message_proto_rawDescGZIP() []byte {
+	file_vote_message_proto_rawDescOnce.Do(func() {
+		file_vote_message_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_vote_message_proto_rawDesc), len(file_vote_message_proto_rawDesc)))
 	})
-	return file_transaction_proto_rawDescData
+	return file_vote_message_proto_rawDescData
 }
 
-var file_transaction_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_transaction_proto_goTypes = []any{
-	(*VoteRequest)(nil),  // 0: protobuf.VoteRequest
-	(*VoteResponse)(nil), // 1: protobuf.VoteResponse
+var file_vote_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_vote_message_proto_goTypes = []any{
+	(*VoteRequest)(nil),  // 0: vote.VoteRequest
+	(*VoteResponse)(nil), // 1: vote.VoteResponse
 }
-var file_transaction_proto_depIdxs = []int32{
-	0, // 0: protobuf.BlockchainService.SubmitVote:input_type -> protobuf.VoteRequest
-	1, // 1: protobuf.BlockchainService.SubmitVote:output_type -> protobuf.VoteResponse
+var file_vote_message_proto_depIdxs = []int32{
+	0, // 0: vote.BlockchainService.SubmitVote:input_type -> vote.VoteRequest
+	1, // 1: vote.BlockchainService.SubmitVote:output_type -> vote.VoteResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -169,26 +169,26 @@ var file_transaction_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_transaction_proto_init() }
-func file_transaction_proto_init() {
-	if File_transaction_proto != nil {
+func init() { file_vote_message_proto_init() }
+func file_vote_message_proto_init() {
+	if File_vote_message_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_transaction_proto_rawDesc), len(file_transaction_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_vote_message_proto_rawDesc), len(file_vote_message_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_transaction_proto_goTypes,
-		DependencyIndexes: file_transaction_proto_depIdxs,
-		MessageInfos:      file_transaction_proto_msgTypes,
+		GoTypes:           file_vote_message_proto_goTypes,
+		DependencyIndexes: file_vote_message_proto_depIdxs,
+		MessageInfos:      file_vote_message_proto_msgTypes,
 	}.Build()
-	File_transaction_proto = out.File
-	file_transaction_proto_goTypes = nil
-	file_transaction_proto_depIdxs = nil
+	File_vote_message_proto = out.File
+	file_vote_message_proto_goTypes = nil
+	file_vote_message_proto_depIdxs = nil
 }

@@ -5,17 +5,17 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/andantan/vote-blockchain-server/protobuf"
+	"github.com/andantan/vote-blockchain-server/vote"
 )
 
 type Server struct {
-	protobuf.UnimplementedBlockchainServiceServer
+	vote.UnimplementedBlockchainServiceServer
 }
 
-func (s *Server) SubmitVote(ctx context.Context, req *protobuf.VoteRequest) (*protobuf.VoteResponse, error) {
+func (s *Server) SubmitVote(ctx context.Context, req *vote.VoteRequest) (*vote.VoteResponse, error) {
 	log.Printf("Received vote from client: %+v\n", req)
 
-	return &protobuf.VoteResponse{
-		BlockHeight: int64(rand.Intn(1000)),
+	return &vote.VoteResponse{
+		BlockHeight: int64(rand.Intn(10000)),
 	}, nil
 }

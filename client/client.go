@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/andantan/vote-blockchain-server/protobuf"
+	"github.com/andantan/vote-blockchain-server/vote"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -24,10 +24,10 @@ func main() {
 
 	defer conn.Close()
 
-	c := protobuf.NewBlockchainServiceClient(conn)
+	c := vote.NewBlockchainServiceClient(conn)
 
 	for {
-		vote := protobuf.VoteRequest{
+		vote := vote.VoteRequest{
 			VoteHash:   randSeq(10),
 			VoteOption: randSeq(10),
 			ElectionId: randSeq(10),

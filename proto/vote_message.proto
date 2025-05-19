@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package="github.com/andantan/vote-blockchain-server/protobuf";
+option go_package="../vote";
 
-package protobuf;
+package vote;
 
 service BlockchainService {
   rpc SubmitVote(VoteRequest) returns (VoteResponse);

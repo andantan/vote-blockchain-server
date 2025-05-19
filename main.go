@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/andantan/vote-blockchain-server/network"
-	"github.com/andantan/vote-blockchain-server/protobuf"
+	"github.com/andantan/vote-blockchain-server/vote"
 	"google.golang.org/grpc"
 )
 
@@ -20,7 +20,7 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	protobuf.RegisterBlockchainServiceServer(grpcServer, &s)
+	vote.RegisterBlockchainServiceServer(grpcServer, &s)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to server gRPC server over port 9000: %v", err)
