@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package="github.com/andantan/vote-blockchain-server/protobuf";
+
+package protobuf;
+
+service BlockchainService {
+  rpc SubmitVote(VoteRequest) returns (VoteResponse);
+}
+
+message VoteRequest {
+  string vote_hash = 1;
+  string vote_option = 2;
+  string election_id = 3;
+}
+
+message VoteResponse {
+  int64 block_height = 1;
+}

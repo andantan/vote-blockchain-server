@@ -17,3 +17,25 @@ func RandomBytes(size int) []byte {
 func RandomHash() types.Hash {
 	return types.HashFromBytes(RandomBytes(types.DIGEST_SIZE))
 }
+
+type Vote struct {
+	VoteHash   types.Hash
+	UserHash   types.Hash
+	VoteOption string
+	Age        uint8
+	Gender     rune
+	ElectionId string
+}
+
+func RandomVote() *Vote {
+	v := &Vote{
+		VoteHash:   RandomHash(),
+		UserHash:   RandomHash(),
+		VoteOption: "5",
+		Age:        26,
+		Gender:     'M',
+		ElectionId: "2025-보건복지여론조사사",
+	}
+
+	return v
+}
