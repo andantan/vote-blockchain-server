@@ -1,6 +1,7 @@
 package types
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 )
@@ -36,10 +37,14 @@ func (h Hash) String() string {
 	return hex.EncodeToString(h.ToSlice())
 }
 
+func HashFromString(s string) Hash {
+	return sha256.Sum256([]byte(s))
+}
+
 // b []byte len must be 32 & Return Hash that casted from bytes
 func HashFromBytes(b []byte) Hash {
 	if len(b) != DIGEST_SIZE {
-		msg := fmt.Sprintf("Given bytes with length %d should be 32", len(b))
+		msg := fmt.Sprintf("given bytes with length %d should be 32", len(b))
 
 		// System can not continue
 		panic(msg)
@@ -53,4 +58,14 @@ func HashFromBytes(b []byte) Hash {
 	}
 
 	return Hash(t)
+}
+
+func HashFromHashString(s string) (Hash, error) {
+	h, err := hex.DecodeString(s)
+
+	if err != nil {
+		return Hash([32]uint8{}), err
+	}
+
+	return Hash(h), nil
 }

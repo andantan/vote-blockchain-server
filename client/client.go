@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/util"
 	"github.com/andantan/vote-blockchain-server/vote"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -28,7 +29,7 @@ func main() {
 
 	for {
 		vote := vote.VoteRequest{
-			VoteHash:   randSeq(10),
+			VoteHash:   util.RandomHash().String(),
 			VoteOption: randSeq(10),
 			ElectionId: randSeq(10),
 		}
@@ -41,12 +42,8 @@ func main() {
 
 		log.Printf("Response from server: %+v\n", response)
 
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
 	}
-}
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

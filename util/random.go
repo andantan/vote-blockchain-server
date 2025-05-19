@@ -34,7 +34,7 @@ func RandomVote() *Vote {
 		VoteOption: "5",
 		Age:        26,
 		Gender:     'M',
-		ElectionId: "2025-보건복지여론조사사",
+		ElectionId: "2025-보건복지여론조사",
 	}
 
 	return v
