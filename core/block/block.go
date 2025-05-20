@@ -13,7 +13,7 @@ type Header struct {
 	ElectionId    string
 	MerkleRoot    types.Hash // Hashs of all of transaction
 	PrevBlockHash types.Hash // Chaining with HeaderHash
-	Height        uint32
+	Height        uint64
 }
 
 func (h *Header) Bytes() []byte {
