@@ -1,4 +1,4 @@
-package vote
+package vote_message
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestXxx(t *testing.T) {
+func TestVoteMessage(t *testing.T) {
 	rv := util.RandomVote()
 
 	req := VoteRequest{

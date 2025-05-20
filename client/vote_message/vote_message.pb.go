@@ -4,7 +4,7 @@
 // 	protoc        v6.30.2
 // source: vote_message.proto
 
-package vote
+package vote_message
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -129,7 +129,7 @@ var File_vote_message_proto protoreflect.FileDescriptor
 
 const file_vote_message_proto_rawDesc = "" +
 	"\n" +
-	"\x12vote_message.proto\x12\x04vote\"l\n" +
+	"\x12vote_message.proto\x12\fvote_message\"l\n" +
 	"\vVoteRequest\x12\x1b\n" +
 	"\tvote_hash\x18\x01 \x01(\tR\bvoteHash\x12\x1f\n" +
 	"\vvote_option\x18\x02 \x01(\tR\n" +
@@ -137,10 +137,10 @@ const file_vote_message_proto_rawDesc = "" +
 	"\velection_id\x18\x03 \x01(\tR\n" +
 	"electionId\"1\n" +
 	"\fVoteResponse\x12!\n" +
-	"\fblock_height\x18\x01 \x01(\x03R\vblockHeight2H\n" +
-	"\x11BlockchainService\x123\n" +
+	"\fblock_height\x18\x01 \x01(\x03R\vblockHeight2X\n" +
+	"\x11BlockchainService\x12C\n" +
 	"\n" +
-	"SubmitVote\x12\x11.vote.VoteRequest\x1a\x12.vote.VoteResponseB\tZ\a../voteb\x06proto3"
+	"SubmitVote\x12\x19.vote_message.VoteRequest\x1a\x1a.vote_message.VoteResponseB\x1eZ\x1c../network/gRPC/vote_messageb\x06proto3"
 
 var (
 	file_vote_message_proto_rawDescOnce sync.Once
@@ -156,12 +156,12 @@ func file_vote_message_proto_rawDescGZIP() []byte {
 
 var file_vote_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_vote_message_proto_goTypes = []any{
-	(*VoteRequest)(nil),  // 0: vote.VoteRequest
-	(*VoteResponse)(nil), // 1: vote.VoteResponse
+	(*VoteRequest)(nil),  // 0: vote_message.VoteRequest
+	(*VoteResponse)(nil), // 1: vote_message.VoteResponse
 }
 var file_vote_message_proto_depIdxs = []int32{
-	0, // 0: vote.BlockchainService.SubmitVote:input_type -> vote.VoteRequest
-	1, // 1: vote.BlockchainService.SubmitVote:output_type -> vote.VoteResponse
+	0, // 0: vote_message.BlockchainService.SubmitVote:input_type -> vote_message.VoteRequest
+	1, // 1: vote_message.BlockchainService.SubmitVote:output_type -> vote_message.VoteResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

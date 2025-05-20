@@ -1,4 +1,4 @@
-package core
+package transaction
 
 import "github.com/andantan/vote-blockchain-server/types"
 

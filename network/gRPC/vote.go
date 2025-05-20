@@ -1,11 +1,10 @@
-package network
+package gRPC
 
 import (
 	"log"
 
-	"github.com/andantan/vote-blockchain-server/core"
+	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_message"
 	"github.com/andantan/vote-blockchain-server/types"
-	"github.com/andantan/vote-blockchain-server/vote"
 )
 
 type Vote struct {
@@ -14,7 +13,7 @@ type Vote struct {
 	ElectionId string
 }
 
-func GetVoteFromgRPCRequest(v *vote.VoteRequest) Vote {
+func GetVoteFromVoteMessage(v *vote_message.VoteRequest) Vote {
 	s := v.GetVoteHash()
 	h, err := types.HashFromHashString(s)
 
@@ -29,11 +28,4 @@ func GetVoteFromgRPCRequest(v *vote.VoteRequest) Vote {
 		VoteOption: v.GetVoteOption(),
 		ElectionId: v.GetElectionId(),
 	}
-}
-
-func (v *Vote) Fragmentation() (*core.Transaction, string) {
-	return &core.Transaction{
-		VoteHash:   v.VoteHash,
-		VoteOption: v.VoteOption,
-	}, v.ElectionId
 }

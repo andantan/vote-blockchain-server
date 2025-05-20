@@ -1,0 +1,13 @@
+package gRPC
+
+import (
+	"github.com/andantan/vote-blockchain-server/core/transaction"
+)
+
+// Return (*core.Transaction, electionId) from Vote
+func (v *Vote) Fragmentation() (*transaction.Transaction, string) {
+	return &transaction.Transaction{
+		VoteHash:   v.VoteHash,
+		VoteOption: v.VoteOption,
+	}, v.ElectionId
+}

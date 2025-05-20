@@ -1,9 +1,11 @@
-package core
+package block
 
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 
+	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
 )
 
@@ -25,5 +27,9 @@ func (h *Header) Bytes() []byte {
 type Block struct {
 	*Header
 	HeaderHash   types.Hash // Hashs Header, header has merkleroot
-	Transactions []*Transaction
+	Transactions []*transaction.Transaction
+}
+
+func CreateNewBlock() {
+	fmt.Println("Created new block")
 }

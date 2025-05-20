@@ -4,7 +4,7 @@
 // - protoc             v6.30.2
 // source: vote_message.proto
 
-package vote
+package vote_message
 
 import (
 	context "context"
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BlockchainService_SubmitVote_FullMethodName = "/vote.BlockchainService/SubmitVote"
+	BlockchainService_SubmitVote_FullMethodName = "/vote_message.BlockchainService/SubmitVote"
 )
 
 // BlockchainServiceClient is the client API for BlockchainService service.
@@ -108,7 +108,7 @@ func _BlockchainService_SubmitVote_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BlockchainService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "vote.BlockchainService",
+	ServiceName: "vote_message.BlockchainService",
 	HandlerType: (*BlockchainServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
