@@ -25,7 +25,7 @@ type VoteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	VoteHash      string                 `protobuf:"bytes,1,opt,name=vote_hash,json=voteHash,proto3" json:"vote_hash,omitempty"`
 	VoteOption    string                 `protobuf:"bytes,2,opt,name=vote_option,json=voteOption,proto3" json:"vote_option,omitempty"`
-	ElectionId    string                 `protobuf:"bytes,3,opt,name=election_id,json=electionId,proto3" json:"election_id,omitempty"`
+	VoteId        string                 `protobuf:"bytes,3,opt,name=vote_id,json=voteId,proto3" json:"vote_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -74,9 +74,9 @@ func (x *VoteRequest) GetVoteOption() string {
 	return ""
 }
 
-func (x *VoteRequest) GetElectionId() string {
+func (x *VoteRequest) GetVoteId() string {
 	if x != nil {
-		return x.ElectionId
+		return x.VoteId
 	}
 	return ""
 }
@@ -129,16 +129,15 @@ var File_vote_message_proto protoreflect.FileDescriptor
 
 const file_vote_message_proto_rawDesc = "" +
 	"\n" +
-	"\x12vote_message.proto\x12\fvote_message\"l\n" +
+	"\x12vote_message.proto\x12\fvote_message\"d\n" +
 	"\vVoteRequest\x12\x1b\n" +
 	"\tvote_hash\x18\x01 \x01(\tR\bvoteHash\x12\x1f\n" +
 	"\vvote_option\x18\x02 \x01(\tR\n" +
-	"voteOption\x12\x1f\n" +
-	"\velection_id\x18\x03 \x01(\tR\n" +
-	"electionId\"1\n" +
+	"voteOption\x12\x17\n" +
+	"\avote_id\x18\x03 \x01(\tR\x06voteId\"1\n" +
 	"\fVoteResponse\x12!\n" +
-	"\fblock_height\x18\x01 \x01(\x03R\vblockHeight2X\n" +
-	"\x11BlockchainService\x12C\n" +
+	"\fblock_height\x18\x01 \x01(\x03R\vblockHeight2\\\n" +
+	"\x15BlockchainVoteService\x12C\n" +
 	"\n" +
 	"SubmitVote\x12\x19.vote_message.VoteRequest\x1a\x1a.vote_message.VoteResponseB\x1eZ\x1c../network/gRPC/vote_messageb\x06proto3"
 
@@ -160,8 +159,8 @@ var file_vote_message_proto_goTypes = []any{
 	(*VoteResponse)(nil), // 1: vote_message.VoteResponse
 }
 var file_vote_message_proto_depIdxs = []int32{
-	0, // 0: vote_message.BlockchainService.SubmitVote:input_type -> vote_message.VoteRequest
-	1, // 1: vote_message.BlockchainService.SubmitVote:output_type -> vote_message.VoteResponse
+	0, // 0: vote_message.BlockchainVoteService.SubmitVote:input_type -> vote_message.VoteRequest
+	1, // 1: vote_message.BlockchainVoteService.SubmitVote:output_type -> vote_message.VoteResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

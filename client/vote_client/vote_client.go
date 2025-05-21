@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/andantan/vote-blockchain-server/client/vote_message"
+	"github.com/andantan/vote-blockchain-server/client/vote_client/vote_message"
 	"github.com/andantan/vote-blockchain-server/util"
 
 	"google.golang.org/grpc"
@@ -16,7 +16,7 @@ import (
 func main() {
 	var conn *grpc.ClientConn
 	conn, err := grpc.NewClient(
-		":9000",
+		":9001",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 
@@ -26,13 +26,13 @@ func main() {
 
 	defer conn.Close()
 
-	c := vote_message.NewBlockchainServiceClient(conn)
+	c := vote_message.NewBlockchainVoteServiceClient(conn)
 
 	for {
 		vote := vote_message.VoteRequest{
 			VoteHash:   util.RandomHash().String(),
 			VoteOption: randSeq(10),
-			ElectionId: randSeq(10),
+			VoteId:     randSeq(10),
 		}
 
 		response, err := c.SubmitVote(context.Background(), &vote)

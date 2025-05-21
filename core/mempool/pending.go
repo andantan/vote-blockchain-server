@@ -9,21 +9,23 @@ import (
 
 type Pending struct {
 	transactions         []*transaction.Transaction // Votes [ Transaction ]
-	pendingTime          time.Duration              // Vote duration
-	blockTime            time.Duration              // Block Time (system)
-	maxTransactionSize   uint32                     // Tx size (system)
-	scheduledBlockHeight []uint64                   // Pended block heights
-	pendingId            types.ElectionID           // ElectionID
+	transactionCH        chan *transaction.Transaction
+	pendingTime          time.Duration  // Vote duration
+	blockTime            time.Duration  // Block Time (system)
+	maxTransactionSize   uint32         // Tx size (system)
+	scheduledBlockHeight []uint64       // Pended block heights
+	pendingID            types.VotingID // VotingID
 }
 
 func NewPending(pendingTime, blockTime time.Duration,
 	maxTxSize uint32, pendingId string) *Pending {
 	return &Pending{
 		transactions:         []*transaction.Transaction{},
+		transactionCH:        make(chan *transaction.Transaction),
 		pendingTime:          pendingTime,
 		blockTime:            blockTime,
 		maxTransactionSize:   maxTxSize,
 		scheduledBlockHeight: []uint64{},
-		pendingId:            types.ElectionID(pendingId),
+		pendingID:            types.VotingID(pendingId),
 	}
 }

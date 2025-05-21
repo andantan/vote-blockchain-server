@@ -1,50 +1,93 @@
 package server
 
 import (
-	"context"
-	"fmt"
-	"math/rand"
-	"net"
+	"log"
+	"time"
 
+	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
-	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_message"
-	"google.golang.org/grpc"
 )
 
+const (
+	BlockTime = 5 * time.Second
+	MaxTxSize = uint32(50000)
+)
+
+// gRPC Network and port options
+//
+// Network must be "tcp", "unix" or "unixpacket"
+//
+// Port must be between 0 and 65535
+type ServerOpts struct {
+	TopicgRPCNetwork     string
+	TopicgRPCNetworkPort uint16
+	VotegRPCNetwork      string
+	VotegRPCNetworkPort  uint16
+}
+
+func NewServerOpts() ServerOpts {
+	return ServerOpts{}
+}
+
+func (o *ServerOpts) SetTopicOptions(topicNetwork string, topicNetworkPort uint16) {
+	o.TopicgRPCNetwork = topicNetwork
+	o.TopicgRPCNetworkPort = topicNetworkPort
+}
+
+func (o *ServerOpts) SetVoteOptions(voteNetwork string, voteNetworkPort uint16) {
+	o.VotegRPCNetwork = voteNetwork
+	o.VotegRPCNetworkPort = voteNetworkPort
+}
+
 type BlockChainServer struct {
-	vote_message.UnimplementedBlockchainServiceServer
-	VoteCh chan gRPC.Vote
+	// vote_message.UnimplementedBlockchainVoteServiceServer
+	// VoteCh chan gRPC.Vote
+	ServerOpts
+	*BlockChainVoteListener
+	*BlockChainTopicListener
+	ExitSignalCh chan uint8
 }
 
-func NewBlockChainServer() *BlockChainServer {
+func NewBlockChainServer(opts ServerOpts) *BlockChainServer {
+
 	return &BlockChainServer{
-		VoteCh: make(chan gRPC.Vote),
+		ServerOpts: opts,
+		BlockChainVoteListener: &BlockChainVoteListener{
+			VoteCh: make(chan gRPC.Vote),
+		},
+		BlockChainTopicListener: &BlockChainTopicListener{
+			TopicCh: make(chan gRPC.Topic),
+		},
+		ExitSignalCh: make(chan uint8),
 	}
 }
 
-// gRPC
-func (s *BlockChainServer) SubmitVote(ctx context.Context, req *vote_message.VoteRequest) (*vote_message.VoteResponse, error) {
-	s.VoteCh <- gRPC.GetVoteFromVoteMessage(req)
+func (s *BlockChainServer) Start() {
+	ticker := time.NewTicker(BlockTime)
 
-	return &vote_message.VoteResponse{
-		BlockHeight: int64(rand.Intn(10000)),
-	}, nil
+	go s.startTopicListener(s.getTopicOpts())
+	go s.startVoteListener(s.getVoteOpts())
+
+labelServer:
+	for {
+		select {
+		case topic := <-s.TopicCh:
+			log.Printf("received topic from client: %+v\n", topic)
+		case vote := <-s.VoteCh:
+			log.Printf("received vote from client: %+v\n", vote)
+		case <-ticker.C:
+			block.CreateNewBlock()
+		case <-s.ExitSignalCh:
+			log.Println("Exit signal detected")
+			break labelServer
+		}
+	}
 }
 
-func (s *BlockChainServer) Start() error {
-	lis, err := net.Listen("tcp", ":9000")
+func (s *BlockChainServer) getTopicOpts() (network string, port uint16) {
+	return s.ServerOpts.TopicgRPCNetwork, s.ServerOpts.TopicgRPCNetworkPort
+}
 
-	if err != nil {
-		return fmt.Errorf("failed to listen on port 9000: %v", err)
-	}
-
-	grpcServer := grpc.NewServer()
-
-	vote_message.RegisterBlockchainServiceServer(grpcServer, s)
-
-	if err := grpcServer.Serve(lis); err != nil {
-		return fmt.Errorf("failed to server gRPC server over port 9000: %v", err)
-	}
-
-	return nil
+func (s *BlockChainServer) getVoteOpts() (network string, port uint16) {
+	return s.ServerOpts.VotegRPCNetwork, s.ServerOpts.VotegRPCNetworkPort
 }

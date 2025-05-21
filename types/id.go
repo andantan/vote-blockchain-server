@@ -1,3 +1,4 @@
 package types
 
-type ElectionID string
+type VotingID string
+type TopicID string

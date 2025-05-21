@@ -4,14 +4,14 @@ option go_package="../network/gRPC/vote_message";
 
 package vote_message;
 
-service BlockchainService {
+service BlockchainVoteService {
   rpc SubmitVote(VoteRequest) returns (VoteResponse);
 }
 
 message VoteRequest {
   string vote_hash = 1;
   string vote_option = 2;
-  string election_id = 3;
+  string vote_id = 3;
 }
 
 message VoteResponse {

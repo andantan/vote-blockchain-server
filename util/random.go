@@ -2,6 +2,8 @@ package util
 
 import (
 	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 
 	"github.com/andantan/vote-blockchain-server/types"
 )
@@ -18,24 +20,34 @@ func RandomHash() types.Hash {
 	return types.HashFromBytes(RandomBytes(types.DIGEST_SIZE))
 }
 
-type Vote struct {
+type OriginalVote struct {
 	VoteHash   types.Hash
 	UserHash   types.Hash
 	VoteOption string
 	Age        uint8
 	Gender     rune
-	ElectionId string
+	VoteId     types.VotingID
 }
 
-func RandomVote() *Vote {
-	v := &Vote{
-		VoteHash:   RandomHash(),
+func RandomVote() *OriginalVote {
+	v := &OriginalVote{
 		UserHash:   RandomHash(),
 		VoteOption: "5",
 		Age:        26,
 		Gender:     'M',
-		ElectionId: "2025-보건복지여론조사",
+		VoteId:     "2025-보건복지여론조사",
 	}
+
+	fmt.Println(v.UserHash.String())
+
+	data := fmt.Sprintf("%s|%s|%d|%c|%s",
+		v.UserHash.String(), v.VoteOption, v.Age, v.Gender, v.VoteId)
+
+	fmt.Println(data)
+
+	v.VoteHash = types.HashFromString(data)
+
+	fmt.Println(hex.EncodeToString(v.VoteHash.ToSlice()))
 
 	return v
 }

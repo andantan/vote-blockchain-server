@@ -14,7 +14,7 @@ func TestVoteMessage(t *testing.T) {
 	req := VoteRequest{
 		VoteHash:   rv.VoteHash.String(),
 		VoteOption: rv.VoteOption,
-		ElectionId: rv.ElectionId,
+		VoteId:     string(rv.VoteId),
 	}
 
 	data, err := proto.Marshal(&req)
@@ -27,5 +27,5 @@ func TestVoteMessage(t *testing.T) {
 
 	assert.Equal(t, req.VoteHash, ureq.VoteHash)
 	assert.Equal(t, req.VoteOption, ureq.VoteOption)
-	assert.Equal(t, req.ElectionId, ureq.ElectionId)
+	assert.Equal(t, req.VoteId, ureq.VoteId)
 }

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package="../network/gRPC/topic_message";
+
+package topic_message;
+
+service BlockchainTopicService {
+  rpc SubmitTopic(TopicRequest) returns (TopicResponse);
+}
+
+message TopicRequest {
+  string topic_id = 1;
+  int64 topic_duration = 2;
+}
+
+message TopicResponse {
+  string topic_id = 1;
+  int64 topic_duration = 2;
+}

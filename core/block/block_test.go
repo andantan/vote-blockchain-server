@@ -12,14 +12,14 @@ func TestHeaderBytes(t *testing.T) {
 	randomPrevBlockHash := util.RandomHash()
 
 	h1 := &Header{
-		ElectionId:    "aaa",
+		VotingID:      "aaa",
 		MerkleRoot:    randomMerkleRootHash,
 		PrevBlockHash: randomPrevBlockHash,
 		Height:        1,
 	}
 
 	h2 := &Header{
-		ElectionId:    "aaa",
+		VotingID:      "aaa",
 		MerkleRoot:    randomMerkleRootHash,
 		PrevBlockHash: randomPrevBlockHash,
 		Height:        1,
@@ -28,7 +28,7 @@ func TestHeaderBytes(t *testing.T) {
 	assert.Equal(t, h1.Bytes(), h2.Bytes())
 
 	h3 := &Header{
-		ElectionId:    "bbb",
+		VotingID:      "bbb",
 		MerkleRoot:    util.RandomHash(),
 		PrevBlockHash: util.RandomHash(),
 		Height:        2,

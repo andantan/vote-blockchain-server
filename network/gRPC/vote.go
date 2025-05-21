@@ -10,7 +10,7 @@ import (
 type Vote struct {
 	VoteHash   types.Hash
 	VoteOption string
-	ElectionId types.ElectionID
+	VoteId     types.VotingID
 }
 
 func GetVoteFromVoteMessage(v *vote_message.VoteRequest) Vote {
@@ -26,6 +26,6 @@ func GetVoteFromVoteMessage(v *vote_message.VoteRequest) Vote {
 	return Vote{
 		VoteHash:   h,
 		VoteOption: v.GetVoteOption(),
-		ElectionId: types.ElectionID(v.GetElectionId()),
+		VoteId:     types.VotingID(v.GetVoteId()),
 	}
 }
