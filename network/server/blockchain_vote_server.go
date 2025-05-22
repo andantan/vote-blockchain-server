@@ -6,21 +6,21 @@ import (
 	"log"
 	"net"
 
+	"google.golang.org/grpc"
+
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
 	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_message"
-	"google.golang.org/grpc"
+	"github.com/andantan/vote-blockchain-server/util"
 )
 
 type BlockChainVoteServer struct {
 	vote_message.UnimplementedBlockchainVoteServiceServer
-	RequestVoteCh  chan *gRPC.PreTxVote
-	ResponseVoteCh chan *gRPC.PostTxVote
+	RequestVoteCh chan *gRPC.PreTxVote
 }
 
-func NewBlockChainVoteServer() *BlockChainVoteServer {
+func NewBlockChainVoteServer(bufferSize int) *BlockChainVoteServer {
 	return &BlockChainVoteServer{
-		RequestVoteCh:  make(chan *gRPC.PreTxVote),
-		ResponseVoteCh: make(chan *gRPC.PostTxVote),
+		RequestVoteCh: make(chan *gRPC.PreTxVote, bufferSize),
 	}
 }
 
@@ -34,39 +34,46 @@ func (s *BlockChainVoteServer) SubmitVote(
 		return s.GetErrorSubmitVote(err.Error()).GetVoteResponse(), nil
 	}
 
-	// log.Printf("Submit vote %s|%s|%s\n", req.Hash, req.Option, req.Topic)
+	ResponseCh := make(chan *gRPC.PostTxVote, 1)
+	defer close(ResponseCh)
+
+	preTxVote.ResponseCh = ResponseCh
+
 	s.RequestVoteCh <- preTxVote
 
 	// Standby for reaching mempool: add Tx
-	postTxVote := <-s.ResponseVoteCh
+	postTxVote := <-ResponseCh
+
 	return postTxVote.GetVoteResponse(), nil
 
 }
 
-func (s *BlockChainVoteServer) startVoteListener(network string, port uint16) {
+func (s *BlockChainVoteServer) startVoteListener(network string, port uint16, exitCh chan<- uint8) {
 	address := fmt.Sprintf(":%d", port) // ":port"
 
 	lis, err := net.Listen(network, address)
 
 	if err != nil {
-		log.Fatalf("failed to listen on port 9000 (Vote): %v", err)
+		log.Printf(util.FatalString("failed to listen on port 9000 (Vote): %v"), err)
+		exitCh <- EXIT_SIGNAL
 	}
 
 	grpcServer := grpc.NewServer()
 
 	vote_message.RegisterBlockchainVoteServiceServer(grpcServer, s)
 
-	log.Printf("Vote gRPC listener opened (%d)", port)
+	log.Printf(util.SystemString("SYSTEM: Vote gRPC listener opened { port: %d }"), port)
 
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to server gRPC listener (Vote) over port 9000: %v", err)
+		log.Printf(util.FatalString("failed to server gRPC listener (Vote) over port %d: %v"), port, err)
+		exitCh <- EXIT_SIGNAL
 	}
 }
 
 func (s *BlockChainVoteServer) GetSuccessSubmitVote(message string) *gRPC.PostTxVote {
-	return gRPC.GetPostTxVote("SUCCESS", message, false)
+	return gRPC.GetPostTxVote("SUCCESS", message, true)
 }
 
 func (s *BlockChainVoteServer) GetErrorSubmitVote(message string) *gRPC.PostTxVote {
-	return gRPC.GetPostTxVote("ERROR", message, true)
+	return gRPC.GetPostTxVote("ERROR", message, false)
 }

@@ -32,7 +32,7 @@ func main() {
 		vote := vote_message.VoteRequest{
 			Hash:   util.RandomHash().String(),
 			Option: randOpt(),
-			Topic:  "2025-대선",
+			Topic:  randTopic(),
 		}
 
 		response, err := c.SubmitVote(context.Background(), &vote)
@@ -41,22 +41,26 @@ func main() {
 			log.Fatalf("error when calling SubmitVote: %s", err)
 		}
 
-		log.Printf("Response from server: %+v\n", response)
-
-		time.Sleep(400 * time.Millisecond)
+		log.Printf("gRPC response success: %t (%s | %s)", response.Success, response.Status, response.Message)
+		time.Sleep(time.Millisecond)
 		// time.Sleep(1 * time.Second)
 	}
 }
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+// var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var topics = []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표", "상법개정안 시범 기간 조사"}
 var options = []rune("12345")
 
-func randSeq(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
+// func randSeq(n int) string {
+// 	b := make([]rune, n)
+// 	for i := range b {
+// 		b[i] = letters[rand.Intn(len(letters))]
+// 	}
+// 	return string(b)
+// }
+
+func randTopic() string {
+	return topics[rand.Intn(len(topics))]
 }
 
 func randOpt() string {

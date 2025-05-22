@@ -1,10 +1,21 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/mempool"
+)
+
+const (
+	EXIT_SIGNAL = iota
+	CONVERT_SIGNAL
+	STANDBY_SIGNAL
+)
+
+const (
+	GRPC_REQUEST_BUFFER_SIZE = 128
 )
 
 // gRPC Network and port options
@@ -60,36 +71,40 @@ func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
 
 	return &BlockChainServer{
 		BlockChainServerOpts:  opts,
-		BlockChainVoteServer:  NewBlockChainVoteServer(),
-		BlockChainTopicServer: NewBlockChainTopicServer(),
+		BlockChainVoteServer:  NewBlockChainVoteServer(GRPC_REQUEST_BUFFER_SIZE),
+		BlockChainTopicServer: NewBlockChainTopicServer(GRPC_REQUEST_BUFFER_SIZE),
 		mempool:               mempool.NewMemPool(opts.BlockTime, opts.MaxTxSize),
 		ExitSignalCh:          make(chan uint8),
 	}
 }
 
 func (s *BlockChainServer) Start() {
+	tn, tp := s.getTopicListenerOpts()
+	go s.startTopicListener(tn, tp, s.ExitSignalCh)
 
-	go s.startTopicListener(s.getTopicListenerOpts())
-	go s.startVoteListener(s.getVoteListenerOpts())
+	vn, vp := s.getVoteListenerOpts()
+	go s.startVoteListener(vn, vp, s.ExitSignalCh)
 
 labelServer:
 	for {
 		select {
 		case topic := <-s.RequestTopicCh:
 			if err := s.mempool.AddPending(topic.Topic, topic.Duration); err != nil {
-				s.ResponseTopicCh <- s.GetErrorSubmitTopic(err.Error())
+				topic.ResponseCh <- s.GetErrorSubmitTopic(err.Error())
 				continue
 			}
 
-			s.ResponseTopicCh <- s.GetSuccessSubmitTopic("pending success (Topic) " + string(topic.Topic))
+			resMsg := fmt.Sprintf("pending opening success { topic: %s }", topic.Topic)
+
+			topic.ResponseCh <- s.GetSuccessSubmitTopic(resMsg)
 
 		case vote := <-s.RequestVoteCh:
 			if err := s.mempool.CommitTransaction(vote.Fragmentation()); err != nil {
-				s.ResponseVoteCh <- s.GetErrorSubmitVote(err.Error())
+				vote.ResponseCh <- s.GetErrorSubmitVote(err.Error())
 				continue
 			}
 
-			s.ResponseVoteCh <- s.GetSuccessSubmitVote(vote.Hash.String())
+			vote.ResponseCh <- s.GetSuccessSubmitVote(vote.Hash.String())
 
 		case <-s.ExitSignalCh:
 			log.Println("exit signal detected")

@@ -8,16 +8,16 @@ import (
 
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
+	"github.com/andantan/vote-blockchain-server/util"
 )
 
 type MemPool struct {
 	BlockTime time.Duration
 	MaxTxSize uint32
 
-	mutex    sync.RWMutex
+	mu       sync.RWMutex
 	pendings map[types.Topic]*Pending
-
-	closeCh chan types.Topic
+	closeCh  chan types.Topic
 }
 
 func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
@@ -42,7 +42,8 @@ func (p *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) e
 
 	p.AllocatePending(pendingId, pn)
 
-	log.Printf("topic (%s) pending success, duration (%s)", pn.pendingID, pn.pendingTime)
+	log.Printf(util.PendingString("Pending: New pending { topic: %s, duration: %s }"),
+		pn.pendingID, pn.pendingTime)
 
 	go pn.Activate()
 
@@ -55,12 +56,16 @@ func (p *MemPool) getPendingWithoutOpenCheck(pendingId types.Topic) *Pending {
 
 // Check Pending is opened
 func (p *MemPool) IsOpen(pendingId types.Topic) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	_, ok := p.pendings[pendingId]
 
 	return ok
 }
 
 func (p *MemPool) AllocatePending(pendingId types.Topic, open *Pending) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.pendings[pendingId] = open
 }
 
@@ -81,8 +86,11 @@ func (p *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Trans
 func (p *MemPool) closedPendingCollector() {
 	for {
 		topic := <-p.closeCh
-		delete(p.pendings, topic)
 
-		log.Printf("pending (%s) removed from memPool\n", topic)
+		p.mu.Lock()
+		delete(p.pendings, topic)
+		p.mu.Unlock()
+
+		log.Printf(util.PendingString("Pending: %s | Removed from memPool"), topic)
 	}
 }

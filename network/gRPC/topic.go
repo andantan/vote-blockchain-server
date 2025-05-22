@@ -7,9 +7,11 @@ import (
 	"github.com/andantan/vote-blockchain-server/types"
 )
 
+// Mapping request - response
 type PreTxTopic struct {
-	Topic    types.Topic
-	Duration time.Duration
+	Topic      types.Topic
+	Duration   time.Duration
+	ResponseCh chan *PostTxTopic
 }
 
 func GetPreTxTopic(t *topic_message.TopicRequest) *PreTxTopic {
@@ -20,10 +22,9 @@ func GetPreTxTopic(t *topic_message.TopicRequest) *PreTxTopic {
 }
 
 type PostTxTopic struct {
-	Status     string
-	StatusType string
-	Message    string
-	Success    bool
+	Status  string
+	Message string
+	Success bool
 }
 
 func GetPostTxTopic(status, message string, success bool) *PostTxTopic {

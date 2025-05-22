@@ -8,9 +8,10 @@ import (
 )
 
 type PreTxVote struct {
-	Hash   types.Hash
-	Option string
-	Topic  types.Topic
+	Hash       types.Hash
+	Option     string
+	Topic      types.Topic
+	ResponseCh chan *PostTxVote
 }
 
 func GetPreTxVote(v *vote_message.VoteRequest) (*PreTxVote, error) {

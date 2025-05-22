@@ -3,18 +3,19 @@ package mempool
 import (
 	"fmt"
 	"log"
+	"maps"
 	"sync"
 	"time"
 
-	"maps"
-
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
+	"github.com/andantan/vote-blockchain-server/util"
 )
 
 type Pending struct {
-	mutex        sync.RWMutex
+	mu           sync.RWMutex
 	transactions map[string]string
+	txCache      map[string]uint8
 
 	transactionCH        chan *transaction.Transaction
 	pendingTime          time.Duration // Vote duration
@@ -29,6 +30,7 @@ func NewPending(pendingTime, blockTime time.Duration,
 	maxTxSize uint32, pendingId types.Topic, closeCh chan<- types.Topic) *Pending {
 	return &Pending{
 		transactions:         make(map[string]string),
+		txCache:              make(map[string]uint8),
 		transactionCH:        make(chan *transaction.Transaction),
 		pendingTime:          pendingTime,
 		blockTime:            blockTime,
@@ -40,9 +42,9 @@ func NewPending(pendingTime, blockTime time.Duration,
 }
 
 func (p *Pending) Len() int {
-	p.mutex.Lock()
+	p.mu.Lock()
 	l := len(p.transactions)
-	p.mutex.Unlock()
+	p.mu.Unlock()
 
 	return l
 }
@@ -68,25 +70,27 @@ labelPending:
 			txCount := p.Len()
 
 			if p.maxTransactionSize <= uint32(txCount) {
-				log.Printf("PENDING(%s) - Max transactions reached (%d). Creating new block by count.\n",
+				log.Printf(util.PendingString("PENDING: %s | Max transactions (%d) reached"),
 					p.pendingID, txCount)
 
 				p.flush()
 
-				log.Printf("New (%s) block created\n", p.pendingID)
-				log.Printf("PENDING(%s) - Transactions map cleared. New size: %d\n", p.pendingID, p.Len())
+				log.Printf(util.BlockString("Block: %s | Max tx size - New block created"), p.pendingID)
+				log.Printf(util.PendingString("PENDING: %s | Transactions map cleared. New size: %d"),
+					p.pendingID, p.Len())
 
 				blockTimer.Reset(p.blockTime)
 			}
 
 		case <-blockTimer.C:
 			p.flush()
-			log.Printf("New (%s) block created\n", p.pendingID)
+			log.Printf(util.BlockString("Block: %s | Block timeout - new block created"), p.pendingID)
 
 		case <-pendingTimer.C:
 			p.flush()
-			log.Printf("Pending(%s) over\n", p.pendingID)
-			log.Printf("New block created(%s) by close pending\n", p.pendingID)
+			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
+			log.Printf(util.BlockString("Block: %s | Pending timeout -  New block created"), p.pendingID)
+			log.Printf(util.PendingString("Pending: %s | close pending"), p.pendingID)
 
 			p.closeCh <- p.pendingID
 
@@ -94,7 +98,7 @@ labelPending:
 		}
 	}
 
-	log.Printf("Pending(%s) activation exited.\n", p.pendingID)
+	log.Printf(util.PendingString("Pending: %s | Activation exited."), p.pendingID)
 }
 
 func (p *Pending) PushTx(tx *transaction.Transaction) error {
@@ -108,21 +112,34 @@ func (p *Pending) PushTx(tx *transaction.Transaction) error {
 }
 
 func (p *Pending) collision(tx *transaction.Transaction) bool {
-	_, ok := p.transactions[tx.GetHashString()]
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	_, ok := p.txCache[tx.GetHashString()]
 
 	return ok
 }
 
 func (p *Pending) commitTx(tx *transaction.Transaction) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.commit(tx)
+	p.cache(tx)
+
+	log.Printf(util.CommitString("COMMIT: %s | New commit tx { hash: %s, option: %s }"),
+		p.pendingID, tx.GetHashString(), tx.GetOption())
+}
+
+func (p *Pending) commit(tx *transaction.Transaction) {
 	p.transactions[tx.GetHashString()] = tx.Serialize()
-	log.Printf("\"COMMIT-TX(%s)\": %s\n", p.pendingID, p.transactions[tx.GetHashString()])
+}
+
+func (p *Pending) cache(tx *transaction.Transaction) {
+	p.txCache[tx.GetHashString()] = 0
 }
 
 func (p *Pending) flush() {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	p.transactions = make(map[string]string)
 }

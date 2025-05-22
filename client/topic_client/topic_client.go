@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"time"
 
 	"github.com/andantan/vote-blockchain-server/client/topic_client/topic_message"
 	"google.golang.org/grpc"
@@ -25,10 +24,12 @@ func main() {
 
 	c := topic_message.NewBlockchainTopicServiceClient(conn)
 
-	for {
+	topics := []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표", "상법개정안 시범 기간 조사"}
+
+	for _, t := range topics {
 		topic := topic_message.TopicRequest{
-			Topic:    "2025-경기도-철도공사",
-			Duration: 7200,
+			Topic:    t,
+			Duration: 1,
 		}
 
 		response, err := c.SubmitTopic(context.Background(), &topic)
@@ -38,8 +39,5 @@ func main() {
 		}
 
 		log.Printf("Response from server: %+v\n", response)
-
-		// time.Sleep(300 * time.Millisecond)
-		time.Sleep(3 * time.Second)
 	}
 }
