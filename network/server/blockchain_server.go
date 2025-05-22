@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/core/mempool"
 )
 
@@ -51,8 +50,8 @@ func NewBlockChainServerOpts() BlockChainServerOpts {
 
 type BlockChainServer struct {
 	BlockChainServerOpts
-	*BlockChainVoteListener
-	*BlockChainTopicListener
+	*BlockChainVoteServer
+	*BlockChainTopicServer
 	mempool      *mempool.MemPool
 	ExitSignalCh chan uint8
 }
@@ -60,16 +59,15 @@ type BlockChainServer struct {
 func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
 
 	return &BlockChainServer{
-		BlockChainServerOpts:    opts,
-		BlockChainVoteListener:  NewBlockChainVoteListener(),
-		BlockChainTopicListener: NewBlockChainTopicListener(),
-		mempool:                 mempool.NewMemPool(opts.BlockTime, opts.MaxTxSize),
-		ExitSignalCh:            make(chan uint8),
+		BlockChainServerOpts:  opts,
+		BlockChainVoteServer:  NewBlockChainVoteServer(),
+		BlockChainTopicServer: NewBlockChainTopicServer(),
+		mempool:               mempool.NewMemPool(opts.BlockTime, opts.MaxTxSize),
+		ExitSignalCh:          make(chan uint8),
 	}
 }
 
 func (s *BlockChainServer) Start() {
-	ticker := time.NewTicker(s.BlockTime)
 
 	go s.startTopicListener(s.getTopicListenerOpts())
 	go s.startVoteListener(s.getVoteListenerOpts())
@@ -80,19 +78,21 @@ labelServer:
 		case topic := <-s.RequestTopicCh:
 			if err := s.mempool.AddPending(topic.Topic, topic.Duration); err != nil {
 				s.ResponseTopicCh <- s.GetErrorSubmitTopic(err.Error())
-
-				log.Println(err)
 				continue
 			}
 
 			s.ResponseTopicCh <- s.GetSuccessSubmitTopic("pending success (Topic)" + string(topic.Topic))
+
 		case vote := <-s.RequestVoteCh:
-			log.Printf("received vote from client: %+v\n", vote)
+			id, tx := vote.Fragmentation()
+
+			if err := s.mempool.CommitTransaction(id, tx); err != nil {
+				s.ResponseVoteCh <- s.GetErrorSubmitVote(err.Error())
+				continue
+			}
 
 			s.ResponseVoteCh <- s.GetSuccessSubmitVote(vote.Hash.String())
 
-		case <-ticker.C:
-			block.CreateNewBlock()
 		case <-s.ExitSignalCh:
 			log.Println("exit signal detected")
 			break labelServer

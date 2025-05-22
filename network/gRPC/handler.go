@@ -6,9 +6,9 @@ import (
 )
 
 // Return (*core.Transaction, electionId) from Vote
-func (v *PreTxVote) Fragmentation() (*transaction.Transaction, types.Topic) {
-	return &transaction.Transaction{
+func (v *PreTxVote) Fragmentation() (types.Topic, *transaction.Transaction) {
+	return v.Topic, &transaction.Transaction{
 		Hash:   v.Hash,
 		Option: v.Option,
-	}, v.Topic
+	}
 }

@@ -11,38 +11,39 @@ import (
 	"google.golang.org/grpc"
 )
 
-type BlockChainVoteListener struct {
+type BlockChainVoteServer struct {
 	vote_message.UnimplementedBlockchainVoteServiceServer
 	RequestVoteCh  chan *gRPC.PreTxVote
 	ResponseVoteCh chan *gRPC.PostTxVote
 }
 
-func NewBlockChainVoteListener() *BlockChainVoteListener {
-	return &BlockChainVoteListener{
+func NewBlockChainVoteServer() *BlockChainVoteServer {
+	return &BlockChainVoteServer{
 		RequestVoteCh:  make(chan *gRPC.PreTxVote),
 		ResponseVoteCh: make(chan *gRPC.PostTxVote),
 	}
 }
 
 // gRPC
-func (l *BlockChainVoteListener) SubmitVote(
+func (s *BlockChainVoteServer) SubmitVote(
 	ctx context.Context, req *vote_message.VoteRequest,
 ) (*vote_message.VoteResponse, error) {
 	preTxVote, err := gRPC.GetPreTxVote(req)
 
 	if err != nil {
-		return l.GetErrorSubmitVote(err.Error()).GetVoteResponse(), nil
+		return s.GetErrorSubmitVote(err.Error()).GetVoteResponse(), nil
 	}
 
-	l.RequestVoteCh <- preTxVote
+	// log.Printf("Submit vote %s|%s|%s\n", req.Hash, req.Option, req.Topic)
+	s.RequestVoteCh <- preTxVote
 
 	// Standby for reaching mempool: add Tx
-	postTxVote := <-l.ResponseVoteCh
-
+	postTxVote := <-s.ResponseVoteCh
 	return postTxVote.GetVoteResponse(), nil
+
 }
 
-func (l *BlockChainVoteListener) startVoteListener(network string, port uint16) {
+func (s *BlockChainVoteServer) startVoteListener(network string, port uint16) {
 	address := fmt.Sprintf(":%d", port) // ":port"
 
 	lis, err := net.Listen(network, address)
@@ -53,7 +54,7 @@ func (l *BlockChainVoteListener) startVoteListener(network string, port uint16) 
 
 	grpcServer := grpc.NewServer()
 
-	vote_message.RegisterBlockchainVoteServiceServer(grpcServer, l)
+	vote_message.RegisterBlockchainVoteServiceServer(grpcServer, s)
 
 	log.Printf("Vote gRPC listener opened (%d)", port)
 
@@ -62,10 +63,10 @@ func (l *BlockChainVoteListener) startVoteListener(network string, port uint16) 
 	}
 }
 
-func (l *BlockChainVoteListener) GetSuccessSubmitVote(message string) *gRPC.PostTxVote {
+func (s *BlockChainVoteServer) GetSuccessSubmitVote(message string) *gRPC.PostTxVote {
 	return gRPC.GetPostTxVote("SUCCESS", message, false)
 }
 
-func (l *BlockChainVoteListener) GetErrorSubmitVote(message string) *gRPC.PostTxVote {
+func (s *BlockChainVoteServer) GetErrorSubmitVote(message string) *gRPC.PostTxVote {
 	return gRPC.GetPostTxVote("ERROR", message, true)
 }

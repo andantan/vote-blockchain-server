@@ -11,32 +11,32 @@ import (
 	"google.golang.org/grpc"
 )
 
-type BlockChainTopicListener struct {
+type BlockChainTopicServer struct {
 	topic_message.UnimplementedBlockchainTopicServiceServer
 	RequestTopicCh  chan *gRPC.PreTxTopic // TODO Request, Response channel
 	ResponseTopicCh chan *gRPC.PostTxTopic
 }
 
-func NewBlockChainTopicListener() *BlockChainTopicListener {
-	return &BlockChainTopicListener{
+func NewBlockChainTopicServer() *BlockChainTopicServer {
+	return &BlockChainTopicServer{
 		RequestTopicCh:  make(chan *gRPC.PreTxTopic),
 		ResponseTopicCh: make(chan *gRPC.PostTxTopic),
 	}
 }
 
 // gRPC
-func (l *BlockChainTopicListener) SubmitTopic(
+func (s *BlockChainTopicServer) SubmitTopic(
 	ctx context.Context, req *topic_message.TopicRequest,
 ) (*topic_message.TopicResponse, error) {
-	l.RequestTopicCh <- gRPC.GetPreTxTopic(req)
+	s.RequestTopicCh <- gRPC.GetPreTxTopic(req)
 
 	// Standby for reaching mempool: pending
-	postTxTopic := <-l.ResponseTopicCh
+	postTxTopic := <-s.ResponseTopicCh
 
 	return postTxTopic.GetTopicResponse(), nil
 }
 
-func (l *BlockChainTopicListener) startTopicListener(network string, port uint16) {
+func (s *BlockChainTopicServer) startTopicListener(network string, port uint16) {
 	address := fmt.Sprintf(":%d", port) // ":port"
 
 	lis, err := net.Listen(network, address)
@@ -47,7 +47,7 @@ func (l *BlockChainTopicListener) startTopicListener(network string, port uint16
 
 	grpcServer := grpc.NewServer()
 
-	topic_message.RegisterBlockchainTopicServiceServer(grpcServer, l)
+	topic_message.RegisterBlockchainTopicServiceServer(grpcServer, s)
 
 	log.Printf("Topic gRPC listener opened (%d)", port)
 
@@ -56,10 +56,10 @@ func (l *BlockChainTopicListener) startTopicListener(network string, port uint16
 	}
 }
 
-func (l *BlockChainTopicListener) GetSuccessSubmitTopic(message string) *gRPC.PostTxTopic {
+func (s *BlockChainTopicServer) GetSuccessSubmitTopic(message string) *gRPC.PostTxTopic {
 	return gRPC.GetPostTxTopic("SUCCESS", message, false)
 }
 
-func (l *BlockChainTopicListener) GetErrorSubmitTopic(message string) *gRPC.PostTxTopic {
+func (s *BlockChainTopicServer) GetErrorSubmitTopic(message string) *gRPC.PostTxTopic {
 	return gRPC.GetPostTxTopic("ERROR", message, true)
 }
