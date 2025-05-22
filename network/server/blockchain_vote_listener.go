@@ -28,13 +28,18 @@ func NewBlockChainVoteListener() *BlockChainVoteListener {
 func (l *BlockChainVoteListener) SubmitVote(
 	ctx context.Context, req *vote_message.VoteRequest,
 ) (*vote_message.VoteResponse, error) {
-	l.RequestVoteCh <- gRPC.GetVoteFromVoteMessage(req)
+	preTxVote, err := gRPC.GetPreTxVote(req)
 
-	return &vote_message.VoteResponse{
-		Status:  "success",
-		Message: "pending success (Vote)" + req.GetHash(),
-		Success: true,
-	}, nil
+	if err != nil {
+		return l.GetErrorSubmitVote(err.Error()).GetVoteResponse(), nil
+	}
+
+	l.RequestVoteCh <- preTxVote
+
+	// Standby for reaching mempool: add Tx
+	postTxVote := <-l.ResponseVoteCh
+
+	return postTxVote.GetVoteResponse(), nil
 }
 
 func (l *BlockChainVoteListener) startVoteListener(network string, port uint16) {
@@ -55,4 +60,12 @@ func (l *BlockChainVoteListener) startVoteListener(network string, port uint16) 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to server gRPC listener (Vote) over port 9000: %v", err)
 	}
+}
+
+func (l *BlockChainVoteListener) GetSuccessSubmitVote(message string) *gRPC.PostTxVote {
+	return gRPC.GetPostTxVote("SUCCESS", message, false)
+}
+
+func (l *BlockChainVoteListener) GetErrorSubmitVote(message string) *gRPC.PostTxVote {
+	return gRPC.GetPostTxVote("ERROR", message, true)
 }

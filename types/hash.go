@@ -64,7 +64,7 @@ func HashFromHashString(s string) (Hash, error) {
 	h, err := hex.DecodeString(s)
 
 	if err != nil {
-		return Hash([32]uint8{}), err
+		return Hash{}, err
 	}
 
 	return Hash(h), nil

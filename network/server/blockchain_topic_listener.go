@@ -30,6 +30,7 @@ func (l *BlockChainTopicListener) SubmitTopic(
 ) (*topic_message.TopicResponse, error) {
 	l.RequestTopicCh <- gRPC.GetPreTxTopic(req)
 
+	// Standby for reaching mempool: pending
 	postTxTopic := <-l.ResponseTopicCh
 
 	return postTxTopic.GetTopicResponse(), nil
@@ -61,8 +62,4 @@ func (l *BlockChainTopicListener) GetSuccessSubmitTopic(message string) *gRPC.Po
 
 func (l *BlockChainTopicListener) GetErrorSubmitTopic(message string) *gRPC.PostTxTopic {
 	return gRPC.GetPostTxTopic("ERROR", message, true)
-}
-
-func (l *BlockChainTopicListener) GetFailedSubmitTopic(message string) *gRPC.PostTxTopic {
-	return gRPC.GetPostTxTopic("FAILED", message, false)
 }

@@ -20,9 +20,10 @@ func GetPreTxTopic(t *topic_message.TopicRequest) *PreTxTopic {
 }
 
 type PostTxTopic struct {
-	Status  string
-	Message string
-	Success bool
+	Status     string
+	StatusType string
+	Message    string
+	Success    bool
 }
 
 func GetPostTxTopic(status, message string, success bool) *PostTxTopic {

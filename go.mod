@@ -3,7 +3,6 @@ module github.com/andantan/vote-blockchain-server
 go 1.24.2
 
 require (
-	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.72.1
 	google.golang.org/protobuf v1.36.6

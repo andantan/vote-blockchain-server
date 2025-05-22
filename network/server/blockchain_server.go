@@ -78,7 +78,6 @@ labelServer:
 	for {
 		select {
 		case topic := <-s.RequestTopicCh:
-			// log.Printf("received topic from client: %+v\n", topic)
 			if err := s.mempool.AddPending(topic.Topic, topic.Duration); err != nil {
 				s.ResponseTopicCh <- s.GetErrorSubmitTopic(err.Error())
 
@@ -89,6 +88,9 @@ labelServer:
 			s.ResponseTopicCh <- s.GetSuccessSubmitTopic("pending success (Topic)" + string(topic.Topic))
 		case vote := <-s.RequestVoteCh:
 			log.Printf("received vote from client: %+v\n", vote)
+
+			s.ResponseVoteCh <- s.GetSuccessSubmitVote(vote.Hash.String())
+
 		case <-ticker.C:
 			block.CreateNewBlock()
 		case <-s.ExitSignalCh:
