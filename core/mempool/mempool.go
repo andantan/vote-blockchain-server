@@ -3,6 +3,7 @@ package mempool
 import (
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/transaction"
@@ -12,8 +13,11 @@ import (
 type MemPool struct {
 	BlockTime time.Duration
 	MaxTxSize uint32
-	pendings  map[types.Topic]*Pending
-	closeCh   chan types.Topic
+
+	mutex    sync.RWMutex
+	pendings map[types.Topic]*Pending
+
+	closeCh chan types.Topic
 }
 
 func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
@@ -31,14 +35,14 @@ func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 
 func (p *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) error {
 	if p.IsOpen(pendingId) {
-		return fmt.Errorf("topic(%s) already opened pending", pendingId)
+		return fmt.Errorf("topic (%s) already opened pending", pendingId)
 	}
 
 	pn := NewPending(pendingTime, p.BlockTime, p.MaxTxSize, pendingId, p.closeCh)
 
 	p.AllocatePending(pendingId, pn)
 
-	log.Printf("topic(%s) pending success, duration (%s)", pn.pendingID, pn.pendingTime)
+	log.Printf("topic (%s) pending success, duration (%s)", pn.pendingID, pn.pendingTime)
 
 	go pn.Activate()
 
@@ -67,7 +71,7 @@ func (p *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Trans
 
 	pn := p.getPendingWithoutOpenCheck(pendingId)
 
-	if err := pn.CommitTx(tx); err != nil {
+	if err := pn.PushTx(tx); err != nil {
 		return err
 	}
 

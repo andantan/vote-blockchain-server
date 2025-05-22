@@ -31,8 +31,8 @@ func main() {
 	for {
 		vote := vote_message.VoteRequest{
 			Hash:   util.RandomHash().String(),
-			Option: randSeq(10),
-			Topic:  randSeq(10),
+			Option: randOpt(),
+			Topic:  "2025-대선",
 		}
 
 		response, err := c.SubmitVote(context.Background(), &vote)
@@ -43,12 +43,13 @@ func main() {
 
 		log.Printf("Response from server: %+v\n", response)
 
-		// time.Sleep(300 * time.Millisecond)
-		time.Sleep(1 * time.Second)
+		time.Sleep(400 * time.Millisecond)
+		// time.Sleep(1 * time.Second)
 	}
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var options = []rune("12345")
 
 func randSeq(n int) string {
 	b := make([]rune, n)
@@ -56,4 +57,8 @@ func randSeq(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func randOpt() string {
+	return string(options[rand.Intn(len(options))])
 }

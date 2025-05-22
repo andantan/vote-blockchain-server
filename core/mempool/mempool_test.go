@@ -1,6 +1,7 @@
 package mempool
 
 import (
+	"log"
 	"testing"
 	"time"
 
@@ -27,27 +28,30 @@ func TestPending(t *testing.T) {
 	p := NewMemPool(time.Second, uint32(50000))
 
 	err := p.AddPending("Pending", 3*time.Second)
-	pn := p.pendings["Pending"]
-
 	assert.Nil(t, err)
+
+	pn := p.pendings["Pending"]
 	assert.Equal(t, types.Topic("Pending"), pn.pendingID)
 	assert.Equal(t, time.Second, pn.blockTime)
 	assert.Equal(t, uint32(50000), pn.maxTransactionSize)
 	assert.Equal(t, 3*time.Second, pn.pendingTime)
 	assert.Equal(t, 0, len(pn.scheduledBlockHeight))
 
-	tx := transaction.Transaction{
-		Hash:   util.RandomHash(),
-		Option: "P",
-	}
+	tx1Hash := util.RandomHash()
+	tx1 := transaction.NewTransaction(tx1Hash, "P")
 
-	assert.Nil(t, pn.CommitTx(&tx))
+	assert.Nil(t, pn.PushTx(tx1))
 
-	tx2 := transaction.Transaction{
-		Hash:   util.RandomHash(),
-		Option: "P",
-	}
+	log.Println(pn.transactions[tx1.GetHashString()])
 
-	assert.Nil(t, pn.CommitTx(&tx2))
+	tx2_Hash := util.RandomHash()
+	tx2 := transaction.NewTransaction(tx2_Hash, "P")
 
+	assert.Nil(t, pn.PushTx(tx2))
+
+	log.Println(pn.transactions[tx2.GetHashString()])
+
+	time.Sleep(time.Second)
+
+	assert.Equal(t, 2, pn.Len())
 }

@@ -81,12 +81,10 @@ labelServer:
 				continue
 			}
 
-			s.ResponseTopicCh <- s.GetSuccessSubmitTopic("pending success (Topic)" + string(topic.Topic))
+			s.ResponseTopicCh <- s.GetSuccessSubmitTopic("pending success (Topic) " + string(topic.Topic))
 
 		case vote := <-s.RequestVoteCh:
-			id, tx := vote.Fragmentation()
-
-			if err := s.mempool.CommitTransaction(id, tx); err != nil {
+			if err := s.mempool.CommitTransaction(vote.Fragmentation()); err != nil {
 				s.ResponseVoteCh <- s.GetErrorSubmitVote(err.Error())
 				continue
 			}

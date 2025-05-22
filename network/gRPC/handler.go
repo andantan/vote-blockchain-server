@@ -7,8 +7,7 @@ import (
 
 // Return (*core.Transaction, electionId) from Vote
 func (v *PreTxVote) Fragmentation() (types.Topic, *transaction.Transaction) {
-	return v.Topic, &transaction.Transaction{
-		Hash:   v.Hash,
-		Option: v.Option,
-	}
+	tx := transaction.NewTransaction(v.Hash, v.Option)
+
+	return v.Topic, tx
 }
