@@ -30,9 +30,9 @@ func main() {
 
 	for {
 		vote := vote_message.VoteRequest{
-			VoteHash:   util.RandomHash().String(),
-			VoteOption: randSeq(10),
-			VoteId:     randSeq(10),
+			Hash:   util.RandomHash().String(),
+			Option: randSeq(10),
+			Topic:  randSeq(10),
 		}
 
 		response, err := c.SubmitVote(context.Background(), &vote)

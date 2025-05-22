@@ -26,7 +26,7 @@ type OriginalVote struct {
 	VoteOption string
 	Age        uint8
 	Gender     rune
-	VoteId     types.VotingID
+	VoteId     types.Topic
 }
 
 func RandomVote() *OriginalVote {

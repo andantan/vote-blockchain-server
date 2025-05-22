@@ -9,11 +9,13 @@ service BlockchainVoteService {
 }
 
 message VoteRequest {
-  string vote_hash = 1;
-  string vote_option = 2;
-  string vote_id = 3;
+  string hash = 1;
+  string option = 2;
+  string topic = 3;
 }
 
 message VoteResponse {
-  int64 block_height = 1;
+  string status = 1;
+  string message = 2;
+  bool success = 3;
 }

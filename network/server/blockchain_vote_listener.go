@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
@@ -14,17 +13,27 @@ import (
 
 type BlockChainVoteListener struct {
 	vote_message.UnimplementedBlockchainVoteServiceServer
-	VoteCh chan gRPC.Vote
+	RequestVoteCh  chan *gRPC.PreTxVote
+	ResponseVoteCh chan *gRPC.PostTxVote
+}
+
+func NewBlockChainVoteListener() *BlockChainVoteListener {
+	return &BlockChainVoteListener{
+		RequestVoteCh:  make(chan *gRPC.PreTxVote),
+		ResponseVoteCh: make(chan *gRPC.PostTxVote),
+	}
 }
 
 // gRPC
 func (l *BlockChainVoteListener) SubmitVote(
 	ctx context.Context, req *vote_message.VoteRequest,
 ) (*vote_message.VoteResponse, error) {
-	l.VoteCh <- gRPC.GetVoteFromVoteMessage(req)
+	l.RequestVoteCh <- gRPC.GetVoteFromVoteMessage(req)
 
 	return &vote_message.VoteResponse{
-		BlockHeight: int64(rand.Intn(10000)),
+		Status:  "success",
+		Message: "pending success (Vote)" + req.GetHash(),
+		Success: true,
 	}, nil
 }
 

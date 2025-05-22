@@ -1,15 +1,23 @@
 package node
 
 import (
+	"time"
+
 	"github.com/andantan/vote-blockchain-server/network/server"
 )
 
-func Start() {
-	opts := server.NewServerOpts()
-	opts.SetTopicOptions("tcp", uint16(9000))
-	opts.SetVoteOptions("tcp", uint16(9001))
+const (
+	BlockTime = 5 * time.Second
+	MaxTxSize = uint32(50000)
+)
 
-	blockChainServer := server.NewBlockChainServer(opts)
+func Start() {
+	BCopts := server.NewBlockChainServerOpts()
+	BCopts.SetTopicOptions("tcp", uint16(9000))
+	BCopts.SetVoteOptions("tcp", uint16(9001))
+	BCopts.SetControllOptions(BlockTime, MaxTxSize)
+
+	blockChainServer := server.NewBlockChainServer(BCopts)
 
 	blockChainServer.Start()
 }

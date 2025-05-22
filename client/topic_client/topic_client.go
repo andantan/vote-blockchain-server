@@ -27,8 +27,8 @@ func main() {
 
 	for {
 		topic := topic_message.TopicRequest{
-			TopicId:       "2025-경기도-철도공사",
-			TopicDuration: 7200,
+			Topic:    "2025-경기도-철도공사",
+			Duration: 7200,
 		}
 
 		response, err := c.SubmitTopic(context.Background(), &topic)

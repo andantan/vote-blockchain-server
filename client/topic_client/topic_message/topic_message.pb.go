@@ -23,8 +23,8 @@ const (
 
 type TopicRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TopicId       string                 `protobuf:"bytes,1,opt,name=topic_id,json=topicId,proto3" json:"topic_id,omitempty"`
-	TopicDuration int64                  `protobuf:"varint,2,opt,name=topic_duration,json=topicDuration,proto3" json:"topic_duration,omitempty"`
+	Topic         string                 `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
+	Duration      int64                  `protobuf:"varint,2,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -59,24 +59,25 @@ func (*TopicRequest) Descriptor() ([]byte, []int) {
 	return file_topic_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *TopicRequest) GetTopicId() string {
+func (x *TopicRequest) GetTopic() string {
 	if x != nil {
-		return x.TopicId
+		return x.Topic
 	}
 	return ""
 }
 
-func (x *TopicRequest) GetTopicDuration() int64 {
+func (x *TopicRequest) GetDuration() int64 {
 	if x != nil {
-		return x.TopicDuration
+		return x.Duration
 	}
 	return 0
 }
 
 type TopicResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TopicId       string                 `protobuf:"bytes,1,opt,name=topic_id,json=topicId,proto3" json:"topic_id,omitempty"`
-	TopicDuration int64                  `protobuf:"varint,2,opt,name=topic_duration,json=topicDuration,proto3" json:"topic_duration,omitempty"`
+	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Success       bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,31 +112,39 @@ func (*TopicResponse) Descriptor() ([]byte, []int) {
 	return file_topic_message_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TopicResponse) GetTopicId() string {
+func (x *TopicResponse) GetStatus() string {
 	if x != nil {
-		return x.TopicId
+		return x.Status
 	}
 	return ""
 }
 
-func (x *TopicResponse) GetTopicDuration() int64 {
+func (x *TopicResponse) GetMessage() string {
 	if x != nil {
-		return x.TopicDuration
+		return x.Message
 	}
-	return 0
+	return ""
+}
+
+func (x *TopicResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 var File_topic_message_proto protoreflect.FileDescriptor
 
 const file_topic_message_proto_rawDesc = "" +
 	"\n" +
-	"\x13topic_message.proto\x12\rtopic_message\"P\n" +
-	"\fTopicRequest\x12\x19\n" +
-	"\btopic_id\x18\x01 \x01(\tR\atopicId\x12%\n" +
-	"\x0etopic_duration\x18\x02 \x01(\x03R\rtopicDuration\"Q\n" +
-	"\rTopicResponse\x12\x19\n" +
-	"\btopic_id\x18\x01 \x01(\tR\atopicId\x12%\n" +
-	"\x0etopic_duration\x18\x02 \x01(\x03R\rtopicDuration2b\n" +
+	"\x13topic_message.proto\x12\rtopic_message\"@\n" +
+	"\fTopicRequest\x12\x14\n" +
+	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x1a\n" +
+	"\bduration\x18\x02 \x01(\x03R\bduration\"[\n" +
+	"\rTopicResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x18\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess2b\n" +
 	"\x16BlockchainTopicService\x12H\n" +
 	"\vSubmitTopic\x12\x1b.topic_message.TopicRequest\x1a\x1c.topic_message.TopicResponseB\x1fZ\x1d../network/gRPC/topic_messageb\x06proto3"
 

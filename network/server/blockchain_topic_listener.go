@@ -13,18 +13,26 @@ import (
 
 type BlockChainTopicListener struct {
 	topic_message.UnimplementedBlockchainTopicServiceServer
-	TopicCh chan gRPC.Topic
+	RequestTopicCh  chan *gRPC.PreTxTopic // TODO Request, Response channel
+	ResponseTopicCh chan *gRPC.PostTxTopic
 }
 
+func NewBlockChainTopicListener() *BlockChainTopicListener {
+	return &BlockChainTopicListener{
+		RequestTopicCh:  make(chan *gRPC.PreTxTopic),
+		ResponseTopicCh: make(chan *gRPC.PostTxTopic),
+	}
+}
+
+// gRPC
 func (l *BlockChainTopicListener) SubmitTopic(
 	ctx context.Context, req *topic_message.TopicRequest,
 ) (*topic_message.TopicResponse, error) {
-	l.TopicCh <- gRPC.GetTopicFromTopicMessage(req)
+	l.RequestTopicCh <- gRPC.GetPreTxTopic(req)
 
-	return &topic_message.TopicResponse{
-		TopicId:       req.GetTopicId(),
-		TopicDuration: req.GetTopicDuration(),
-	}, nil
+	postTxTopic := <-l.ResponseTopicCh
+
+	return postTxTopic.GetTopicResponse(), nil
 }
 
 func (l *BlockChainTopicListener) startTopicListener(network string, port uint16) {
@@ -45,4 +53,16 @@ func (l *BlockChainTopicListener) startTopicListener(network string, port uint16
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to server gRPC listener (Topic) over port 9001: %v", err)
 	}
+}
+
+func (l *BlockChainTopicListener) GetSuccessSubmitTopic(message string) *gRPC.PostTxTopic {
+	return gRPC.GetPostTxTopic("SUCCESS", message, false)
+}
+
+func (l *BlockChainTopicListener) GetErrorSubmitTopic(message string) *gRPC.PostTxTopic {
+	return gRPC.GetPostTxTopic("ERROR", message, true)
+}
+
+func (l *BlockChainTopicListener) GetFailedSubmitTopic(message string) *gRPC.PostTxTopic {
+	return gRPC.GetPostTxTopic("FAILED", message, false)
 }

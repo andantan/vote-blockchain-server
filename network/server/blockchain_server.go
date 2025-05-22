@@ -5,12 +5,7 @@ import (
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
-	"github.com/andantan/vote-blockchain-server/network/gRPC"
-)
-
-const (
-	BlockTime = 5 * time.Second
-	MaxTxSize = uint32(50000)
+	"github.com/andantan/vote-blockchain-server/core/mempool"
 )
 
 // gRPC Network and port options
@@ -18,76 +13,95 @@ const (
 // Network must be "tcp", "unix" or "unixpacket"
 //
 // Port must be between 0 and 65535
-type ServerOpts struct {
+type BlockChainListenerOpts struct {
 	TopicgRPCNetwork     string
 	TopicgRPCNetworkPort uint16
 	VotegRPCNetwork      string
 	VotegRPCNetworkPort  uint16
 }
 
-func NewServerOpts() ServerOpts {
-	return ServerOpts{}
-}
-
-func (o *ServerOpts) SetTopicOptions(topicNetwork string, topicNetworkPort uint16) {
+func (o *BlockChainServerOpts) SetTopicOptions(topicNetwork string, topicNetworkPort uint16) {
 	o.TopicgRPCNetwork = topicNetwork
 	o.TopicgRPCNetworkPort = topicNetworkPort
 }
 
-func (o *ServerOpts) SetVoteOptions(voteNetwork string, voteNetworkPort uint16) {
+func (o *BlockChainServerOpts) SetVoteOptions(voteNetwork string, voteNetworkPort uint16) {
 	o.VotegRPCNetwork = voteNetwork
 	o.VotegRPCNetworkPort = voteNetworkPort
 }
 
+type BlockChainControllOpts struct {
+	BlockTime time.Duration
+	MaxTxSize uint32
+}
+
+func (o *BlockChainServerOpts) SetControllOptions(blockTime time.Duration, maxTxSize uint32) {
+	o.BlockTime = blockTime
+	o.MaxTxSize = maxTxSize
+}
+
+type BlockChainServerOpts struct {
+	BlockChainListenerOpts
+	BlockChainControllOpts
+}
+
+func NewBlockChainServerOpts() BlockChainServerOpts {
+	return BlockChainServerOpts{}
+}
+
 type BlockChainServer struct {
-	// vote_message.UnimplementedBlockchainVoteServiceServer
-	// VoteCh chan gRPC.Vote
-	ServerOpts
+	BlockChainServerOpts
 	*BlockChainVoteListener
 	*BlockChainTopicListener
+	mempool      *mempool.MemPool
 	ExitSignalCh chan uint8
 }
 
-func NewBlockChainServer(opts ServerOpts) *BlockChainServer {
+func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
 
 	return &BlockChainServer{
-		ServerOpts: opts,
-		BlockChainVoteListener: &BlockChainVoteListener{
-			VoteCh: make(chan gRPC.Vote),
-		},
-		BlockChainTopicListener: &BlockChainTopicListener{
-			TopicCh: make(chan gRPC.Topic),
-		},
-		ExitSignalCh: make(chan uint8),
+		BlockChainServerOpts:    opts,
+		BlockChainVoteListener:  NewBlockChainVoteListener(),
+		BlockChainTopicListener: NewBlockChainTopicListener(),
+		mempool:                 mempool.NewMemPool(opts.BlockTime, opts.MaxTxSize),
+		ExitSignalCh:            make(chan uint8),
 	}
 }
 
 func (s *BlockChainServer) Start() {
-	ticker := time.NewTicker(BlockTime)
+	ticker := time.NewTicker(s.BlockTime)
 
-	go s.startTopicListener(s.getTopicOpts())
-	go s.startVoteListener(s.getVoteOpts())
+	go s.startTopicListener(s.getTopicListenerOpts())
+	go s.startVoteListener(s.getVoteListenerOpts())
 
 labelServer:
 	for {
 		select {
-		case topic := <-s.TopicCh:
-			log.Printf("received topic from client: %+v\n", topic)
-		case vote := <-s.VoteCh:
+		case topic := <-s.RequestTopicCh:
+			// log.Printf("received topic from client: %+v\n", topic)
+			if err := s.mempool.AddPending(topic.Topic, topic.Duration); err != nil {
+				s.ResponseTopicCh <- s.GetErrorSubmitTopic(err.Error())
+
+				log.Println(err)
+				continue
+			}
+
+			s.ResponseTopicCh <- s.GetSuccessSubmitTopic("pending success (Topic)" + string(topic.Topic))
+		case vote := <-s.RequestVoteCh:
 			log.Printf("received vote from client: %+v\n", vote)
 		case <-ticker.C:
 			block.CreateNewBlock()
 		case <-s.ExitSignalCh:
-			log.Println("Exit signal detected")
+			log.Println("exit signal detected")
 			break labelServer
 		}
 	}
 }
 
-func (s *BlockChainServer) getTopicOpts() (network string, port uint16) {
-	return s.ServerOpts.TopicgRPCNetwork, s.ServerOpts.TopicgRPCNetworkPort
+func (s *BlockChainServer) getTopicListenerOpts() (network string, port uint16) {
+	return s.BlockChainServerOpts.TopicgRPCNetwork, s.BlockChainServerOpts.TopicgRPCNetworkPort
 }
 
-func (s *BlockChainServer) getVoteOpts() (network string, port uint16) {
-	return s.ServerOpts.VotegRPCNetwork, s.ServerOpts.VotegRPCNetworkPort
+func (s *BlockChainServer) getVoteListenerOpts() (network string, port uint16) {
+	return s.BlockChainServerOpts.VotegRPCNetwork, s.BlockChainServerOpts.VotegRPCNetworkPort
 }

@@ -10,7 +10,7 @@ import (
 )
 
 type Header struct {
-	VotingID      types.VotingID
+	VotingID      types.Topic
 	MerkleRoot    types.Hash // Hashs of all of transaction
 	PrevBlockHash types.Hash // Chaining with HeaderHash
 	Height        uint64

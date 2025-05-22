@@ -9,11 +9,12 @@ service BlockchainTopicService {
 }
 
 message TopicRequest {
-  string topic_id = 1;
-  int64 topic_duration = 2;
+  string topic = 1;
+  int64 duration = 2;
 }
 
 message TopicResponse {
-  string topic_id = 1;
-  int64 topic_duration = 2;
+  string status = 1;
+  string message = 2;
+  bool success = 3;
 }

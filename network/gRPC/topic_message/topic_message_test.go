@@ -10,8 +10,8 @@ import (
 func TestVoteMessage(t *testing.T) {
 
 	req := TopicRequest{
-		TopicId:       "2025-보건의료여론조사",
-		TopicDuration: 7200,
+		Topic:    "2025-보건의료여론조사",
+		Duration: 7200,
 	}
 
 	data, err := proto.Marshal(&req)
@@ -22,6 +22,6 @@ func TestVoteMessage(t *testing.T) {
 
 	proto.Unmarshal(data, ureq)
 
-	assert.Equal(t, req.TopicId, ureq.TopicId)
-	assert.Equal(t, req.TopicDuration, ureq.TopicDuration)
+	assert.Equal(t, req.Topic, ureq.Topic)
+	assert.Equal(t, req.Duration, ureq.Duration)
 }

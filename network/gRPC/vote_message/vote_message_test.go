@@ -12,9 +12,9 @@ func TestVoteMessage(t *testing.T) {
 	rv := util.RandomVote()
 
 	req := VoteRequest{
-		VoteHash:   rv.VoteHash.String(),
-		VoteOption: rv.VoteOption,
-		VoteId:     string(rv.VoteId),
+		Hash:   rv.VoteHash.String(),
+		Option: rv.VoteOption,
+		Topic:  string(rv.VoteId),
 	}
 
 	data, err := proto.Marshal(&req)
@@ -25,7 +25,7 @@ func TestVoteMessage(t *testing.T) {
 
 	proto.Unmarshal(data, ureq)
 
-	assert.Equal(t, req.VoteHash, ureq.VoteHash)
-	assert.Equal(t, req.VoteOption, ureq.VoteOption)
-	assert.Equal(t, req.VoteId, ureq.VoteId)
+	assert.Equal(t, req.Hash, ureq.Hash)
+	assert.Equal(t, req.Option, ureq.Option)
+	assert.Equal(t, req.Topic, ureq.Topic)
 }

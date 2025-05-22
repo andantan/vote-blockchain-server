@@ -23,9 +23,9 @@ const (
 
 type VoteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	VoteHash      string                 `protobuf:"bytes,1,opt,name=vote_hash,json=voteHash,proto3" json:"vote_hash,omitempty"`
-	VoteOption    string                 `protobuf:"bytes,2,opt,name=vote_option,json=voteOption,proto3" json:"vote_option,omitempty"`
-	VoteId        string                 `protobuf:"bytes,3,opt,name=vote_id,json=voteId,proto3" json:"vote_id,omitempty"`
+	Hash          string                 `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Option        string                 `protobuf:"bytes,2,opt,name=option,proto3" json:"option,omitempty"`
+	Topic         string                 `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -60,30 +60,32 @@ func (*VoteRequest) Descriptor() ([]byte, []int) {
 	return file_vote_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *VoteRequest) GetVoteHash() string {
+func (x *VoteRequest) GetHash() string {
 	if x != nil {
-		return x.VoteHash
+		return x.Hash
 	}
 	return ""
 }
 
-func (x *VoteRequest) GetVoteOption() string {
+func (x *VoteRequest) GetOption() string {
 	if x != nil {
-		return x.VoteOption
+		return x.Option
 	}
 	return ""
 }
 
-func (x *VoteRequest) GetVoteId() string {
+func (x *VoteRequest) GetTopic() string {
 	if x != nil {
-		return x.VoteId
+		return x.Topic
 	}
 	return ""
 }
 
 type VoteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockHeight   int64                  `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Success       bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -118,25 +120,40 @@ func (*VoteResponse) Descriptor() ([]byte, []int) {
 	return file_vote_message_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *VoteResponse) GetBlockHeight() int64 {
+func (x *VoteResponse) GetStatus() string {
 	if x != nil {
-		return x.BlockHeight
+		return x.Status
 	}
-	return 0
+	return ""
+}
+
+func (x *VoteResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *VoteResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 var File_vote_message_proto protoreflect.FileDescriptor
 
 const file_vote_message_proto_rawDesc = "" +
 	"\n" +
-	"\x12vote_message.proto\x12\fvote_message\"d\n" +
-	"\vVoteRequest\x12\x1b\n" +
-	"\tvote_hash\x18\x01 \x01(\tR\bvoteHash\x12\x1f\n" +
-	"\vvote_option\x18\x02 \x01(\tR\n" +
-	"voteOption\x12\x17\n" +
-	"\avote_id\x18\x03 \x01(\tR\x06voteId\"1\n" +
-	"\fVoteResponse\x12!\n" +
-	"\fblock_height\x18\x01 \x01(\x03R\vblockHeight2\\\n" +
+	"\x12vote_message.proto\x12\fvote_message\"O\n" +
+	"\vVoteRequest\x12\x12\n" +
+	"\x04hash\x18\x01 \x01(\tR\x04hash\x12\x16\n" +
+	"\x06option\x18\x02 \x01(\tR\x06option\x12\x14\n" +
+	"\x05topic\x18\x03 \x01(\tR\x05topic\"Z\n" +
+	"\fVoteResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x18\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess2\\\n" +
 	"\x15BlockchainVoteService\x12C\n" +
 	"\n" +
 	"SubmitVote\x12\x19.vote_message.VoteRequest\x1a\x1a.vote_message.VoteResponseB\x1eZ\x1c../network/gRPC/vote_messageb\x06proto3"
