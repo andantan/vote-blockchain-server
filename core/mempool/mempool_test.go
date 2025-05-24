@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/core/signal"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
@@ -24,14 +25,18 @@ func TestMempool(t *testing.T) {
 }
 
 func TestPending(t *testing.T) {
-	pendingName := types.Topic("pendings")
+	pendingName := types.Topic("pending")
 
-	p := NewMemPool(5*time.Second, uint32(50000))
+	mp := NewMemPool(5*time.Second, uint32(50000))
+	mp.SetChannel(nil)
 
-	err := p.AddPending(pendingName, 10*time.Second)
+	err := mp.AddPending(pendingName, 10*time.Second)
 	assert.Nil(t, err)
 
-	pn := p.pendings[pendingName]
+	pn := mp.pendings[pendingName]
+
+	assert.True(t, mp.IsOpen(pendingName))
+	assert.Equal(t, 0, pn.Len())
 
 	tx1Hash := util.RandomHash()
 	tx1 := randomTx(tx1Hash, "P")
@@ -40,12 +45,13 @@ func TestPending(t *testing.T) {
 	tx2 := randomTx(tx2_Hash, "P")
 
 	assert.Nil(t, pn.PushTx(tx1))
-	assert.Nil(t, pn.PushTx(tx2))
+	assert.Nil(t, mp.CommitTransaction(pendingName, tx2))
 
 	time.Sleep(time.Second)
 
-	atx1 := pn.SeekTx(tx1.GetHashString())
-	atx2 := pn.SeekTx(tx2.GetHashString())
+	assert.Equal(t, 2, pn.Len())
+	atx1 := pn.seekTx(tx1.GetHashString())
+	atx2 := pn.seekTx(tx2.GetHashString())
 
 	assert.NotNil(t, atx1)
 	assert.NotNil(t, atx2)
@@ -53,10 +59,21 @@ func TestPending(t *testing.T) {
 	t.Log(atx1)
 	t.Log(atx2)
 
-	assert.Equal(t, atx1.GetOption(), atx2.GetOption())
 	assert.Equal(t, tx1Hash, atx1.GetHash())
 	assert.Equal(t, tx2_Hash, atx2.GetHash())
-	assert.Equal(t, 2, pn.Len())
+	assert.Equal(t, atx1.GetOption(), atx2.GetOption())
+
+	sync := signal.NewPendingClosing(pendingName, pn.wg, 300*time.Millisecond)
+
+	startTime := time.Now()
+
+	sync.Add(1)
+	mp.closeCh <- sync
+	sync.Wait()
+	elapsedTime := time.Since(startTime)
+
+	t.Logf("%s", elapsedTime)
+	assert.False(t, mp.IsOpen(pendingName))
 }
 
 func randomTx(hash types.Hash, option string) *transaction.Transaction {

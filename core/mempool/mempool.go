@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/core/signal"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
@@ -17,30 +18,43 @@ type MemPool struct {
 
 	mu       sync.RWMutex
 	pendings map[types.Topic]*Pending
-	closeCh  chan types.Topic
+
+	pendedCh chan<- *Pended
+	closeCh  chan *signal.PendingClosing
 }
 
 func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
-	p := &MemPool{
+	mp := &MemPool{
 		BlockTime: blockTime,
 		MaxTxSize: maxTxSize,
 		pendings:  make(map[types.Topic]*Pending),
-		closeCh:   make(chan types.Topic),
 	}
 
-	go p.closedPendingCollector()
+	go mp.closedPendingCollector()
 
-	return p
+	return mp
 }
 
-func (p *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) error {
-	if p.IsOpen(pendingId) {
+func (mp *MemPool) SetChannel(pendedCh chan<- *Pended) {
+	mp.closeCh = make(chan *signal.PendingClosing)
+	mp.pendedCh = pendedCh
+}
+
+func (mp *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) error {
+	if mp.IsOpen(pendingId) {
 		return fmt.Errorf("topic (%s) already opened pending", pendingId)
 	}
 
-	pn := NewPending(pendingTime, p.BlockTime, p.MaxTxSize, pendingId, p.closeCh)
+	pn := NewPending()
 
-	p.AllocatePending(pendingId, pn)
+	pn.SetLimitOptions(mp.MaxTxSize, mp.BlockTime)
+	pn.SetPendingOptions(pendingId, pendingTime)
+	pn.SetChannel(mp.pendedCh, mp.closeCh)
+
+	mp.mu.Lock()
+	defer mp.mu.Unlock()
+
+	mp.AllocatePending(pendingId, pn)
 
 	log.Printf(util.PendingString("Pending: New pending { topic: %s, duration: %s }"),
 		pn.pendingID, pn.pendingTime)
@@ -50,31 +64,29 @@ func (p *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) e
 	return nil
 }
 
-func (p *MemPool) getPendingWithoutOpenCheck(pendingId types.Topic) *Pending {
-	return p.pendings[pendingId]
+func (mp *MemPool) getPendingWithoutOpenCheck(pendingId types.Topic) *Pending {
+	return mp.pendings[pendingId]
 }
 
 // Check Pending is opened
-func (p *MemPool) IsOpen(pendingId types.Topic) bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	_, ok := p.pendings[pendingId]
+func (mp *MemPool) IsOpen(pendingId types.Topic) bool {
+	mp.mu.RLock()
+	defer mp.mu.RUnlock()
+	_, ok := mp.pendings[pendingId]
 
 	return ok
 }
 
-func (p *MemPool) AllocatePending(pendingId types.Topic, open *Pending) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.pendings[pendingId] = open
+func (mp *MemPool) AllocatePending(pendingId types.Topic, open *Pending) {
+	mp.pendings[pendingId] = open
 }
 
-func (p *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Transaction) error {
-	if !p.IsOpen(pendingId) {
+func (mp *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Transaction) error {
+	if !mp.IsOpen(pendingId) {
 		return fmt.Errorf("pending(%s) does not opened", pendingId)
 	}
 
-	pn := p.getPendingWithoutOpenCheck(pendingId)
+	pn := mp.getPendingWithoutOpenCheck(pendingId)
 
 	if err := pn.PushTx(tx); err != nil {
 		return err
@@ -83,14 +95,16 @@ func (p *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Trans
 	return nil
 }
 
-func (p *MemPool) closedPendingCollector() {
+func (mp *MemPool) closedPendingCollector() {
 	for {
-		topic := <-p.closeCh
+		c := <-mp.closeCh
 
-		p.mu.Lock()
-		delete(p.pendings, topic)
-		p.mu.Unlock()
+		mp.mu.Lock()
+		delete(mp.pendings, c.GetTopic())
+		mp.mu.Unlock()
 
-		log.Printf(util.PendingString("Pending: %s | Removed from memPool"), topic)
+		log.Printf(util.PendingString("Pending: %s | Removed from memPool"), c.GetTopic())
+		time.Sleep(time.Second)
+		c.Done()
 	}
 }

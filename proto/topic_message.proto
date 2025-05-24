@@ -16,5 +16,5 @@ message TopicRequest {
 message TopicResponse {
   string status = 1;
   string message = 2;
-  bool success = 3;
+    bool success = 3;
 }

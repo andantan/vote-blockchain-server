@@ -24,7 +24,8 @@ func main() {
 
 	c := topic_message.NewBlockchainTopicServiceClient(conn)
 
-	topics := []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표", "상법개정안 시범 기간 조사"}
+	// topics := []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표", "상법개정안 시범 기간 조사"}
+	topics := []string{"2025 대선", "2025 보건의료 여론조사"}
 
 	for _, t := range topics {
 		topic := topic_message.TopicRequest{

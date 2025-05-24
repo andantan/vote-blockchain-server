@@ -8,12 +8,12 @@ import (
 
 const (
 	BlockTime = 5 * time.Second
-	MaxTxSize = uint32(50000)
+	MaxTxSize = uint32(1000)
 )
 
 const (
-	TestBlockTime = 10 * time.Second
-	TestMaxTxSize = uint32(10)
+	TestBlockTime = 20 * time.Second
+	TestMaxTxSize = uint32(5)
 )
 
 func Start() {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/mempool"
+	"github.com/andantan/vote-blockchain-server/util"
 )
 
 const (
@@ -63,32 +64,34 @@ type BlockChainServer struct {
 	BlockChainServerOpts
 	*BlockChainVoteServer
 	*BlockChainTopicServer
-	mempool      *mempool.MemPool
+	mempool  *mempool.MemPool
+	pendedCh chan *mempool.Pended
+	// chain        *blockchain.BlockChain
 	ExitSignalCh chan uint8
 }
 
 func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
 
+	// Need genesisBlock
 	return &BlockChainServer{
 		BlockChainServerOpts:  opts,
 		BlockChainVoteServer:  NewBlockChainVoteServer(GRPC_REQUEST_BUFFER_SIZE),
 		BlockChainTopicServer: NewBlockChainTopicServer(GRPC_REQUEST_BUFFER_SIZE),
 		mempool:               mempool.NewMemPool(opts.BlockTime, opts.MaxTxSize),
+		pendedCh:              make(chan *mempool.Pended),
 		ExitSignalCh:          make(chan uint8),
 	}
 }
 
 func (s *BlockChainServer) Start() {
-	tn, tp := s.getTopicListenerOpts()
-	go s.startTopicListener(tn, tp, s.ExitSignalCh)
-
-	vn, vp := s.getVoteListenerOpts()
-	go s.startVoteListener(vn, vp, s.ExitSignalCh)
+	s.startgRPCListener()
+	s.mempool.SetChannel(s.pendedCh)
 
 labelServer:
 	for {
 		select {
 		case topic := <-s.RequestTopicCh:
+
 			if err := s.mempool.AddPending(topic.Topic, topic.Duration); err != nil {
 				topic.ResponseCh <- s.GetErrorSubmitTopic(err.Error())
 				continue
@@ -99,18 +102,33 @@ labelServer:
 			topic.ResponseCh <- s.GetSuccessSubmitTopic(resMsg)
 
 		case vote := <-s.RequestVoteCh:
-			if err := s.mempool.CommitTransaction(vote.Fragmentation()); err != nil {
+			id, tx := vote.Fragmentation()
+
+			if err := s.mempool.CommitTransaction(id, tx); err != nil {
 				vote.ResponseCh <- s.GetErrorSubmitVote(err.Error())
 				continue
 			}
 
 			vote.ResponseCh <- s.GetSuccessSubmitVote(vote.Hash.String())
 
+		case pended := <-s.pendedCh:
+			for _, v := range pended.GetTxx() {
+				log.Printf(util.PendingString("PENDED: { %s }"), v.Serialize())
+			}
+
 		case <-s.ExitSignalCh:
 			log.Println("exit signal detected")
 			break labelServer
 		}
 	}
+}
+
+func (s *BlockChainServer) startgRPCListener() {
+	tn, tp := s.getTopicListenerOpts()
+	go s.startTopicListener(tn, tp, s.ExitSignalCh)
+
+	vn, vp := s.getVoteListenerOpts()
+	go s.startVoteListener(vn, vp, s.ExitSignalCh)
 }
 
 func (s *BlockChainServer) getTopicListenerOpts() (network string, port uint16) {
@@ -120,3 +138,7 @@ func (s *BlockChainServer) getTopicListenerOpts() (network string, port uint16) 
 func (s *BlockChainServer) getVoteListenerOpts() (network string, port uint16) {
 	return s.BlockChainServerOpts.VotegRPCNetwork, s.BlockChainServerOpts.VotegRPCNetworkPort
 }
+
+// func (s *BlockChainServer) createNewBlock() {
+
+// }

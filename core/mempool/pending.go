@@ -3,58 +3,73 @@ package mempool
 import (
 	"fmt"
 	"log"
-	"maps"
 	"sync"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/core/signal"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
 type Pending struct {
-	mu           sync.RWMutex
-	transactions map[string]string
-	txCache      map[string]uint8
+	pendingID types.Topic // TopicID
 
-	transactionCH        chan *transaction.Transaction
+	mu      sync.RWMutex
+	txx     map[string]*transaction.Transaction
+	txCache map[string]struct{}
+	wg      *sync.WaitGroup
+
 	pendingTime          time.Duration // Vote duration
 	blockTime            time.Duration // Block Time (system)
-	maxTransactionSize   uint32        // Tx size (system)
+	maxTxSize            uint32        // Tx size (system)
 	scheduledBlockHeight []uint64      // Pended block heights
-	pendingID            types.Topic   // TopicID
-	closeCh              chan<- types.Topic
+
+	transactionCH chan *transaction.Transaction
+	pendedCh      chan<- *Pended
+	closeCh       chan<- *signal.PendingClosing
 }
 
-func NewPending(pendingTime, blockTime time.Duration,
-	maxTxSize uint32, pendingId types.Topic, closeCh chan<- types.Topic) *Pending {
+func NewPending() *Pending {
 	return &Pending{
-		transactions:         make(map[string]string),
-		txCache:              make(map[string]uint8),
-		transactionCH:        make(chan *transaction.Transaction),
-		pendingTime:          pendingTime,
-		blockTime:            blockTime,
-		maxTransactionSize:   maxTxSize,
+		txx:                  make(map[string]*transaction.Transaction),
+		txCache:              make(map[string]struct{}),
 		scheduledBlockHeight: []uint64{},
-		pendingID:            pendingId,
-		closeCh:              closeCh,
+		transactionCH:        make(chan *transaction.Transaction),
 	}
+}
+
+func (p *Pending) SetLimitOptions(maxTxSize uint32, blockTime time.Duration) {
+	p.maxTxSize = maxTxSize
+	p.blockTime = blockTime
+}
+
+func (p *Pending) SetPendingOptions(pendingId types.Topic, pendingTime time.Duration) {
+	p.pendingID = pendingId
+	p.pendingTime = pendingTime
+}
+
+func (p *Pending) SetChannel(
+	pendedCh chan<- *Pended,
+	closeCh chan<- *signal.PendingClosing,
+) {
+	p.pendedCh = pendedCh
+	p.wg = &sync.WaitGroup{}
+	p.closeCh = closeCh
 }
 
 func (p *Pending) Len() int {
 	p.mu.Lock()
-	l := len(p.transactions)
+	l := len(p.txx)
 	p.mu.Unlock()
 
 	return l
 }
 
-func (p *Pending) Transactions() *map[string]string {
-	m := make(map[string]string)
+func (p *Pending) Transactions() *transaction.SortedTxx {
+	s := transaction.NewTxMapSorter(p.txx)
 
-	maps.Copy(m, p.transactions)
-
-	return &m
+	return s
 }
 
 func (p *Pending) Activate() {
@@ -67,15 +82,13 @@ labelPending:
 		case tx := <-p.transactionCH:
 			p.commitTx(tx)
 
-			txCount := p.Len()
-
-			if p.maxTransactionSize <= uint32(txCount) {
+			if p.maxTxSize <= uint32(p.Len()) {
 				log.Printf(util.PendingString("PENDING: %s | Max transactions (%d) reached"),
-					p.pendingID, txCount)
+					p.pendingID, p.Len())
 
-				p.flush()
+				p.emitAndFlush()
 
-				log.Printf(util.BlockString("Block: %s | Max tx size - New block created"), p.pendingID)
+				log.Printf(util.BlockString("Block: %s | New block created"), p.pendingID)
 				log.Printf(util.PendingString("PENDING: %s | Transactions map cleared. New size: %d"),
 					p.pendingID, p.Len())
 
@@ -83,18 +96,21 @@ labelPending:
 			}
 
 		case <-blockTimer.C:
-			p.flush()
-			log.Printf(util.BlockString("Block: %s | Block timeout - new block created"), p.pendingID)
-
+			if uint32(p.Len()) != 0 {
+				p.emitAndFlush()
+				log.Printf(util.BlockString("Block: %s | Block timeout - new block created"), p.pendingID)
+			}
 		case <-pendingTimer.C:
-			p.flush()
-			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
-			log.Printf(util.BlockString("Block: %s | Pending timeout -  New block created"), p.pendingID)
-			log.Printf(util.PendingString("Pending: %s | close pending"), p.pendingID)
+			if uint32(p.Len()) != 0 {
+				p.emitAndFlush()
+			}
 
-			p.closeCh <- p.pendingID
+			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
+
+			p.triggerShutdown(300 * time.Millisecond)
 
 			break labelPending
+
 		}
 	}
 
@@ -111,6 +127,23 @@ func (p *Pending) PushTx(tx *transaction.Transaction) error {
 	return nil
 }
 
+func (p *Pending) seekTx(hash string) *transaction.Transaction {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	t, ok := p.txx[hash]
+	if !ok {
+		return nil
+	}
+
+	s := transaction.NewTransaction(
+		t.GetHash(),
+		t.GetOption(),
+		t.GetTimeStamp(),
+	)
+
+	return s
+}
+
 func (p *Pending) collision(tx *transaction.Transaction) bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -125,21 +158,36 @@ func (p *Pending) commitTx(tx *transaction.Transaction) {
 	p.commit(tx)
 	p.cache(tx)
 
-	log.Printf(util.CommitString("COMMIT: %s | New commit tx { hash: %s, option: %s }"),
-		p.pendingID, tx.GetHashString(), tx.GetOption())
+	log.Printf(util.CommitString("COMMIT: %s | New commit tx { hash: %s, option: %s, timestamp: %d }"),
+		p.pendingID, tx.GetHashString(), tx.GetOption(), tx.GetTimeStamp())
 }
 
 func (p *Pending) commit(tx *transaction.Transaction) {
-	p.transactions[tx.GetHashString()] = tx.Serialize()
+	p.txx[tx.GetHashString()] = tx
 }
 
 func (p *Pending) cache(tx *transaction.Transaction) {
-	p.txCache[tx.GetHashString()] = 0
+	p.txCache[tx.GetHashString()] = struct{}{}
 }
 
 func (p *Pending) flush() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.transactions = make(map[string]string)
+	p.txx = make(map[string]*transaction.Transaction)
+}
+
+func (p *Pending) emitAndFlush() {
+	p.pendedCh <- NewPended(p.pendingID, p.txx)
+	p.flush()
+}
+
+func (p *Pending) triggerShutdown(t time.Duration) {
+	s := signal.NewPendingClosing(p.pendingID, p.wg, t)
+
+	s.Add(1)
+	p.closeCh <- s
+	s.Wait()
+
+	log.Printf(util.PendingString("Pending: %s | close pending"), p.pendingID)
 }
