@@ -25,6 +25,8 @@ func TestMempool(t *testing.T) {
 }
 
 func TestPending(t *testing.T) {
+	t.Log(util.GreenString("+-+-+-+-+-+-+-+-+- mempool_test.go::TestPending \"RUN\" -+-+-+-+-+-+-+-+-+"))
+
 	pendingName := types.Topic("pending")
 
 	mp := NewMemPool(5*time.Second, uint32(50000))
@@ -44,6 +46,13 @@ func TestPending(t *testing.T) {
 	tx2_Hash := util.RandomHash()
 	tx2 := randomTx(tx2_Hash, "P")
 
+	t.Logf(util.CyanString("Tx1.Hash: %v"), tx1.GetHash())
+	t.Logf(util.CyanString("Tx1.Option: %s"), tx1.GetOption())
+	t.Logf(util.CyanString("Tx1.TimeStamp: %d"), tx1.GetTimeStamp())
+	t.Logf(util.CyanString("Tx2.Hash: %v"), tx2.GetHash())
+	t.Logf(util.CyanString("Tx2.Option: %s"), tx2.GetOption())
+	t.Logf(util.CyanString("Tx2.TimeStamp: %d"), tx2.GetTimeStamp())
+
 	assert.Nil(t, pn.PushTx(tx1))
 	assert.Nil(t, mp.CommitTransaction(pendingName, tx2))
 
@@ -56,8 +65,12 @@ func TestPending(t *testing.T) {
 	assert.NotNil(t, atx1)
 	assert.NotNil(t, atx2)
 
-	t.Log(atx1)
-	t.Log(atx2)
+	t.Logf(util.MagentaString("aTx1.Hash: %v"), atx1.GetHash())
+	t.Logf(util.MagentaString("aTx1.Option: %s"), atx1.GetOption())
+	t.Logf(util.MagentaString("aTx1.TimeStamp: %d"), atx1.GetTimeStamp())
+	t.Logf(util.MagentaString("aTx2.Hash: %v"), atx2.GetHash())
+	t.Logf(util.MagentaString("aTx2.Option: %s"), atx2.GetOption())
+	t.Logf(util.MagentaString("aTx2.TimeStamp: %d"), atx2.GetTimeStamp())
 
 	assert.Equal(t, tx1Hash, atx1.GetHash())
 	assert.Equal(t, tx2_Hash, atx2.GetHash())
@@ -65,15 +78,18 @@ func TestPending(t *testing.T) {
 
 	sync := signal.NewPendingClosing(pendingName, pn.wg, 300*time.Millisecond)
 
+	t.Logf(util.YellowString("PendingClosingSignal: %+v"), sync)
+
 	startTime := time.Now()
 
 	sync.Add(1)
 	mp.closeCh <- sync
 	sync.Wait()
 	elapsedTime := time.Since(startTime)
-
-	t.Logf("%s", elapsedTime)
 	assert.False(t, mp.IsOpen(pendingName))
+
+	t.Logf(util.YellowString("PendingClosingSignalTime: %s, Closed: %t"), elapsedTime, !mp.IsOpen(pendingName))
+	t.Log(util.GreenString("+-+-+-+-+-+-+-+-+- mempool_test.go::TestPending \"END\" -+-+-+-+-+-+-+-+-+"))
 }
 
 func randomTx(hash types.Hash, option string) *transaction.Transaction {

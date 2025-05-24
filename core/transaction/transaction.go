@@ -82,3 +82,7 @@ func (s *SortedTxx) Less(i, j int) bool {
 	}
 	return s.txx[i].timeStamp < s.txx[j].timeStamp
 }
+
+func (s *SortedTxx) GetTxx() []*Transaction {
+	return s.txx
+}

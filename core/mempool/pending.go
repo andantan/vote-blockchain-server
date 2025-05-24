@@ -83,14 +83,14 @@ labelPending:
 			p.commitTx(tx)
 
 			if p.maxTxSize <= uint32(p.Len()) {
-				log.Printf(util.PendingString("PENDING: %s | Max transactions (%d) reached"),
-					p.pendingID, p.Len())
+				// log.Printf(util.PendingString("PENDING: %s | Max transactions (%d) reached"),
+				// 	p.pendingID, p.Len())
 
 				p.emitAndFlush()
 
-				log.Printf(util.BlockString("Block: %s | New block created"), p.pendingID)
-				log.Printf(util.PendingString("PENDING: %s | Transactions map cleared. New size: %d"),
-					p.pendingID, p.Len())
+				// log.Printf(util.BlockString("Block: %s | New block created"), p.pendingID)
+				// log.Printf(util.PendingString("PENDING: %s | Transactions map cleared. New size: %d"),
+				// 	p.pendingID, p.Len())
 
 				blockTimer.Reset(p.blockTime)
 			}
@@ -98,7 +98,7 @@ labelPending:
 		case <-blockTimer.C:
 			if uint32(p.Len()) != 0 {
 				p.emitAndFlush()
-				log.Printf(util.BlockString("Block: %s | Block timeout - new block created"), p.pendingID)
+				// log.Printf(util.BlockString("Block: %s | Block timeout - new block created"), p.pendingID)
 			}
 		case <-pendingTimer.C:
 			if uint32(p.Len()) != 0 {
