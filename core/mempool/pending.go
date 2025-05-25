@@ -1,6 +1,7 @@
 package mempool
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -18,7 +19,10 @@ type Pending struct {
 	mu      sync.RWMutex
 	txx     map[string]*transaction.Transaction
 	txCache map[string]struct{}
-	wg      *sync.WaitGroup
+
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     *sync.WaitGroup
 
 	pendingTime          time.Duration // Vote duration
 	blockTime            time.Duration // Block Time (system)
@@ -28,15 +32,25 @@ type Pending struct {
 	transactionCH chan *transaction.Transaction
 	pendedCh      chan<- *Pended
 	closeCh       chan<- *signal.PendingClosing
+	// closeCh chan<- types.Topic
 }
 
 func NewPending() *Pending {
-	return &Pending{
+	ctx, cancel := context.WithCancel(context.Background())
+
+	p := &Pending{
 		txx:                  make(map[string]*transaction.Transaction),
 		txCache:              make(map[string]struct{}),
 		scheduledBlockHeight: []uint64{},
+		ctx:                  ctx,
+		cancel:               cancel,
+		wg:                   &sync.WaitGroup{},
 		transactionCH:        make(chan *transaction.Transaction),
 	}
+
+	p.wg.Add(1)
+
+	return p
 }
 
 func (p *Pending) SetLimitOptions(maxTxSize uint32, blockTime time.Duration) {
@@ -52,9 +66,9 @@ func (p *Pending) SetPendingOptions(pendingId types.Topic, pendingTime time.Dura
 func (p *Pending) SetChannel(
 	pendedCh chan<- *Pended,
 	closeCh chan<- *signal.PendingClosing,
+	// closeCh chan<- types.Topic,
 ) {
 	p.pendedCh = pendedCh
-	p.wg = &sync.WaitGroup{}
 	p.closeCh = closeCh
 }
 
@@ -67,18 +81,26 @@ func (p *Pending) Len() int {
 }
 
 func (p *Pending) Transactions() *transaction.SortedTxx {
-	s := transaction.NewTxMapSorter(p.txx)
+	s := transaction.NewSortedTxx(p.txx)
 
 	return s
 }
 
 func (p *Pending) Activate() {
-	blockTimer := time.NewTicker(p.blockTime)
-	pendingTimer := time.NewTicker(p.pendingTime)
+	defer p.wg.Done()
 
-labelPending:
+	blockTimer := time.NewTicker(p.blockTime)
+	defer blockTimer.Stop()
+	pendingTimer := time.NewTicker(p.pendingTime)
+	defer pendingTimer.Stop()
+
 	for {
 		select {
+		case <-p.ctx.Done():
+			log.Printf(util.PendingString("Pending: %s | Activation exited."), p.pendingID)
+
+			return
+
 		case tx := <-p.transactionCH:
 			p.commitTx(tx)
 
@@ -88,7 +110,7 @@ labelPending:
 
 				p.emitAndFlush()
 
-				// log.Printf(util.BlockString("Block: %s | New block created"), p.pendingID)
+				// log.Printf(util.BlockString("Block: %s | Reached maxTxSize - New block created"), p.pendingID)
 				// log.Printf(util.PendingString("PENDING: %s | Transactions map cleared. New size: %d"),
 				// 	p.pendingID, p.Len())
 
@@ -105,16 +127,14 @@ labelPending:
 				p.emitAndFlush()
 			}
 
-			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
+			//log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
 
-			p.triggerShutdown(300 * time.Millisecond)
+			go p.triggerShutdown()
 
-			break labelPending
-
+			return
 		}
 	}
 
-	log.Printf(util.PendingString("Pending: %s | Activation exited."), p.pendingID)
 }
 
 func (p *Pending) PushTx(tx *transaction.Transaction) error {
@@ -158,8 +178,8 @@ func (p *Pending) commitTx(tx *transaction.Transaction) {
 	p.commit(tx)
 	p.cache(tx)
 
-	log.Printf(util.CommitString("COMMIT: %s | New commit tx { hash: %s, option: %s, timestamp: %d }"),
-		p.pendingID, tx.GetHashString(), tx.GetOption(), tx.GetTimeStamp())
+	// log.Printf(util.CommitString("COMMIT: %s | New commit tx { hash: %s, option: %s, timestamp: %d }"),
+	// 	p.pendingID, tx.GetHashString(), tx.GetOption(), tx.GetTimeStamp())
 }
 
 func (p *Pending) commit(tx *transaction.Transaction) {
@@ -182,12 +202,15 @@ func (p *Pending) emitAndFlush() {
 	p.flush()
 }
 
-func (p *Pending) triggerShutdown(t time.Duration) {
-	s := signal.NewPendingClosing(p.pendingID, p.wg, t)
+func (p *Pending) triggerShutdown() {
+	p.cancel()
+	p.wg.Wait()
+
+	s := signal.NewPendingClosing(p.pendingID)
 
 	s.Add(1)
 	p.closeCh <- s
 	s.Wait()
 
-	log.Printf(util.PendingString("Pending: %s | close pending"), p.pendingID)
+	log.Printf(util.PendingString("Pending: %s | successfully closed and removed from MemPool"), p.pendingID)
 }

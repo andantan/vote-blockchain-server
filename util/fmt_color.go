@@ -68,3 +68,15 @@ func BlockString(s string) string {
 func FatalString(s string) string {
 	return RedString(s)
 }
+
+func TestInfoString(s string) string {
+	return CyanString(s)
+}
+
+func TestOracleString(s string) string {
+	return MagentaString(s)
+}
+
+func TestDecoratorString(s string) string {
+	return GreenString(s)
+}

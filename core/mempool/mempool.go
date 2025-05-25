@@ -12,6 +12,10 @@ import (
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
+const (
+	PENDING_CLOSED_BUFFER_SIZE = 64
+)
+
 type MemPool struct {
 	BlockTime time.Duration
 	MaxTxSize uint32
@@ -21,6 +25,7 @@ type MemPool struct {
 
 	pendedCh chan<- *Pended
 	closeCh  chan *signal.PendingClosing
+	// closeCh chan types.Topic
 }
 
 func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
@@ -36,7 +41,8 @@ func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 }
 
 func (mp *MemPool) SetChannel(pendedCh chan<- *Pended) {
-	mp.closeCh = make(chan *signal.PendingClosing)
+	mp.closeCh = make(chan *signal.PendingClosing, PENDING_CLOSED_BUFFER_SIZE)
+	// mp.closeCh = make(chan types.Topic, PENDING_CLOSED_BUFFER_SIZE)
 	mp.pendedCh = pendedCh
 }
 
@@ -50,9 +56,6 @@ func (mp *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) 
 	pn.SetLimitOptions(mp.MaxTxSize, mp.BlockTime)
 	pn.SetPendingOptions(pendingId, pendingTime)
 	pn.SetChannel(mp.pendedCh, mp.closeCh)
-
-	mp.mu.Lock()
-	defer mp.mu.Unlock()
 
 	mp.AllocatePending(pendingId, pn)
 
@@ -78,6 +81,8 @@ func (mp *MemPool) IsOpen(pendingId types.Topic) bool {
 }
 
 func (mp *MemPool) AllocatePending(pendingId types.Topic, open *Pending) {
+	mp.mu.Lock()
+	defer mp.mu.Unlock()
 	mp.pendings[pendingId] = open
 }
 
@@ -97,14 +102,14 @@ func (mp *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Tran
 
 func (mp *MemPool) closedPendingCollector() {
 	for {
+		log.Println(util.SystemString("ClosedPendingCollector looping"))
+
 		c := <-mp.closeCh
 
 		mp.mu.Lock()
 		delete(mp.pendings, c.GetTopic())
 		mp.mu.Unlock()
 
-		log.Printf(util.PendingString("Pending: %s | Removed from memPool"), c.GetTopic())
-		time.Sleep(time.Second)
 		c.Done()
 	}
 }

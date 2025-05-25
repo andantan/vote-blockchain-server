@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/core/block"
+	"github.com/andantan/vote-blockchain-server/core/blockchain"
 	"github.com/andantan/vote-blockchain-server/core/mempool"
 	"github.com/andantan/vote-blockchain-server/util"
 )
@@ -16,7 +18,8 @@ const (
 )
 
 const (
-	GRPC_REQUEST_BUFFER_SIZE = 128
+	GRPC_REQUEST_BUFFER_SIZE   = 128
+	PENDED_REQUEST_BUFFER_SIZE = 64
 )
 
 // gRPC Network and port options
@@ -64,9 +67,9 @@ type BlockChainServer struct {
 	BlockChainServerOpts
 	*BlockChainVoteServer
 	*BlockChainTopicServer
-	mempool  *mempool.MemPool
-	pendedCh chan *mempool.Pended
-	// chain        *blockchain.BlockChain
+	mempool      *mempool.MemPool
+	pendedCh     chan *mempool.Pended
+	blockChain   *blockchain.BlockChain
 	ExitSignalCh chan uint8
 }
 
@@ -78,7 +81,8 @@ func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
 		BlockChainVoteServer:  NewBlockChainVoteServer(GRPC_REQUEST_BUFFER_SIZE),
 		BlockChainTopicServer: NewBlockChainTopicServer(GRPC_REQUEST_BUFFER_SIZE),
 		mempool:               mempool.NewMemPool(opts.BlockTime, opts.MaxTxSize),
-		pendedCh:              make(chan *mempool.Pended),
+		pendedCh:              make(chan *mempool.Pended, PENDED_REQUEST_BUFFER_SIZE),
+		blockChain:            blockchain.NewBlockChainWithGenesisBlock(),
 		ExitSignalCh:          make(chan uint8),
 	}
 }
@@ -112,9 +116,12 @@ labelServer:
 			vote.ResponseCh <- s.GetSuccessSubmitVote(vote.Hash.String())
 
 		case pended := <-s.pendedCh:
-			for _, v := range pended.GetTxx() {
-				log.Printf(util.PendingString("PENDED: { %s }"), v.Serialize())
-			}
+			// preBlock := block.NewPreparedBlock(pended.GetPendingID(), pended.GetTxx())
+			// stxx := transaction.NewTxMapSorter(pended.GetTxx())
+
+			s.createNewBlock(pended)
+
+			// log.Printf(util.BlockString("PREPAREDBLOCK: %s | %s"), preBlock.VotingID, preBlock.MerkleRoot)
 
 		case <-s.ExitSignalCh:
 			log.Println("exit signal detected")
@@ -139,6 +146,18 @@ func (s *BlockChainServer) getVoteListenerOpts() (network string, port uint16) {
 	return s.BlockChainServerOpts.VotegRPCNetwork, s.BlockChainServerOpts.VotegRPCNetworkPort
 }
 
-// func (s *BlockChainServer) createNewBlock() {
+func (s *BlockChainServer) createNewBlock(p *mempool.Pended) (*block.Block, error) {
+	prevHeight := s.blockChain.Height()
+	prevHeader, err := s.blockChain.GetHeader(prevHeight)
 
-// }
+	if err != nil {
+		return nil, err
+	}
+
+	currentProtoBlock := block.NewProtoBlock(p.GetPendingID(), p.GetTxx())
+	currentBlock := block.NewBlockFromPrevHeader(prevHeader, currentProtoBlock)
+
+	log.Printf(util.BlockString("NEW BLOCK: %s |  %+v"), p.GetPendingID(), currentBlock)
+
+	return nil, nil
+}

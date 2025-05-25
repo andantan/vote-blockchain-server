@@ -32,7 +32,7 @@ func main() {
 		vote := vote_message.VoteRequest{
 			Hash:   util.RandomHash().String(),
 			Option: randOpt(),
-			Topic:  "2025 대선",
+			Topic:  randTopic(),
 		}
 
 		response, err := c.SubmitVote(context.Background(), &vote)
@@ -42,14 +42,17 @@ func main() {
 		}
 
 		log.Printf("gRPC response success: %t (%s | %s)", response.Success, response.Status, response.Message)
-		time.Sleep(1200 * time.Millisecond)
+
+		time.Sleep(30 * time.Millisecond)
 		// time.Sleep(1 * time.Second)
 	}
 }
 
 // var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 // var topics = []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표", "상법개정안 시범 기간 조사"}
-var topics = []string{"2025 대선", "2025 보건의료 여론조사"}
+var topics = []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표"}
+
+// var topics = []string{"2025 대선", "2025 보건의료 여론조사"}
 var options = []rune("12345")
 
 // func randSeq(n int) string {

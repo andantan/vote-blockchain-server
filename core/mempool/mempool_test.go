@@ -76,7 +76,7 @@ func TestPending(t *testing.T) {
 	assert.Equal(t, tx2_Hash, atx2.GetHash())
 	assert.Equal(t, atx1.GetOption(), atx2.GetOption())
 
-	sync := signal.NewPendingClosing(pendingName, pn.wg, 300*time.Millisecond)
+	sync := signal.NewPendingClosing(pendingName)
 
 	t.Logf(util.YellowString("PendingClosingSignal: %+v"), sync)
 
@@ -86,6 +86,7 @@ func TestPending(t *testing.T) {
 	mp.closeCh <- sync
 	sync.Wait()
 	elapsedTime := time.Since(startTime)
+	time.Sleep(100 * time.Millisecond)
 	assert.False(t, mp.IsOpen(pendingName))
 
 	t.Logf(util.YellowString("PendingClosingSignalTime: %s, Closed: %t"), elapsedTime, !mp.IsOpen(pendingName))
