@@ -25,7 +25,6 @@ type MemPool struct {
 
 	pendedCh chan<- *Pended
 	closeCh  chan *signal.PendingClosing
-	// closeCh chan types.Topic
 }
 
 func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
@@ -42,7 +41,6 @@ func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 
 func (mp *MemPool) SetChannel(pendedCh chan<- *Pended) {
 	mp.closeCh = make(chan *signal.PendingClosing, PENDING_CLOSED_BUFFER_SIZE)
-	// mp.closeCh = make(chan types.Topic, PENDING_CLOSED_BUFFER_SIZE)
 	mp.pendedCh = pendedCh
 }
 
@@ -59,7 +57,7 @@ func (mp *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) 
 
 	mp.AllocatePending(pendingId, pn)
 
-	log.Printf(util.PendingString("Pending: New pending { topic: %s, duration: %s }"),
+	log.Printf(util.MemPoolString("MEMPOOL: New pending { topic: %s, duration: %s }"),
 		pn.pendingID, pn.pendingTime)
 
 	go pn.Activate()
@@ -102,14 +100,25 @@ func (mp *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Tran
 
 func (mp *MemPool) closedPendingCollector() {
 	for {
-		log.Println(util.SystemString("ClosedPendingCollector looping"))
+		log.Println(util.MemPoolString("MEMPOOL: ClosedPendingCollector blocked closeSignal waiting..."))
 
 		c := <-mp.closeCh
 
-		mp.mu.Lock()
-		delete(mp.pendings, c.GetTopic())
-		mp.mu.Unlock()
+		log.Printf(util.MemPoolString("MEMPOOL: ClosedPendingCollector closeSignal received: %s"), c.GetTopic())
+
+		mp.closePending(c.GetTopic())
 
 		c.Done()
 	}
+}
+
+func (mp *MemPool) closePending(pendingId types.Topic) {
+	mp.mu.Lock()
+	log.Printf(util.MemPoolString("MEMPOOL: ClosedPendingCollector::closePending mutex locked: %s"), pendingId)
+
+	defer mp.mu.Unlock()
+	defer log.Printf(util.MemPoolString("MEMPOOL: ClosedPendingCollector::closePending mutex unlocked: %s"), pendingId)
+
+	delete(mp.pendings, pendingId)
+	log.Printf(util.MemPoolString("MEMPOOL: Pending %d remained"), len(mp.pendings))
 }

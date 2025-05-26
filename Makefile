@@ -15,5 +15,8 @@ run: build
 test-debug:
 	@go test -v ./...
 
+test-race:
+	@go test ./... --race
+
 test:
 	@go test ./...

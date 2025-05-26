@@ -10,6 +10,7 @@ const (
 	Cyan    = "\033[36m"
 	Gray    = "\033[37m"
 	White   = "\033[97m"
+	PINK    = "\033[35m"
 )
 
 // Fatal
@@ -20,6 +21,10 @@ func RedString(s string) string {
 // Commit
 func GreenString(s string) string {
 	return Green + s + Reset
+}
+
+func PinkString(s string) string {
+	return PINK + s + Reset
 }
 
 // Block
@@ -63,6 +68,14 @@ func CommitString(s string) string {
 
 func BlockString(s string) string {
 	return YellowString(s)
+}
+
+func MemPoolString(s string) string {
+	return PinkString(s)
+}
+
+func BlockChainString(s string) string {
+	return GreenString(s)
 }
 
 func FatalString(s string) string {

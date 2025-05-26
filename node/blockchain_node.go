@@ -8,7 +8,7 @@ import (
 
 const (
 	BlockTime = 10 * time.Second
-	MaxTxSize = uint32(2000)
+	MaxTxSize = uint32(80)
 )
 
 const (
@@ -20,8 +20,8 @@ func Start() {
 	BCopts := server.NewBlockChainServerOpts()
 	BCopts.SetTopicOptions("tcp", uint16(9000))
 	BCopts.SetVoteOptions("tcp", uint16(9001))
-	//BCopts.SetControllOptions(BlockTime, MaxTxSize)
-	BCopts.SetControllOptions(TestBlockTime, TestMaxTxSize)
+	BCopts.SetControllOptions(BlockTime, MaxTxSize)
+	// BCopts.SetControllOptions(TestBlockTime, TestMaxTxSize)
 	blockChainServer := server.NewBlockChainServer(BCopts)
 
 	blockChainServer.Start()

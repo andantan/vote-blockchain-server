@@ -2,9 +2,11 @@ package blockchain
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
+	"github.com/andantan/vote-blockchain-server/util"
 )
 
 type BlockChain struct {
@@ -23,6 +25,8 @@ func NewBlockChainWithGenesisBlock() *BlockChain {
 	bc := NewBlockChain()
 
 	bc.attachBlock(gb)
+
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block created | hash=%s"), gb.BlockHash)
 
 	return bc
 }

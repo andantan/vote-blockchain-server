@@ -24,28 +24,26 @@ type Pending struct {
 	cancel context.CancelFunc
 	wg     *sync.WaitGroup
 
-	pendingTime          time.Duration // Vote duration
-	blockTime            time.Duration // Block Time (system)
-	maxTxSize            uint32        // Tx size (system)
-	scheduledBlockHeight []uint64      // Pended block heights
+	pendingTime time.Duration // Vote duration
+	blockTime   time.Duration // Block Time (system)
+	maxTxSize   uint32        // Tx size (system)
+	//scheduledBlockHeight []uint64      // Pended block heights
 
 	transactionCH chan *transaction.Transaction
 	pendedCh      chan<- *Pended
 	closeCh       chan<- *signal.PendingClosing
-	// closeCh chan<- types.Topic
 }
 
 func NewPending() *Pending {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	p := &Pending{
-		txx:                  make(map[string]*transaction.Transaction),
-		txCache:              make(map[string]struct{}),
-		scheduledBlockHeight: []uint64{},
-		ctx:                  ctx,
-		cancel:               cancel,
-		wg:                   &sync.WaitGroup{},
-		transactionCH:        make(chan *transaction.Transaction),
+		txx:           make(map[string]*transaction.Transaction),
+		txCache:       make(map[string]struct{}),
+		ctx:           ctx,
+		cancel:        cancel,
+		wg:            &sync.WaitGroup{},
+		transactionCH: make(chan *transaction.Transaction),
 	}
 
 	p.wg.Add(1)
@@ -66,7 +64,6 @@ func (p *Pending) SetPendingOptions(pendingId types.Topic, pendingTime time.Dura
 func (p *Pending) SetChannel(
 	pendedCh chan<- *Pended,
 	closeCh chan<- *signal.PendingClosing,
-	// closeCh chan<- types.Topic,
 ) {
 	p.pendedCh = pendedCh
 	p.closeCh = closeCh
@@ -80,13 +77,14 @@ func (p *Pending) Len() int {
 	return l
 }
 
-func (p *Pending) Transactions() *transaction.SortedTxx {
-	s := transaction.NewSortedTxx(p.txx)
+// func (p *Pending) Transactions() *transaction.SortedTxx {
+// 	s := transaction.NewSortedTxx(p.txx)
 
-	return s
-}
+// 	return s
+// }
 
 func (p *Pending) Activate() {
+	defer log.Printf(util.PendingString("Pending: %s | Activation exited."), p.pendingID)
 	defer p.wg.Done()
 
 	blockTimer := time.NewTicker(p.blockTime)
@@ -97,22 +95,13 @@ func (p *Pending) Activate() {
 	for {
 		select {
 		case <-p.ctx.Done():
-			log.Printf(util.PendingString("Pending: %s | Activation exited."), p.pendingID)
-
 			return
 
 		case tx := <-p.transactionCH:
 			p.commitTx(tx)
 
 			if p.maxTxSize <= uint32(p.Len()) {
-				// log.Printf(util.PendingString("PENDING: %s | Max transactions (%d) reached"),
-				// 	p.pendingID, p.Len())
-
 				p.emitAndFlush()
-
-				// log.Printf(util.BlockString("Block: %s | Reached maxTxSize - New block created"), p.pendingID)
-				// log.Printf(util.PendingString("PENDING: %s | Transactions map cleared. New size: %d"),
-				// 	p.pendingID, p.Len())
 
 				blockTimer.Reset(p.blockTime)
 			}
@@ -120,17 +109,15 @@ func (p *Pending) Activate() {
 		case <-blockTimer.C:
 			if uint32(p.Len()) != 0 {
 				p.emitAndFlush()
-				// log.Printf(util.BlockString("Block: %s | Block timeout - new block created"), p.pendingID)
 			}
 		case <-pendingTimer.C:
+			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
+
 			if uint32(p.Len()) != 0 {
 				p.emitAndFlush()
 			}
 
-			//log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
-
 			go p.triggerShutdown()
-
 			return
 		}
 	}
@@ -203,14 +190,14 @@ func (p *Pending) emitAndFlush() {
 }
 
 func (p *Pending) triggerShutdown() {
+	log.Printf(util.PendingString("Pending: %s | triggerShutdown() called"), p.pendingID)
 	p.cancel()
 	p.wg.Wait()
 
 	s := signal.NewPendingClosing(p.pendingID)
-
+	log.Printf(util.PendingString("Pending: %s | pendingClosing signal generated"), p.pendingID)
 	s.Add(1)
 	p.closeCh <- s
 	s.Wait()
-
 	log.Printf(util.PendingString("Pending: %s | successfully closed and removed from MemPool"), p.pendingID)
 }

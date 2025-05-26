@@ -1,11 +1,15 @@
 package util
 
 import (
-	"crypto/rand"
 	"fmt"
+	"math/rand"
 
 	"github.com/andantan/vote-blockchain-server/types"
 )
+
+func RandRange(min, max int) int {
+	return rand.Intn(max-min) + min
+}
 
 func RandomBytes(size int) []byte {
 	ticket := make([]byte, size)

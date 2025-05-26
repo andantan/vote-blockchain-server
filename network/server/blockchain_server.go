@@ -116,12 +116,7 @@ labelServer:
 			vote.ResponseCh <- s.GetSuccessSubmitVote(vote.Hash.String())
 
 		case pended := <-s.pendedCh:
-			// preBlock := block.NewPreparedBlock(pended.GetPendingID(), pended.GetTxx())
-			// stxx := transaction.NewTxMapSorter(pended.GetTxx())
-
-			s.createNewBlock(pended)
-
-			// log.Printf(util.BlockString("PREPAREDBLOCK: %s | %s"), preBlock.VotingID, preBlock.MerkleRoot)
+			go s.createNewBlock(pended)
 
 		case <-s.ExitSignalCh:
 			log.Println("exit signal detected")
@@ -157,7 +152,11 @@ func (s *BlockChainServer) createNewBlock(p *mempool.Pended) (*block.Block, erro
 	currentProtoBlock := block.NewProtoBlock(p.GetPendingID(), p.GetTxx())
 	currentBlock := block.NewBlockFromPrevHeader(prevHeader, currentProtoBlock)
 
-	log.Printf(util.BlockString("NEW BLOCK: %s |  %+v"), p.GetPendingID(), currentBlock)
+	// log.Printf(util.BlockString("NEW BLOCK(PrevBlockHash): %s |  %s"), p.GetPendingID(), currentBlock.Header.PrevBlockHash)
+	log.Printf(util.BlockString("NEW BLOCK: %s | { BlockHash: %s, TxLength: %d }"),
+		p.GetPendingID(), currentBlock.BlockHash, len(currentBlock.Transactions))
+	// log.Printf(util.BlockString("NEW BLOCK(Tx length): %s |  %d"), p.GetPendingID(), len(currentBlock.Transactions))
+	// log.Printf(util.BlockString("NEW BLOCK(BlockHeight): %s |  %+v"), p.GetPendingID(), currentBlock.Header.Height)
 
 	return nil, nil
 }

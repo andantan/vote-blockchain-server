@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/andantan/vote-blockchain-server/client/vote_client/vote_message"
+	"github.com/andantan/vote-blockchain-server/client/gRPC_client/vote_client/vote_message"
 	"github.com/andantan/vote-blockchain-server/util"
 
 	"google.golang.org/grpc"
@@ -29,10 +29,12 @@ func main() {
 	c := vote_message.NewBlockchainVoteServiceClient(conn)
 
 	for {
+		topic := randTopic()
+
 		vote := vote_message.VoteRequest{
 			Hash:   util.RandomHash().String(),
 			Option: randOpt(),
-			Topic:  randTopic(),
+			Topic:  topic,
 		}
 
 		response, err := c.SubmitVote(context.Background(), &vote)
@@ -41,16 +43,17 @@ func main() {
 			log.Fatalf("error when calling SubmitVote: %s", err)
 		}
 
-		log.Printf("gRPC response success: %t (%s | %s)", response.Success, response.Status, response.Message)
-
-		time.Sleep(30 * time.Millisecond)
+		log.Printf("gRPC response success: %s | %t (%s | %s)", topic, response.Success, response.Status, response.Message)
+		r := util.RandRange(10, 50)
+		time.Sleep(time.Duration(r) * time.Millisecond)
 		// time.Sleep(1 * time.Second)
 	}
 }
 
 // var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-// var topics = []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표", "상법개정안 시범 기간 조사"}
-var topics = []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표"}
+var topics = []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표", "상법개정안 시범 기간 조사"}
+
+// var topics = []string{"2025 대선", "2025 보건의료 여론조사", "법률개정안 찬반 투표"}
 
 // var topics = []string{"2025 대선", "2025 보건의료 여론조사"}
 var options = []rune("12345")
