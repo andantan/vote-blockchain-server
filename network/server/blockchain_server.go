@@ -65,31 +65,100 @@ func NewBlockChainServerOpts() BlockChainServerOpts {
 
 type BlockChainServer struct {
 	BlockChainServerOpts
+
 	*BlockChainVoteServer
 	*BlockChainTopicServer
-	mempool      *mempool.MemPool
+
+	mempool    *mempool.MemPool
+	blockChain *blockchain.BlockChain
+
 	pendedCh     chan *mempool.Pended
-	blockChain   *blockchain.BlockChain
 	ExitSignalCh chan uint8
 }
 
 func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
-
-	// Need genesisBlock
-	return &BlockChainServer{
-		BlockChainServerOpts:  opts,
-		BlockChainVoteServer:  NewBlockChainVoteServer(GRPC_REQUEST_BUFFER_SIZE),
-		BlockChainTopicServer: NewBlockChainTopicServer(GRPC_REQUEST_BUFFER_SIZE),
-		mempool:               mempool.NewMemPool(opts.BlockTime, opts.MaxTxSize),
-		pendedCh:              make(chan *mempool.Pended, PENDED_REQUEST_BUFFER_SIZE),
-		blockChain:            blockchain.NewBlockChainWithGenesisBlock(),
-		ExitSignalCh:          make(chan uint8),
+	server := &BlockChainServer{
+		BlockChainServerOpts: opts,
 	}
+
+	server.Initialize()
+
+	log.Println(util.SystemString("SYSTEM: BlockChainServer generated"))
+
+	return server
+}
+
+func (s *BlockChainServer) Initialize() {
+	log.Println(util.SystemString("SYSTEM: BlockChainServer initialize..."))
+
+	s.setgRPCServer()
+	s.setMemPool()
+	s.setBlockChain()
+	s.setChannel()
+
+	log.Println(util.SystemString("SYSTEM: BlockChainServer initialization is done."))
+}
+
+func (s *BlockChainServer) setgRPCServer() {
+	log.Printf(
+		util.SystemString("SYSTEM: BlockChainServer setting gRPC server... | GRPC_REQUEST_BUFFER_SIZE=%d"),
+		GRPC_REQUEST_BUFFER_SIZE,
+	)
+
+	s.BlockChainVoteServer = NewBlockChainVoteServer(GRPC_REQUEST_BUFFER_SIZE)
+	s.BlockChainTopicServer = NewBlockChainTopicServer(GRPC_REQUEST_BUFFER_SIZE)
+
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting gRPC server is done."))
+}
+
+func (s *BlockChainServer) setMemPool() {
+	log.Printf(
+		util.SystemString("SYSTEM: BlockChainServer setting memory pool... | { BlockTime: %s, MaxTxSize: %d }"),
+		s.BlockChainControllOpts.BlockTime,
+		s.BlockChainControllOpts.MaxTxSize,
+	)
+
+	s.mempool = mempool.NewMemPool(
+		s.BlockChainControllOpts.BlockTime,
+		s.BlockChainControllOpts.MaxTxSize,
+	)
+
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting memory pool is done."))
+}
+
+func (s *BlockChainServer) setBlockChain() {
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting blockchain..."))
+
+	s.blockChain = blockchain.NewBlockChainWithGenesisBlock()
+
+	genesisHeader, err := s.blockChain.GetHeader(0)
+
+	if err != nil {
+		log.Fatalf(util.RedString("Genesis block initialization error: %s"), err.Error())
+	}
+
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block ID=%s"), genesisHeader.VotingID)
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block MerkleRoot=%s"), genesisHeader.MerkleRoot.String())
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block Height=%d"), genesisHeader.Height)
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block PrevBlockHash=%s"), genesisHeader.PrevBlockHash.String())
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block BlockHash=%s"), genesisHeader.Hash().String())
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting blockchain is done."))
+}
+
+func (s *BlockChainServer) setChannel() {
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting channel..."))
+
+	s.pendedCh = make(chan *mempool.Pended, PENDED_REQUEST_BUFFER_SIZE)
+
+	s.mempool.SetChannel(s.pendedCh)
+
+	s.ExitSignalCh = make(chan uint8)
+
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting channel is done."))
 }
 
 func (s *BlockChainServer) Start() {
 	s.startgRPCListener()
-	s.mempool.SetChannel(s.pendedCh)
 
 labelServer:
 	for {
@@ -152,11 +221,8 @@ func (s *BlockChainServer) createNewBlock(p *mempool.Pended) (*block.Block, erro
 	currentProtoBlock := block.NewProtoBlock(p.GetPendingID(), p.GetTxx())
 	currentBlock := block.NewBlockFromPrevHeader(prevHeader, currentProtoBlock)
 
-	// log.Printf(util.BlockString("NEW BLOCK(PrevBlockHash): %s |  %s"), p.GetPendingID(), currentBlock.Header.PrevBlockHash)
 	log.Printf(util.BlockString("NEW BLOCK: %s | { BlockHash: %s, TxLength: %d }"),
 		p.GetPendingID(), currentBlock.BlockHash, len(currentBlock.Transactions))
-	// log.Printf(util.BlockString("NEW BLOCK(Tx length): %s |  %d"), p.GetPendingID(), len(currentBlock.Transactions))
-	// log.Printf(util.BlockString("NEW BLOCK(BlockHeight): %s |  %+v"), p.GetPendingID(), currentBlock.Header.Height)
 
 	return nil, nil
 }

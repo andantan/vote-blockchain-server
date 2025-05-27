@@ -49,6 +49,16 @@ func main() {
 		NewTopic("2025 보건의료 여론조사", 2),
 		NewTopic("법률개정안 찬반 투표", 1),
 		NewTopic("상법개정안 시범 기간 조사", 2),
+		NewTopic("기후변화 대응 방안 선호도 조사", 3),
+		NewTopic("인공지능 교육 도입 찬반 설문", 1),
+		NewTopic("수원시 대중교통 만족도 평가", 2),
+		NewTopic("청년 주거 정책 의견 수렴", 4),
+		NewTopic("국민연금 개편안 대국민 토론", 1),
+		NewTopic("미래 식량 기술 투자 필요성 조사", 3),
+		NewTopic("문화예술 바우처 사업 확대 여부", 2),
+		NewTopic("자율주행 자동차 상용화 시점 예측", 4),
+		NewTopic("코로나19 재유행 대비 행동 지침", 1),
+		NewTopic("초고령사회 대비 사회복지 시스템 개선", 3),
 	}
 
 	for _, topic := range topics {

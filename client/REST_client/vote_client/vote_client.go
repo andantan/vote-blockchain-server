@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/util"
@@ -44,6 +45,7 @@ type VoteResponse struct {
 }
 
 func main() {
+	wg := &sync.WaitGroup{}
 
 	topics := []string{
 		"2025 대선",
@@ -51,17 +53,25 @@ func main() {
 		"2025 보건의료 여론조사",
 		"법률개정안 찬반 투표",
 		"상법개정안 시범 기간 조사",
+		"기후변화 대응 방안 선호도 조사",
+		"인공지능 교육 도입 찬반 설문",
+		"수원시 대중교통 만족도 평가",
+		"청년 주거 정책 의견 수렴",
+		"국민연금 개편안 대국민 토론",
+		"미래 식량 기술 투자 필요성 조사",
+		"문화예술 바우처 사업 확대 여부",
+		"자율주행 자동차 상용화 시점 예측",
+		"코로나19 재유행 대비 행동 지침",
+		"초고령사회 대비 사회복지 시스템 개선",
 	}
 
-	blockTimer := time.NewTicker(2 * time.Minute)
-	defer blockTimer.Stop()
+	wg.Add(len(topics))
 
 	for _, topic := range topics {
-		go RequestLoop(topic)
+		go RequestLoop(topic, wg)
 	}
 
-	<-blockTimer.C
-
+	wg.Wait()
 }
 
 func RequestVote(vote *Vote) *VoteResponse {
@@ -98,7 +108,9 @@ func RequestVote(vote *Vote) *VoteResponse {
 	return &response
 }
 
-func RequestLoop(topic string) {
+func RequestLoop(topic string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	for {
 		vote := NewVote(
 			util.RandomHash().String(),

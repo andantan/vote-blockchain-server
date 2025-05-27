@@ -55,7 +55,7 @@ func InitString(s string) string {
 }
 
 func SystemString(s string) string {
-	return MagentaString(s)
+	return WhiteString(s)
 }
 
 func PendingString(s string) string {

@@ -36,9 +36,9 @@ func (tx *Transaction) GetTimeStamp() int64 {
 	return tx.timeStamp
 }
 
-// Return "Hash|Option|timestamp"
+// Return "Hash|Option"
 func (tx *Transaction) Serialize() string {
-	s := fmt.Sprintf("%s|%s|%d", tx.hash.String(), tx.option, tx.timeStamp)
+	s := fmt.Sprintf("%s|%s", tx.hash.String(), tx.option)
 
 	return s
 }

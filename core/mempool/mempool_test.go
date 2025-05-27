@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andantan/vote-blockchain-server/core/signal"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
@@ -29,10 +28,10 @@ func TestPending(t *testing.T) {
 
 	pendingName := types.Topic("pending")
 
-	mp := NewMemPool(5*time.Second, uint32(50000))
+	mp := NewMemPool(3*time.Second, uint32(50000))
 	mp.SetChannel(nil)
 
-	err := mp.AddPending(pendingName, 10*time.Second)
+	err := mp.AddPending(pendingName, 5*time.Second)
 	assert.Nil(t, err)
 
 	pn := mp.pendings[pendingName]
@@ -75,21 +74,6 @@ func TestPending(t *testing.T) {
 	assert.Equal(t, tx1Hash, atx1.GetHash())
 	assert.Equal(t, tx2_Hash, atx2.GetHash())
 	assert.Equal(t, atx1.GetOption(), atx2.GetOption())
-
-	sync := signal.NewPendingClosing(pendingName)
-
-	t.Logf(util.YellowString("PendingClosingSignal: %+v"), sync)
-
-	startTime := time.Now()
-
-	sync.Add(1)
-	mp.closeCh <- sync
-	sync.Wait()
-	elapsedTime := time.Since(startTime)
-	time.Sleep(100 * time.Millisecond)
-	assert.False(t, mp.IsOpen(pendingName))
-
-	t.Logf(util.YellowString("PendingClosingSignalTime: %s, Closed: %t"), elapsedTime, !mp.IsOpen(pendingName))
 	t.Log(util.GreenString("+-+-+-+-+-+-+-+-+- mempool_test.go::TestPending \"END\" -+-+-+-+-+-+-+-+-+"))
 }
 
