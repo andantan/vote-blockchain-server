@@ -1,6 +1,7 @@
 package node
 
 import (
+	"sync"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/network/server"
@@ -16,7 +17,9 @@ const (
 	TestMaxTxSize = uint32(50)
 )
 
-func Start() {
+func Start(wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	BCopts := server.NewBlockChainServerOpts()
 	BCopts.SetTopicOptions("tcp", uint16(9000))
 	BCopts.SetVoteOptions("tcp", uint16(9001))
@@ -25,4 +28,5 @@ func Start() {
 	blockChainServer := server.NewBlockChainServer(BCopts)
 
 	blockChainServer.Start()
+
 }

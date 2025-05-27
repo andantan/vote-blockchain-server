@@ -29,3 +29,7 @@ func genesisProtoBlock() *ProtoBlock {
 		txx:        []*transaction.Transaction{},
 	}
 }
+
+func (pb *ProtoBlock) Len() int {
+	return len(pb.txx)
+}

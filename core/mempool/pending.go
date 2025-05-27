@@ -1,39 +1,58 @@
 package mempool
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
-	"github.com/andantan/vote-blockchain-server/core/signal"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
+const (
+	RESET_TIMER_DURATION = iota
+)
+
+const (
+	CONTEXT_TIMER_DURATION = 5 * time.Second
+	CLOSE_TIMER_DURATION   = 10 * time.Second
+)
+
 type Pending struct {
 	pendingID types.Topic // TopicID
 
-	mu          sync.RWMutex
-	txx         map[string]*transaction.Transaction
-	txCache     map[string]struct{}
-	txChannling bool // txCh flag
+	mu      sync.RWMutex
+	txx     map[string]*transaction.Transaction
+	txCache map[string]struct{}
+
+	timeout bool // txCh flag
+	closed  bool
+
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	pendingTime time.Duration // Vote duration
 	blockTime   time.Duration // Block Time (system)
 	maxTxSize   uint32        // Tx size (system)
 	//scheduledBlockHeight []uint64      // Pended block heights
 
-	transactionCH  chan *transaction.Transaction
-	pendedCh       chan<- *Pended
-	pendingCloseCh chan<- *signal.PendingClosing
+	transactionCH chan *transaction.Transaction
+	pendedCh      chan<- *Pended
 }
 
 func NewPending() *Pending {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	p := &Pending{
 		txx:     make(map[string]*transaction.Transaction),
 		txCache: make(map[string]struct{}),
+		timeout: false,
+		closed:  false,
+		ctx:     ctx,
+		cancel:  cancel,
 	}
 
 	return p
@@ -49,15 +68,10 @@ func (p *Pending) SetPendingOptions(pendingId types.Topic, pendingTime time.Dura
 	p.pendingTime = pendingTime
 }
 
-func (p *Pending) SetChannel(
-	pendedCh chan<- *Pended,
-	pendingCloseCh chan<- *signal.PendingClosing,
-) {
+func (p *Pending) SetChannel(pendedCh chan<- *Pended) {
 	p.transactionCH = make(chan *transaction.Transaction)
-	p.txChannling = true
 
 	p.pendedCh = pendedCh
-	p.pendingCloseCh = pendingCloseCh
 }
 
 func (p *Pending) Len() int {
@@ -71,18 +85,52 @@ func (p *Pending) Len() int {
 func (p *Pending) Activate() {
 	blockTimer := time.NewTicker(p.blockTime)
 	pendingTimer := time.NewTicker(p.pendingTime)
+	closeTimer := time.NewTimer(RESET_TIMER_DURATION)
+	<-closeTimer.C
+	contextTimer := time.NewTimer(RESET_TIMER_DURATION)
+	<-contextTimer.C
 
 	defer log.Printf(util.PendingString("Pending: %s | Activation exited"), p.pendingID)
 	defer blockTimer.Stop()
 	defer pendingTimer.Stop()
+	defer closeTimer.Stop()
+	defer contextTimer.Stop()
 
 	for {
 		select {
+		case <-p.ctx.Done():
+			log.Printf(
+				util.PendingString("Pending: %s | Context cancelled. Initiating immediate shutdown due to external signal."),
+				p.pendingID,
+			)
+			blockTimer.Stop()
+			pendingTimer.Stop()
+			closeTimer.Stop()
+
+			p.interruptPending()
+
+			contextTimer.Reset(CONTEXT_TIMER_DURATION)
+
+		case <-contextTimer.C:
+			log.Printf(
+				util.PendingString("Pending: %s | Grace period (%s) for transaction finalization ended. Closing transaction channel to prevent panics."),
+				p.pendingID,
+				CONTEXT_TIMER_DURATION,
+			)
+
+			p.closeTxChannel()
+			p.closedTxChFlush()
+			p.flushIfNotEmpty()
+			p.clearTxCache()
+
+			return
+
 		case tx, ok := <-p.transactionCH:
 			if !ok {
-				p.stopReceivingTx(false)
+				p.timeoutPending()
 				p.closedTxChFlush()
 				p.clearTxCache()
+				p.closePending()
 				return
 			}
 
@@ -94,10 +142,17 @@ func (p *Pending) Activate() {
 		case <-pendingTimer.C:
 			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
 
-			p.stopReceivingTx(true)
+			p.timeoutPending()
+			closeTimer.Reset(CONTEXT_TIMER_DURATION)
+
+		case <-closeTimer.C:
+			log.Printf(util.PendingString("Pending: %s | Pending is now on closing"), p.pendingID)
+
+			p.closeTxChannel()
 			p.closedTxChFlush()
 			p.flushIfNotEmpty()
 			p.clearTxCache()
+			p.closePending()
 			return
 		}
 	}
@@ -110,10 +165,6 @@ func (p *Pending) PushTx(tx *transaction.Transaction) error {
 
 	p.mu.Lock()
 	defer p.mu.Unlock()
-
-	if !p.txChannling {
-		return fmt.Errorf("pending %s is not channeling transactions (closed or shutting down)", p.pendingID)
-	}
 
 	select {
 	case p.transactionCH <- tx:
@@ -136,14 +187,10 @@ func (p *Pending) processTxWithResetTimer(tx *transaction.Transaction, blockTime
 	}
 }
 
-func (p *Pending) stopReceivingTx(txChClose bool) {
-	if txChClose {
-		close(p.transactionCH)
+func (p *Pending) closeTxChannel() {
+	close(p.transactionCH)
 
-		log.Printf(util.PendingString("Pending: %s | Transaction channel closed."), p.pendingID)
-	}
-
-	p.unChanneling()
+	log.Printf(util.PendingString("Pending: %s | Transaction channel closed."), p.pendingID)
 }
 
 func (p *Pending) flush() {
@@ -166,7 +213,7 @@ func (p *Pending) flushIfNotEmpty() {
 
 func (p *Pending) closedTxChFlush() {
 	log.Printf(
-		util.PendingString("Pending: %s | Transaction channel closed by sender. Exiting transaction processing loop."),
+		util.PendingString("Pending: %s | Flushing closed tx channel"),
 		p.pendingID,
 	)
 
@@ -177,7 +224,7 @@ func (p *Pending) closedTxChFlush() {
 			p.emitAndFlush()
 		}
 
-		log.Printf(util.PendingString("Pending: %s | Flushed remaining transaction during shutdown."), p.pendingID)
+		log.Printf(util.PendingString("Pending: %s | Flushed remaining transaction during shutdown"), p.pendingID)
 	}
 }
 
@@ -223,22 +270,50 @@ func (p *Pending) cache(tx *transaction.Transaction) {
 
 func (p *Pending) clearTxCache() {
 	p.mu.Lock()
-	p.txCache = make(map[string]struct{})
 	defer p.mu.Unlock()
 
-	log.Printf(util.PendingString("Pending: %s | TxCache cleared for memory optimization."), p.pendingID)
+	txCachedLength := len(p.txCache)
+
+	p.txCache = make(map[string]struct{})
+
+	clearedTxCacheLength := len(p.txCache)
+
+	log.Printf(util.PendingString("Pending: %s | TxCache cleared { txCachedLength: %d, clearedTxCacheLength: %d }"),
+		p.pendingID, txCachedLength, clearedTxCacheLength)
 }
 
-func (p *Pending) IsPendingChanneled() bool {
+func (p *Pending) IsTimeout() bool {
 	p.mu.RLock()
-	c := p.txChannling
-	p.mu.RUnlock()
+	defer p.mu.RUnlock()
 
-	return c
+	return p.timeout
 }
 
-func (p *Pending) unChanneling() {
+func (p *Pending) IsClosed() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	return p.closed
+}
+
+func (p *Pending) timeoutPending() {
 	p.mu.Lock()
-	p.txChannling = false
-	p.mu.Unlock()
+	defer p.mu.Unlock()
+
+	p.timeout = true
+}
+
+func (p *Pending) closePending() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.closed = true
+}
+
+func (p *Pending) interruptPending() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.timeout = true
+	p.closed = true
 }

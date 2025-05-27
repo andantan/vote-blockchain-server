@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
@@ -18,7 +19,7 @@ const (
 )
 
 const (
-	GRPC_REQUEST_BUFFER_SIZE = 128
+	GRPC_REQUEST_BUFFER_SIZE = 1024
 )
 
 // gRPC Network and port options
@@ -72,6 +73,7 @@ type BlockChainServer struct {
 	blockChain *blockchain.BlockChain
 
 	pendedCh     <-chan *mempool.Pended
+	protoBlockCh chan<- *block.ProtoBlock
 	ExitSignalCh chan uint8
 }
 
@@ -82,7 +84,7 @@ func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
 
 	server.Initialize()
 
-	log.Println(util.SystemString("SYSTEM: BlockChainServer generated"))
+	log.Println(util.SystemString("SYSTEM: BlockChainServer engine generated"))
 
 	return server
 }
@@ -100,7 +102,7 @@ func (s *BlockChainServer) Initialize() {
 
 func (s *BlockChainServer) setgRPCServer() {
 	log.Printf(
-		util.SystemString("SYSTEM: BlockChainServer setting gRPC server... | GRPC_REQUEST_BUFFER_SIZE=%d"),
+		util.SystemString("SYSTEM: BlockChainServer setting gRPC server... | { GRPC_REQUEST_BUFFER_SIZE: %d }"),
 		GRPC_REQUEST_BUFFER_SIZE,
 	)
 
@@ -150,6 +152,8 @@ func (s *BlockChainServer) setChannel() {
 	s.mempool.SetChannel()
 
 	s.pendedCh = s.mempool.Produce()
+	s.protoBlockCh = s.blockChain.ProtoBlockProducer()
+
 	s.ExitSignalCh = make(chan uint8)
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting channel is done."))
@@ -162,6 +166,18 @@ labelServer:
 	for {
 		select {
 		case topic := <-s.RequestTopicCh:
+
+			// TODO Make this tender
+			if strings.Compare(string(topic.Topic), "exit") == 0 {
+				topic.ResponseCh <- s.GetSuccessSubmitTopic("shutdown")
+
+				s.BlockChainTopicServer.Shutdown()
+				s.BlockChainVoteServer.Shutdown()
+				s.mempool.Shutdown()
+				s.blockChain.Shutdown()
+
+				break labelServer
+			}
 
 			if err := s.mempool.AddPending(topic.Topic, topic.Duration); err != nil {
 				topic.ResponseCh <- s.GetErrorSubmitTopic(err.Error())
@@ -208,19 +224,23 @@ func (s *BlockChainServer) getVoteListenerOpts() (network string, port uint16) {
 	return s.BlockChainServerOpts.VotegRPCNetwork, s.BlockChainServerOpts.VotegRPCNetworkPort
 }
 
-func (s *BlockChainServer) createNewBlock(p *mempool.Pended) (*block.Block, error) {
-	prevHeight := s.blockChain.Height()
-	prevHeader, err := s.blockChain.GetHeader(prevHeight)
-
-	if err != nil {
-		return nil, err
-	}
+func (s *BlockChainServer) createNewBlock(p *mempool.Pended) {
+	// prevHeight := s.blockChain.Height()
+	// prevHeader, _ := s.blockChain.GetHeader(prevHeight)
 
 	currentProtoBlock := block.NewProtoBlock(p.GetPendingID(), p.GetTxx())
-	currentBlock := block.NewBlockFromPrevHeader(prevHeader, currentProtoBlock)
+	// currentBlock := block.NewBlockFromPrevHeader(prevHeader, currentProtoBlock)
 
-	log.Printf(util.BlockString("NEW BLOCK: %s | { BlockHash: %s, TxLength: %d }"),
-		p.GetPendingID(), currentBlock.BlockHash, len(currentBlock.Transactions))
+	// log.Printf(util.BlockString("PROTOBLOCK: %s | { BlockHash: %s, TxLength: %d }"),
+	// 	p.GetPendingID(), currentProtoBlock.MerkleRoot, currentProtoBlock.Len())
 
-	return nil, nil
+	select {
+	case s.protoBlockCh <- currentProtoBlock:
+		return
+	default:
+		log.Printf(util.BlockChainString("failed to push block %s: block channel is likely full or closed during send attempt"),
+			currentProtoBlock.VotingID,
+		)
+		return
+	}
 }

@@ -1,13 +1,17 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/andantan/vote-blockchain-server/node"
 )
 
 func main() {
-	quitch := make(chan struct{})
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	// quitch := make(chan struct{})
 
-	go node.Start()
-
-	<-quitch
+	go node.Start(wg)
+	wg.Wait()
+	//<-quitch
 }

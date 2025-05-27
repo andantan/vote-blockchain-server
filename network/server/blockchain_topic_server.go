@@ -15,12 +15,19 @@ import (
 
 type BlockChainTopicServer struct {
 	topic_message.UnimplementedBlockchainTopicServiceServer
+	grpcServer     *grpc.Server
 	RequestTopicCh chan *gRPC.PreTxTopic
+	ctx            context.Context
+	cancel         context.CancelFunc
 }
 
 func NewBlockChainTopicServer(bufferSize int) *BlockChainTopicServer {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &BlockChainTopicServer{
 		RequestTopicCh: make(chan *gRPC.PreTxTopic, bufferSize),
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 }
 
@@ -43,6 +50,7 @@ func (s *BlockChainTopicServer) SubmitTopic(
 }
 
 func (s *BlockChainTopicServer) startTopicListener(network string, port uint16, exitCh chan<- uint8) {
+
 	address := fmt.Sprintf(":%d", port) // ":port"
 
 	lis, err := net.Listen(network, address)
@@ -52,13 +60,15 @@ func (s *BlockChainTopicServer) startTopicListener(network string, port uint16, 
 		exitCh <- EXIT_SIGNAL
 	}
 
-	grpcServer := grpc.NewServer()
+	s.grpcServer = grpc.NewServer()
 
-	topic_message.RegisterBlockchainTopicServiceServer(grpcServer, s)
+	go s.stopTopicListener()
+
+	topic_message.RegisterBlockchainTopicServiceServer(s.grpcServer, s)
 
 	log.Printf(util.SystemString("SYSTEM: Topic gRPC listener opened { port: %d }"), port)
 
-	if err := grpcServer.Serve(lis); err != nil {
+	if err := s.grpcServer.Serve(lis); err != nil {
 		log.Printf(util.FatalString("failed to server gRPC listener (Topic) over port %d: %v"), port, err)
 		exitCh <- EXIT_SIGNAL
 	}
@@ -70,4 +80,19 @@ func (s *BlockChainTopicServer) GetSuccessSubmitTopic(message string) *gRPC.Post
 
 func (s *BlockChainTopicServer) GetErrorSubmitTopic(message string) *gRPC.PostTxTopic {
 	return gRPC.GetPostTxTopic("ERROR", message, false)
+}
+
+func (s *BlockChainTopicServer) stopTopicListener() {
+	defer close(s.RequestTopicCh)
+
+	<-s.ctx.Done()
+	log.Println(util.SystemString("SYSTEM: Topic gRPC server received shutdown signal. Gracefully stopping..."))
+	s.grpcServer.GracefulStop()
+	log.Println(util.SystemString("SYSTEM: Topic gRPC server stopped"))
+}
+
+func (s *BlockChainTopicServer) Shutdown() {
+	log.Println(util.SystemString("SYSTEM: Requesting BlockChainTopicServer to stop"))
+	s.cancel()
+	log.Println(util.SystemString("SYSTEM: BlockChainTopicServer has stopped"))
 }

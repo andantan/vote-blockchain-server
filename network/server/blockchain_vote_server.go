@@ -15,12 +15,19 @@ import (
 
 type BlockChainVoteServer struct {
 	vote_message.UnimplementedBlockchainVoteServiceServer
+	grpcServer    *grpc.Server
 	RequestVoteCh chan *gRPC.PreTxVote
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 func NewBlockChainVoteServer(bufferSize int) *BlockChainVoteServer {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &BlockChainVoteServer{
 		RequestVoteCh: make(chan *gRPC.PreTxVote, bufferSize),
+		ctx:           ctx,
+		cancel:        cancel,
 	}
 }
 
@@ -58,13 +65,15 @@ func (s *BlockChainVoteServer) startVoteListener(network string, port uint16, ex
 		exitCh <- EXIT_SIGNAL
 	}
 
-	grpcServer := grpc.NewServer()
+	s.grpcServer = grpc.NewServer()
 
-	vote_message.RegisterBlockchainVoteServiceServer(grpcServer, s)
+	go s.stopVoteListener()
+
+	vote_message.RegisterBlockchainVoteServiceServer(s.grpcServer, s)
 
 	log.Printf(util.SystemString("SYSTEM: Vote gRPC listener opened { port: %d }"), port)
 
-	if err := grpcServer.Serve(lis); err != nil {
+	if err := s.grpcServer.Serve(lis); err != nil {
 		log.Printf(util.FatalString("failed to server gRPC listener (Vote) over port %d: %v"), port, err)
 		exitCh <- EXIT_SIGNAL
 	}
@@ -76,4 +85,19 @@ func (s *BlockChainVoteServer) GetSuccessSubmitVote(message string) *gRPC.PostTx
 
 func (s *BlockChainVoteServer) GetErrorSubmitVote(message string) *gRPC.PostTxVote {
 	return gRPC.GetPostTxVote("ERROR", message, false)
+}
+
+func (s *BlockChainVoteServer) stopVoteListener() {
+	defer close(s.RequestVoteCh)
+
+	<-s.ctx.Done()
+	log.Println(util.SystemString("SYSTEM: Vote gRPC server received shutdown signal. Gracefully stopping..."))
+	s.grpcServer.GracefulStop()
+	log.Println(util.SystemString("SYSTEM: Vote gRPC server stopped"))
+}
+
+func (s *BlockChainVoteServer) Shutdown() {
+	log.Println(util.SystemString("SYSTEM: Requesting BlockChainVoteServer to stop"))
+	s.cancel()
+	log.Println(util.SystemString("SYSTEM: BlockChainVoteServer has stopped"))
 }

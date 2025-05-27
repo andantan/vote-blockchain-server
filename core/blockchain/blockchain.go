@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -11,40 +10,28 @@ import (
 )
 
 const (
-	BLOCK_REQUEST_BUFFER_SIZE = 16
+	BLOCK_REQUEST_BUFFER_SIZE = 64
 )
 
 type BlockChain struct {
-	mu      sync.RWMutex
-	headers []*block.Header
-
-	ctx    context.Context
-	cancel context.CancelFunc
-	wg     *sync.WaitGroup
-
-	blockCh chan *block.Block
+	mu           sync.RWMutex
+	headers      []*block.Header
+	wg           *sync.WaitGroup
+	protoBlockCh chan *block.ProtoBlock
 }
 
 func NewBlockChain() *BlockChain {
-	ctx, cancel := context.WithCancel(context.Background())
 
 	bc := &BlockChain{
 		headers: []*block.Header{},
-		ctx:     ctx,
-		cancel:  cancel,
 		wg:      &sync.WaitGroup{},
-		blockCh: make(chan *block.Block, BLOCK_REQUEST_BUFFER_SIZE),
 	}
 
-	// sync go-routine Activate()
+	bc.setChannel()
+
 	bc.wg.Add(1)
 
 	go bc.Activate()
-
-	log.Printf(
-		util.BlockChainString("BLOCKCHAIN: activate blockchain  { BLOCK_REQUEST_BUFFER_SIZE: %d }"),
-		BLOCK_REQUEST_BUFFER_SIZE,
-	)
 
 	return bc
 }
@@ -56,6 +43,17 @@ func NewBlockChainWithGenesisBlock() *BlockChain {
 	bc.attachBlock(gb)
 
 	return bc
+}
+
+func (bc *BlockChain) setChannel() {
+	log.Printf(
+		util.SystemString("SYSTEM: Blockchain setting channel... | { BLOCK_REQUEST_BUFFER_SIZE: %d }"),
+		BLOCK_REQUEST_BUFFER_SIZE,
+	)
+
+	bc.protoBlockCh = make(chan *block.ProtoBlock, BLOCK_REQUEST_BUFFER_SIZE)
+
+	log.Println(util.SystemString("SYSTEM: Blockchain block channel setting is done."))
 }
 
 func (bc *BlockChain) GetHeader(height uint32) (*block.Header, error) {
@@ -82,32 +80,26 @@ func (bc *BlockChain) attachBlock(b *block.Block) {
 	bc.mu.Unlock()
 }
 
-func (bc *BlockChain) Produce() chan<- *block.Block {
-	return bc.blockCh
+func (bc *BlockChain) ProtoBlockProducer() chan<- *block.ProtoBlock {
+	return bc.protoBlockCh
 }
 
 func (bc *BlockChain) Activate() {
-	defer close(bc.blockCh)
 	defer bc.wg.Done()
 
-	for {
-		select {
-		case <-bc.ctx.Done():
-			// TODO something...
-			return
-		case newBlock := <-bc.blockCh:
-			log.Printf(util.BlockChainString("BLOCKCHAIN: received block %s | { BlockHash: %s, TxLength: %d }"),
-				newBlock.VotingID, newBlock.BlockHash, len(newBlock.Transactions))
-		}
+	log.Println(util.BlockChainString("BLOCKCHAIN: Starting block receiver and processor goroutine"))
+
+	for pb := range bc.protoBlockCh {
+		log.Printf(util.BlockChainString("BLOCKCHAIN: received protoBlock %s | { MerkleRoot: %s, TxxLength: %d }"),
+			pb.VotingID, pb.MerkleRoot, pb.Len())
 	}
+
+	log.Println(util.BlockChainString("BLOCKCHAIN: Block receiver and processor goroutine exited"))
 }
 
-func (bc *BlockChain) Stop() {
-	log.Println(util.SystemString("BlockChainServer: Stopping..."))
-
-	bc.cancel()
-
+func (bc *BlockChain) Shutdown() {
+	log.Println(util.BlockChainString("BLOCKCHAIN: Initiating shutdown for BlockChain. Closing protoBlock channel"))
+	close(bc.protoBlockCh)
 	bc.wg.Wait()
-
-	log.Println(util.SystemString("BlockChainServer: Stopped."))
+	log.Println(util.BlockChainString("BLOCKCHAIN: BlockChain shutdown complete"))
 }
