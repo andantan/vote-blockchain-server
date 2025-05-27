@@ -18,8 +18,7 @@ const (
 )
 
 const (
-	GRPC_REQUEST_BUFFER_SIZE   = 128
-	PENDED_REQUEST_BUFFER_SIZE = 64
+	GRPC_REQUEST_BUFFER_SIZE = 128
 )
 
 // gRPC Network and port options
@@ -72,7 +71,7 @@ type BlockChainServer struct {
 	mempool    *mempool.MemPool
 	blockChain *blockchain.BlockChain
 
-	pendedCh     chan *mempool.Pended
+	pendedCh     <-chan *mempool.Pended
 	ExitSignalCh chan uint8
 }
 
@@ -148,10 +147,9 @@ func (s *BlockChainServer) setBlockChain() {
 func (s *BlockChainServer) setChannel() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting channel..."))
 
-	s.pendedCh = make(chan *mempool.Pended, PENDED_REQUEST_BUFFER_SIZE)
+	s.mempool.SetChannel()
 
-	s.mempool.SetChannel(s.pendedCh)
-
+	s.pendedCh = s.mempool.Produce()
 	s.ExitSignalCh = make(chan uint8)
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting channel is done."))

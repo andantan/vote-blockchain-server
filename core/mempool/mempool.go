@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	PENDED_REQUEST_BUFFER_SIZE = 64
 	PENDING_CLOSED_BUFFER_SIZE = 64
 )
 
@@ -23,7 +24,7 @@ type MemPool struct {
 	mu       sync.RWMutex
 	pendings map[types.Topic]*Pending
 
-	pendedCh       chan<- *Pended
+	pendedCh       chan *Pended
 	pendingCloseCh chan *signal.PendingClosing
 }
 
@@ -39,16 +40,22 @@ func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 	return mp
 }
 
-func (mp *MemPool) SetChannel(pendedCh chan<- *Pended) {
+func (mp *MemPool) SetChannel() {
 	log.Printf(
-		util.SystemString("SYSTEM: Memory pool setting channel... | { PENDING_CLOSED_BUFFER_SIZE: %d }"),
+		util.SystemString("SYSTEM: Memory pool setting channel... | { PENDED_REQUEST_BUFFER_SIZE: %d, PENDING_CLOSED_BUFFER_SIZE: %d }"),
+		PENDED_REQUEST_BUFFER_SIZE,
 		PENDING_CLOSED_BUFFER_SIZE,
 	)
 
-	mp.pendedCh = pendedCh
+	mp.pendedCh = make(chan *Pended, PENDED_REQUEST_BUFFER_SIZE)
 	log.Println(util.SystemString("SYSTEM: Memory pool pended channel setting is done."))
+
 	mp.pendingCloseCh = make(chan *signal.PendingClosing, PENDING_CLOSED_BUFFER_SIZE)
 	log.Println(util.SystemString("SYSTEM: Memory pool pendingClose channel setting is done."))
+}
+
+func (mp *MemPool) Produce() <-chan *Pended {
+	return mp.pendedCh
 }
 
 func (mp *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) error {

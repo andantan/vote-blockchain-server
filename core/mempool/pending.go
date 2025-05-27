@@ -81,6 +81,8 @@ func (p *Pending) Activate() {
 		case tx, ok := <-p.transactionCH:
 			if !ok {
 				p.stopReceivingTx(false)
+				p.closedTxChFlush()
+				p.clearTxCache()
 				return
 			}
 
@@ -93,7 +95,9 @@ func (p *Pending) Activate() {
 			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
 
 			p.stopReceivingTx(true)
+			p.closedTxChFlush()
 			p.flushIfNotEmpty()
+			p.clearTxCache()
 			return
 		}
 	}
@@ -104,9 +108,23 @@ func (p *Pending) PushTx(tx *transaction.Transaction) error {
 		return fmt.Errorf("given tx (%s) is already commited", tx.GetHashString())
 	}
 
-	p.transactionCH <- tx
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	return nil
+	if !p.txChannling {
+		return fmt.Errorf("pending %s is not channeling transactions (closed or shutting down)", p.pendingID)
+	}
+
+	select {
+	case p.transactionCH <- tx:
+		return nil
+	default:
+		return fmt.Errorf("failed to push tx %s | %s: transaction channel is likely full or closed during send attempt",
+			p.pendingID,
+			tx.GetHashString(),
+		)
+	}
+
 }
 
 func (p *Pending) processTxWithResetTimer(tx *transaction.Transaction, blockTimer *time.Ticker) {
@@ -126,7 +144,6 @@ func (p *Pending) stopReceivingTx(txChClose bool) {
 	}
 
 	p.unChanneling()
-	p.closedTxChFlush()
 }
 
 func (p *Pending) flush() {
@@ -202,6 +219,14 @@ func (p *Pending) commit(tx *transaction.Transaction) {
 
 func (p *Pending) cache(tx *transaction.Transaction) {
 	p.txCache[tx.GetHashString()] = struct{}{}
+}
+
+func (p *Pending) clearTxCache() {
+	p.mu.Lock()
+	p.txCache = make(map[string]struct{})
+	defer p.mu.Unlock()
+
+	log.Printf(util.PendingString("Pending: %s | TxCache cleared for memory optimization."), p.pendingID)
 }
 
 func (p *Pending) IsPendingChanneled() bool {

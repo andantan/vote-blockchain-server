@@ -92,6 +92,9 @@ func (bc *BlockChain) Activate() {
 
 	for {
 		select {
+		case <-bc.ctx.Done():
+			// TODO something...
+			return
 		case newBlock := <-bc.blockCh:
 			log.Printf(util.BlockChainString("BLOCKCHAIN: received block %s | { BlockHash: %s, TxLength: %d }"),
 				newBlock.VotingID, newBlock.BlockHash, len(newBlock.Transactions))
