@@ -77,15 +77,10 @@ func (p *Pending) Len() int {
 	return l
 }
 
-// func (p *Pending) Transactions() *transaction.SortedTxx {
-// 	s := transaction.NewSortedTxx(p.txx)
-
-// 	return s
-// }
-
 func (p *Pending) Activate() {
-	defer log.Printf(util.PendingString("Pending: %s | Activation exited."), p.pendingID)
+	defer log.Printf(util.PendingString("Pending: %s | Activation exited"), p.pendingID)
 	defer p.wg.Done()
+	defer close(p.transactionCH)
 
 	blockTimer := time.NewTicker(p.blockTime)
 	defer blockTimer.Stop()

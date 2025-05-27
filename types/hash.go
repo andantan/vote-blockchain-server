@@ -96,6 +96,18 @@ func HashFromBytes(b []byte) Hash {
 	return Hash(t)
 }
 
+// If string is valid then return Hash, true
+// else return nil, false
+func IsValidHashString(s string) (Hash, bool) {
+	h, err := hex.DecodeString(s)
+
+	if err != nil {
+		return Hash{}, false
+	}
+
+	return Hash(h), true
+}
+
 func HashFromHashString(s string) (Hash, error) {
 	h, err := hex.DecodeString(s)
 

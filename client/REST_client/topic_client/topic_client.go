@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/andantan/vote-blockchain-server/util"
 )
 
 const (
@@ -15,6 +17,10 @@ const (
 	ADDRESS  = "localhost"
 	PORT     = 8080
 	API      = "topic/new"
+)
+
+var (
+	URL string = fmt.Sprintf("%s://%s:%d/%s", PROTOCOL, ADDRESS, PORT, API)
 )
 
 type Topic struct {
@@ -36,10 +42,25 @@ type TopicResponse struct {
 }
 
 func main() {
-	url := fmt.Sprintf("%s://%s:%d/%s", PROTOCOL, ADDRESS, PORT, API)
 
-	topic := NewTopic("2025 경선", 1)
+	topics := []*Topic{
+		NewTopic("2025 대선", 1),
+		NewTopic("2025 경선", 2),
+		NewTopic("2025 보건의료 여론조사", 2),
+		NewTopic("법률개정안 찬반 투표", 1),
+		NewTopic("상법개정안 시범 기간 조사", 2),
+	}
 
+	for _, topic := range topics {
+		response := RequestTopic(topic)
+
+		fmt.Printf("POST Response Body: %+v\n", response)
+
+		time.Sleep(time.Duration(util.RandRange(1, 3)) * time.Second)
+	}
+}
+
+func RequestTopic(topic *Topic) *TopicResponse {
 	jsonData, err := json.Marshal(topic)
 
 	if err != nil {
@@ -50,7 +71,7 @@ func main() {
 		Timeout: time.Second * 10,
 	}
 
-	resp, err := client.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := client.Post(URL, "application/json", bytes.NewBuffer(jsonData))
 
 	if err != nil {
 		log.Fatalf("error POST request: %v", err)
@@ -70,6 +91,5 @@ func main() {
 		log.Fatalf("error unmarshalling response JSON: %v", err)
 	}
 
-	fmt.Printf("POST Response Status: %s\n", resp.Status)
-	fmt.Printf("POST Response Body (unmarshalled): %+v", response)
+	return &response
 }
