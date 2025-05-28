@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
+	"github.com/andantan/vote-blockchain-server/storage/store"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
@@ -17,15 +18,19 @@ type BlockChain struct {
 	mu           sync.RWMutex
 	headers      []*block.Header
 	wg           *sync.WaitGroup
+	storer       *store.JsonStorer
 	protoBlockCh chan *block.ProtoBlock
 }
 
-func NewBlockChain() *BlockChain {
+func NewBlockChain(storer *store.JsonStorer) *BlockChain {
 
 	bc := &BlockChain{
 		headers: []*block.Header{},
 		wg:      &sync.WaitGroup{},
+		storer:  storer,
 	}
+
+	// log.Printf("%p", storer)
 
 	bc.setChannel()
 
@@ -36,11 +41,12 @@ func NewBlockChain() *BlockChain {
 	return bc
 }
 
-func NewBlockChainWithGenesisBlock() *BlockChain {
+func NewBlockChainWithGenesisBlock(storer *store.JsonStorer) *BlockChain {
 	gb := block.GenesisBlock()
-	bc := NewBlockChain()
+	bc := NewBlockChain(storer)
 
 	bc.attachBlock(gb)
+	bc.storer.SaveBlock(gb)
 
 	return bc
 }
@@ -125,6 +131,8 @@ func (bc *BlockChain) Activate() {
 			currentBlock.BlockHash.String(),
 			len(currentBlock.Transactions),
 		)
+
+		bc.storer.SaveBlock(currentBlock)
 	}
 
 	log.Println(util.BlockChainString("BLOCKCHAIN: Block receiver and processor goroutine exited"))

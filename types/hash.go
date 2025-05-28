@@ -3,6 +3,7 @@ package types
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 )
 
@@ -71,6 +72,10 @@ func (h Hash) ToSlice() []byte {
 
 func (h Hash) String() string {
 	return hex.EncodeToString(h.ToSlice())
+}
+
+func (h Hash) MarshalJSON() ([]byte, error) {
+	return json.Marshal(h.String())
 }
 
 func HashFromString(s string) Hash {

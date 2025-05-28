@@ -80,7 +80,7 @@ func main() {
 		"K-콘텐츠 해외 진출 전략",
 	}
 
-	max := 2
+	max := 6
 
 	wg.Add(max)
 

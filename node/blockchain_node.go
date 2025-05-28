@@ -17,6 +17,11 @@ const (
 	TestMaxTxSize = uint32(50)
 )
 
+const (
+	STORE_BASE_DIR   = "./"
+	STORE_BLOCKS_DIR = "blocks"
+)
+
 func Start(wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -25,6 +30,7 @@ func Start(wg *sync.WaitGroup) {
 	BCopts.SetVoteOptions("tcp", uint16(9001))
 	BCopts.SetControllOptions(BlockTime, MaxTxSize)
 	// BCopts.SetControllOptions(TestBlockTime, TestMaxTxSize)
+	BCopts.SetStorerDirectoryOptions(STORE_BASE_DIR, STORE_BLOCKS_DIR)
 	blockChainServer := server.NewBlockChainServer(BCopts)
 
 	blockChainServer.Start()

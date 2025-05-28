@@ -7,38 +7,38 @@ import (
 )
 
 type Transaction struct {
-	hash      types.Hash
-	option    string
-	timeStamp int64
+	Hash      types.Hash `json:"hash"`
+	Option    string     `json:"option"`
+	TimeStamp int64      `json:"time_stamp"`
 }
 
 func NewTransaction(hash types.Hash, option string, timeStamp int64) *Transaction {
 	return &Transaction{
-		hash:      hash,
-		option:    option,
-		timeStamp: timeStamp,
+		Hash:      hash,
+		Option:    option,
+		TimeStamp: timeStamp,
 	}
 }
 
 func (tx *Transaction) GetHash() types.Hash {
-	return tx.hash
+	return tx.Hash
 }
 
 func (tx *Transaction) GetHashString() string {
-	return tx.hash.String()
+	return tx.Hash.String()
 }
 
 func (tx *Transaction) GetOption() string {
-	return tx.option
+	return tx.Option
 }
 
 func (tx *Transaction) GetTimeStamp() int64 {
-	return tx.timeStamp
+	return tx.TimeStamp
 }
 
 // Return "Hash|Option"
 func (tx *Transaction) Serialize() string {
-	s := fmt.Sprintf("%s|%s", tx.hash.String(), tx.option)
+	s := fmt.Sprintf("%s|%s", tx.Hash.String(), tx.Option)
 
 	return s
 }

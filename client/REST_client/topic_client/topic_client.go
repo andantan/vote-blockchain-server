@@ -47,9 +47,9 @@ func main() {
 
 	topics := []*Topic{
 		NewTopic("2025 대선", 2),
-		NewTopic("2025 경선", 2),
+		NewTopic("2025 경선", 1),
 		NewTopic("2025 보건의료 여론조사", 2),
-		NewTopic("법률개정안 찬반 투표", 2),
+		NewTopic("법률개정안 찬반 투표", 3),
 		NewTopic("상법개정안 시범 기간 조사", 3),
 		NewTopic("기후변화 대응 방안 선호도 조사", 1),
 		NewTopic("인공지능 교육 도입 찬반 설문", 1),
@@ -78,7 +78,7 @@ func main() {
 		NewTopic("K-콘텐츠 해외 진출 전략", 2),
 	}
 
-	max := 2
+	max := 6
 
 	wg.Add(max)
 

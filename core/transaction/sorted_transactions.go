@@ -40,10 +40,10 @@ func (s *SortedTxx) Swap(i, j int) {
 
 func (s *SortedTxx) Less(i, j int) bool {
 	// Alphabetical order
-	if s.txx[i].timeStamp == s.txx[j].timeStamp {
+	if s.txx[i].TimeStamp == s.txx[j].TimeStamp {
 		return s.txx[i].GetHashString() < s.txx[j].GetHashString()
 	}
-	return s.txx[i].timeStamp < s.txx[j].timeStamp
+	return s.txx[i].TimeStamp < s.txx[j].TimeStamp
 }
 
 func (s *SortedTxx) GetTxx() []*Transaction {

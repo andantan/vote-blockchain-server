@@ -6,9 +6,9 @@ import (
 )
 
 type Block struct {
-	*Header
-	BlockHash    types.Hash // BLOCK HASH
-	Transactions []*transaction.Transaction
+	*Header      `json:"header"`
+	BlockHash    types.Hash                 `json:"block_hash"`
+	Transactions []*transaction.Transaction `json:"transactions"`
 }
 
 func NewBlock(h *Header, txx []*transaction.Transaction) *Block {

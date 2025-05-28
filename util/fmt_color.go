@@ -78,6 +78,10 @@ func BlockChainString(s string) string {
 	return GreenString(s)
 }
 
+func StorerString(s string) string {
+	return YellowString(s)
+}
+
 func FatalString(s string) string {
 	return RedString(s)
 }

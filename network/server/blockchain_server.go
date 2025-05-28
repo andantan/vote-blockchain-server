@@ -9,6 +9,7 @@ import (
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/core/blockchain"
 	"github.com/andantan/vote-blockchain-server/core/mempool"
+	"github.com/andantan/vote-blockchain-server/storage/store"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
@@ -54,9 +55,20 @@ func (o *BlockChainServerOpts) SetControllOptions(blockTime time.Duration, maxTx
 	o.MaxTxSize = maxTxSize
 }
 
+type BlockChainStorerOpts struct {
+	StoreBaseDirectory   string
+	StoreBlocksDirectory string
+}
+
+func (o *BlockChainStorerOpts) SetStorerDirectoryOptions(baseDir, blocksDir string) {
+	o.StoreBaseDirectory = baseDir
+	o.StoreBlocksDirectory = blocksDir
+}
+
 type BlockChainServerOpts struct {
 	BlockChainListenerOpts
 	BlockChainControllOpts
+	BlockChainStorerOpts
 }
 
 func NewBlockChainServerOpts() BlockChainServerOpts {
@@ -71,6 +83,7 @@ type BlockChainServer struct {
 
 	mempool    *mempool.MemPool
 	blockChain *blockchain.BlockChain
+	storer     *store.JsonStorer
 
 	pendedCh     <-chan *mempool.Pended
 	protoBlockCh chan<- *block.ProtoBlock
@@ -94,6 +107,7 @@ func (s *BlockChainServer) Initialize() {
 
 	s.setgRPCServer()
 	s.setMemPool()
+	s.setStorer()
 	s.setBlockChain()
 	s.setChannel()
 
@@ -127,10 +141,20 @@ func (s *BlockChainServer) setMemPool() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting memory pool is done."))
 }
 
+func (s *BlockChainServer) setStorer() {
+	log.Println(util.SystemString("SYSTEM: BlockChainServer storer channel..."))
+
+	base, blocks := s.getStorerDirectoryOpts()
+
+	s.storer = store.NewStore(base, blocks)
+
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting storer is done."))
+}
+
 func (s *BlockChainServer) setBlockChain() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting blockchain..."))
 
-	s.blockChain = blockchain.NewBlockChainWithGenesisBlock()
+	s.blockChain = blockchain.NewBlockChainWithGenesisBlock(s.storer)
 
 	genesisHeader, err := s.blockChain.GetHeader(0)
 
@@ -175,6 +199,7 @@ labelServer:
 				s.BlockChainVoteServer.Shutdown()
 				s.mempool.Shutdown()
 				s.blockChain.Shutdown()
+				s.storer.Shutdown()
 
 				break labelServer
 			}
@@ -222,6 +247,10 @@ func (s *BlockChainServer) getTopicListenerOpts() (network string, port uint16) 
 
 func (s *BlockChainServer) getVoteListenerOpts() (network string, port uint16) {
 	return s.BlockChainServerOpts.VotegRPCNetwork, s.BlockChainServerOpts.VotegRPCNetworkPort
+}
+
+func (s *BlockChainServer) getStorerDirectoryOpts() (baseDir string, blocksDir string) {
+	return s.BlockChainStorerOpts.StoreBaseDirectory, s.BlockChainStorerOpts.StoreBlocksDirectory
 }
 
 func (s *BlockChainServer) createNewBlock(p *mempool.Pended) {

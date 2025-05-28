@@ -167,7 +167,7 @@ func (mp *MemPool) closedPendingCollector() {
 func (mp *MemPool) closePending(pendingId types.Topic) {
 	mp.mu.Lock()
 	delete(mp.pendings, pendingId)
-	log.Printf(util.MemPoolString("MEMPOOL: Pending %s successfully removed"), pendingId)
+	log.Printf(util.MemPoolString("MEMPOOL: %s| Pending successfully removed"), pendingId)
 	mp.mu.Unlock()
 }
 
