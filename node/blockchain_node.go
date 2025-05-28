@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	BlockTime = 10 * time.Second
-	MaxTxSize = uint32(80)
+	BlockTime = 30 * time.Second
+	MaxTxSize = uint32(300)
 )
 
 const (

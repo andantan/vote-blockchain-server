@@ -80,9 +80,22 @@ func (bc *BlockChain) attachBlock(b *block.Block) {
 	bc.mu.Unlock()
 }
 
-func (bc *BlockChain) ProtoBlockProducer() chan<- *block.ProtoBlock {
+func (bc *BlockChain) Produce() chan<- *block.ProtoBlock {
 	return bc.protoBlockCh
 }
+
+const (
+	BLOCKCHAIN_NEW_CHAINED_BLOCK_LOG_MESSAGE = `BLOCKCHAIN: New block added to the chain.
+--------------------------------------------------------------------------------------
+| *H.Voting ID     : %-80s
+| *H.Merkle Root   : %-80s
+| *H.Height        : %-80d
+| *H.PrevBlockHash : %-80s
+| B.BlockHash      : %-80s
+| B.TxLength       : %-80d
+--------------------------------------------------------------------------------------
+`
+)
 
 func (bc *BlockChain) Activate() {
 	defer bc.wg.Done()
@@ -90,8 +103,28 @@ func (bc *BlockChain) Activate() {
 	log.Println(util.BlockChainString("BLOCKCHAIN: Starting block receiver and processor goroutine"))
 
 	for pb := range bc.protoBlockCh {
-		log.Printf(util.BlockChainString("BLOCKCHAIN: received protoBlock %s | { MerkleRoot: %s, TxxLength: %d }"),
-			pb.VotingID, pb.MerkleRoot, pb.Len())
+		// log.Printf(util.BlockChainString("BLOCKCHAIN: Received protoBlock %s | { MerkleRoot: %s, TxxLength: %d }"),
+		// 	pb.VotingID, pb.MerkleRoot, pb.Len())
+
+		height := bc.Height()
+		prevHeader, err := bc.GetHeader(height)
+
+		if err != nil {
+			log.Printf(util.BlockChainString("BLOCKCHAIN: GetHeader error (%s)"), err.Error())
+			continue
+		}
+
+		currentBlock := block.NewBlockFromPrevHeader(prevHeader, pb)
+		bc.attachBlock(currentBlock)
+
+		log.Printf(util.BlockChainString(BLOCKCHAIN_NEW_CHAINED_BLOCK_LOG_MESSAGE),
+			currentBlock.VotingID,
+			currentBlock.MerkleRoot.String(),
+			currentBlock.Height,
+			currentBlock.PrevBlockHash.String(),
+			currentBlock.BlockHash.String(),
+			len(currentBlock.Transactions),
+		)
 	}
 
 	log.Println(util.BlockChainString("BLOCKCHAIN: Block receiver and processor goroutine exited"))

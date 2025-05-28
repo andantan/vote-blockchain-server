@@ -152,7 +152,7 @@ func (s *BlockChainServer) setChannel() {
 	s.mempool.SetChannel()
 
 	s.pendedCh = s.mempool.Produce()
-	s.protoBlockCh = s.blockChain.ProtoBlockProducer()
+	s.protoBlockCh = s.blockChain.Produce()
 
 	s.ExitSignalCh = make(chan uint8)
 
@@ -225,22 +225,14 @@ func (s *BlockChainServer) getVoteListenerOpts() (network string, port uint16) {
 }
 
 func (s *BlockChainServer) createNewBlock(p *mempool.Pended) {
-	// prevHeight := s.blockChain.Height()
-	// prevHeader, _ := s.blockChain.GetHeader(prevHeight)
-
 	currentProtoBlock := block.NewProtoBlock(p.GetPendingID(), p.GetTxx())
-	// currentBlock := block.NewBlockFromPrevHeader(prevHeader, currentProtoBlock)
-
-	// log.Printf(util.BlockString("PROTOBLOCK: %s | { BlockHash: %s, TxLength: %d }"),
-	// 	p.GetPendingID(), currentProtoBlock.MerkleRoot, currentProtoBlock.Len())
 
 	select {
 	case s.protoBlockCh <- currentProtoBlock:
 		return
 	default:
 		log.Printf(util.BlockChainString("failed to push block %s: block channel is likely full or closed during send attempt"),
-			currentProtoBlock.VotingID,
-		)
+			currentProtoBlock.VotingID)
 		return
 	}
 }
