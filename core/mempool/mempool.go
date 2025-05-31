@@ -44,7 +44,7 @@ func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 	return mp
 }
 
-func (mp *MemPool) Produce() <-chan *Pended {
+func (mp *MemPool) Consume() <-chan *Pended {
 	return mp.pendedCh
 }
 

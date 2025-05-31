@@ -17,6 +17,10 @@ const (
 )
 
 const (
+	Tx_BUFFER_SIZE = 1024
+)
+
+const (
 	CONTEXT_TIMER_DURATION = 5 * time.Second
 	CLOSE_TIMER_DURATION   = 10 * time.Second
 )
@@ -64,7 +68,7 @@ func NewPending(opts *PendingOpts) *Pending {
 		pendingTime:   opts.pendingTime,
 		blockTime:     opts.blockTime,
 		maxTxSize:     opts.maxTxSize,
-		transactionCh: make(chan *transaction.Transaction, 1024), // TODO: txCh buffered?
+		transactionCh: make(chan *transaction.Transaction, Tx_BUFFER_SIZE),
 		pendedCh:      opts.pendedCh,
 	}
 
@@ -117,7 +121,7 @@ func (p *Pending) Activate() {
 			p.closedTxChFlush()
 			p.flushIfNotEmpty()
 			p.emitExpiredPended()
-			p.clearTxCache()
+			p.clearCache()
 			p.closePending()
 
 			return
@@ -240,7 +244,7 @@ func (p *Pending) cacheOption(tx *transaction.Transaction) {
 	p.optCache[tx.Option]++
 }
 
-func (p *Pending) clearTxCache() {
+func (p *Pending) clearCache() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -250,6 +254,22 @@ func (p *Pending) clearTxCache() {
 	p.optCache = make(map[string]int)
 
 	log.Printf(util.PendingString("Pending: %s | Cache cleared { txCachedLength: %d, %+v }"), p.pendingID, len(p.txx), p.optCache)
+}
+
+func (p *Pending) timeoutPending() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
+
+	p.timeout = true
+}
+
+func (p *Pending) closePending() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.closed = true
 }
 
 func (p *Pending) IsTimeout() bool {
@@ -264,15 +284,6 @@ func (p *Pending) IsClosed() bool {
 	defer p.mu.RUnlock()
 
 	return p.closed
-}
-
-func (p *Pending) timeoutPending() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
-
-	p.timeout = true
 }
 
 func (p *Pending) startCloseTimer() {
@@ -291,11 +302,4 @@ func (p *Pending) stopBlockTicker() {
 	log.Printf(util.PendingString("Pending: %s | Stop block ticker"), p.pendingID)
 
 	p.blockTicker.Stop()
-}
-
-func (p *Pending) closePending() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.closed = true
 }
