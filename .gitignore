@@ -1,5 +1,3 @@
-*/bin
-
-/bin/node
-blocks
-temp
+/bin/*
+/temp/*.go
+/blocks/*.json

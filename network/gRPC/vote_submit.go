@@ -60,6 +60,7 @@ func GetErrorSubmitVote(message string) *VoteSubmitResponse {
 	return NewVoteSubmitResponse("ERROR", message, false)
 }
 
+// TODO change proto message type name
 func (p *VoteSubmitResponse) GetVoteResponse() *vote_message.VoteResponse {
 	return &vote_message.VoteResponse{
 		Status:  p.Status,
