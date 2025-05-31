@@ -29,7 +29,6 @@ func TestPending(t *testing.T) {
 	pendingName := types.Topic("pending")
 
 	mp := NewMemPool(3*time.Second, uint32(50000))
-	mp.SetChannel()
 
 	err := mp.AddPending(pendingName, 5*time.Second)
 	assert.Nil(t, err)

@@ -24,9 +24,10 @@ const (
 type Pending struct {
 	pendingID types.Topic // TopicID
 
-	mu      sync.RWMutex
-	txx     map[string]*transaction.Transaction
-	txCache map[string]struct{}
+	mu       sync.RWMutex
+	txx      map[string]*transaction.Transaction
+	txCache  map[string]struct{}
+	optCache map[string]int
 
 	timeout bool // txCh flag
 	closed  bool
@@ -34,44 +35,40 @@ type Pending struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	pendingTime time.Duration // Vote duration
 	blockTime   time.Duration // Block Time (system)
-	maxTxSize   uint32        // Tx size (system)
-	//scheduledBlockHeight []uint64      // Pended block heights
+	blockTicker *time.Ticker
 
-	transactionCH chan *transaction.Transaction
-	pendedCh      chan<- *Pended
+	pendingTime   time.Duration // Vote duration
+	pendingTicker *time.Ticker
+
+	closeTimer *time.Timer
+
+	maxTxSize uint32 // Tx size (system)
+
+	transactionCh chan *transaction.Transaction
+	pendedCh      chan *Pended
 }
 
-func NewPending() *Pending {
+func NewPending(opts *PendingOpts) *Pending {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	p := &Pending{
-		txx:     make(map[string]*transaction.Transaction),
-		txCache: make(map[string]struct{}),
-		timeout: false,
-		closed:  false,
-		ctx:     ctx,
-		cancel:  cancel,
+		pendingID:     opts.pendingID,
+		txx:           make(map[string]*transaction.Transaction),
+		txCache:       make(map[string]struct{}),
+		optCache:      make(map[string]int),
+		timeout:       false,
+		closed:        false,
+		ctx:           ctx,
+		cancel:        cancel,
+		pendingTime:   opts.pendingTime,
+		blockTime:     opts.blockTime,
+		maxTxSize:     opts.maxTxSize,
+		transactionCh: make(chan *transaction.Transaction, 1024), // TODO: txCh buffered?
+		pendedCh:      opts.pendedCh,
 	}
 
 	return p
-}
-
-func (p *Pending) SetLimitOptions(maxTxSize uint32, blockTime time.Duration) {
-	p.maxTxSize = maxTxSize
-	p.blockTime = blockTime
-}
-
-func (p *Pending) SetPendingOptions(pendingId types.Topic, pendingTime time.Duration) {
-	p.pendingID = pendingId
-	p.pendingTime = pendingTime
-}
-
-func (p *Pending) SetChannel(pendedCh chan<- *Pended) {
-	p.transactionCH = make(chan *transaction.Transaction)
-
-	p.pendedCh = pendedCh
 }
 
 func (p *Pending) Len() int {
@@ -83,76 +80,46 @@ func (p *Pending) Len() int {
 }
 
 func (p *Pending) Activate() {
-	blockTimer := time.NewTicker(p.blockTime)
-	pendingTimer := time.NewTicker(p.pendingTime)
-	closeTimer := time.NewTimer(RESET_TIMER_DURATION)
-	<-closeTimer.C
-	contextTimer := time.NewTimer(RESET_TIMER_DURATION)
-	<-contextTimer.C
+	p.blockTicker = time.NewTicker(p.blockTime)
+	p.pendingTicker = time.NewTicker(p.pendingTime)
 
-	defer log.Printf(util.PendingString("Pending: %s | Activation exited"), p.pendingID)
-	defer blockTimer.Stop()
-	defer pendingTimer.Stop()
-	defer closeTimer.Stop()
-	defer contextTimer.Stop()
+	p.closeTimer = time.NewTimer(RESET_TIMER_DURATION)
+	<-p.closeTimer.C
+	// contextTimer := time.NewTimer(RESET_TIMER_DURATION)
+	// <-contextTimer.C
+
+	defer func() {
+		p.blockTicker.Stop()
+		p.pendingTicker.Stop()
+		p.closeTimer.Stop()
+		// p.contextTimer.Stop()
+
+		log.Printf(util.PendingString("Pending: %s | Activation exited"), p.pendingID)
+	}()
 
 	for {
 		select {
-		case <-p.ctx.Done():
-			log.Printf(
-				util.PendingString("Pending: %s | Context cancelled. Initiating immediate shutdown due to external signal."),
-				p.pendingID,
-			)
-			blockTimer.Stop()
-			pendingTimer.Stop()
-			closeTimer.Stop()
+		case tx := <-p.transactionCh:
+			p.processTx(tx, true)
 
-			p.interruptPending()
-
-			contextTimer.Reset(CONTEXT_TIMER_DURATION)
-
-		case <-contextTimer.C:
-			log.Printf(
-				util.PendingString("Pending: %s | Grace period (%s) for transaction finalization ended. Closing transaction channel to prevent panics."),
-				p.pendingID,
-				CONTEXT_TIMER_DURATION,
-			)
-
-			p.closeTxChannel()
-			p.closedTxChFlush()
-			p.flushIfNotEmpty()
-			p.clearTxCache()
-
-			return
-
-		case tx, ok := <-p.transactionCH:
-			if !ok {
-				p.timeoutPending()
-				p.closedTxChFlush()
-				p.clearTxCache()
-				p.closePending()
-				return
-			}
-
-			p.processTxWithResetTimer(tx, blockTimer)
-
-		case <-blockTimer.C:
+		case <-p.blockTicker.C:
 			p.flushIfNotEmpty()
 
-		case <-pendingTimer.C:
-			log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
-
+		case <-p.pendingTicker.C:
 			p.timeoutPending()
-			closeTimer.Reset(CONTEXT_TIMER_DURATION)
+			p.stopBlockTicker()
+			p.startCloseTimer()
 
-		case <-closeTimer.C:
+		case <-p.closeTimer.C:
 			log.Printf(util.PendingString("Pending: %s | Pending is now on closing"), p.pendingID)
 
 			p.closeTxChannel()
 			p.closedTxChFlush()
 			p.flushIfNotEmpty()
+			p.emitExpiredPended()
 			p.clearTxCache()
 			p.closePending()
+
 			return
 		}
 	}
@@ -167,7 +134,7 @@ func (p *Pending) PushTx(tx *transaction.Transaction) error {
 	defer p.mu.Unlock()
 
 	select {
-	case p.transactionCH <- tx:
+	case p.transactionCh <- tx:
 		return nil
 	default:
 		return fmt.Errorf("failed to push tx %s | %s: transaction channel is likely full or closed during send attempt",
@@ -178,17 +145,20 @@ func (p *Pending) PushTx(tx *transaction.Transaction) error {
 
 }
 
-func (p *Pending) processTxWithResetTimer(tx *transaction.Transaction, blockTimer *time.Ticker) {
+func (p *Pending) processTx(tx *transaction.Transaction, blockTickerReset bool) {
 	p.commitTx(tx)
 
 	if p.maxTxSize <= uint32(p.Len()) {
 		p.emitAndFlush()
-		blockTimer.Reset(p.blockTime)
+
+		if blockTickerReset {
+			p.blockTicker.Reset(p.blockTime)
+		}
 	}
 }
 
 func (p *Pending) closeTxChannel() {
-	close(p.transactionCH)
+	close(p.transactionCh)
 
 	log.Printf(util.PendingString("Pending: %s | Transaction channel closed."), p.pendingID)
 }
@@ -205,6 +175,10 @@ func (p *Pending) emitAndFlush() {
 	p.flush()
 }
 
+func (p *Pending) emitExpiredPended() {
+	p.pendedCh <- NewExpiredPended(p.pendingID, p.txx, p.optCache)
+}
+
 func (p *Pending) flushIfNotEmpty() {
 	if uint32(p.Len()) != 0 {
 		p.emitAndFlush()
@@ -212,17 +186,10 @@ func (p *Pending) flushIfNotEmpty() {
 }
 
 func (p *Pending) closedTxChFlush() {
-	log.Printf(
-		util.PendingString("Pending: %s | Flushing closed tx channel"),
-		p.pendingID,
-	)
+	log.Printf(util.PendingString("Pending: %s | Flushing closed tx channel"), p.pendingID)
 
-	for tx := range p.transactionCH {
-		p.commitTx(tx)
-
-		if p.maxTxSize <= uint32(p.Len()) {
-			p.emitAndFlush()
-		}
+	for tx := range p.transactionCh {
+		p.processTx(tx, false)
 
 		log.Printf(util.PendingString("Pending: %s | Flushed remaining transaction during shutdown"), p.pendingID)
 	}
@@ -258,6 +225,7 @@ func (p *Pending) commitTx(tx *transaction.Transaction) {
 	defer p.mu.Unlock()
 	p.commit(tx)
 	p.cache(tx)
+	p.cacheOption(tx)
 }
 
 func (p *Pending) commit(tx *transaction.Transaction) {
@@ -268,18 +236,20 @@ func (p *Pending) cache(tx *transaction.Transaction) {
 	p.txCache[tx.GetHashString()] = struct{}{}
 }
 
+func (p *Pending) cacheOption(tx *transaction.Transaction) {
+	p.optCache[tx.Option]++
+}
+
 func (p *Pending) clearTxCache() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	txCachedLength := len(p.txCache)
+	log.Printf(util.PendingString("Pending: %s | Cache { txCachedLength: %d, %+v }"), p.pendingID, len(p.txCache), p.optCache)
 
 	p.txCache = make(map[string]struct{})
+	p.optCache = make(map[string]int)
 
-	clearedTxCacheLength := len(p.txCache)
-
-	log.Printf(util.PendingString("Pending: %s | TxCache cleared { txCachedLength: %d, clearedTxCacheLength: %d }"),
-		p.pendingID, txCachedLength, clearedTxCacheLength)
+	log.Printf(util.PendingString("Pending: %s | Cache cleared { txCachedLength: %d, %+v }"), p.pendingID, len(p.txx), p.optCache)
 }
 
 func (p *Pending) IsTimeout() bool {
@@ -300,20 +270,32 @@ func (p *Pending) timeoutPending() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	log.Printf(util.PendingString("Pending: %s | Pending is over"), p.pendingID)
+
 	p.timeout = true
+}
+
+func (p *Pending) startCloseTimer() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	log.Printf(util.PendingString("Pending: %s | Start close timer"), p.pendingID)
+
+	p.closeTimer.Reset(CONTEXT_TIMER_DURATION)
+}
+
+func (p *Pending) stopBlockTicker() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	log.Printf(util.PendingString("Pending: %s | Stop block ticker"), p.pendingID)
+
+	p.blockTicker.Stop()
 }
 
 func (p *Pending) closePending() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.closed = true
-}
-
-func (p *Pending) interruptPending() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.timeout = true
 	p.closed = true
 }

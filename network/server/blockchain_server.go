@@ -91,13 +91,14 @@ type BlockChainServer struct {
 }
 
 func NewBlockChainServer(opts BlockChainServerOpts) *BlockChainServer {
-	server := &BlockChainServer{
-		BlockChainServerOpts: opts,
-	}
+	server := &BlockChainServer{BlockChainServerOpts: opts}
+
+	log.Println(util.SystemString("SYSTEM: BlockChainServer initialize..."))
 
 	server.Initialize()
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer engine generated"))
+	log.Println(util.SystemString("SYSTEM: BlockChainServer initialization is done."))
 
 	return server
 }
@@ -156,24 +157,15 @@ func (s *BlockChainServer) setBlockChain() {
 
 	s.blockChain = blockchain.NewBlockChainWithGenesisBlock(s.storer)
 
-	genesisHeader, err := s.blockChain.GetHeader(0)
-
-	if err != nil {
+	if _, err := s.blockChain.GetHeader(0); err != nil {
 		log.Fatalf(util.RedString("Genesis block initialization error: %s"), err.Error())
 	}
 
-	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block ID=%s"), genesisHeader.VotingID)
-	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block MerkleRoot=%s"), genesisHeader.MerkleRoot.String())
-	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block Height=%d"), genesisHeader.Height)
-	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block PrevBlockHash=%s"), genesisHeader.PrevBlockHash.String())
-	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block BlockHash=%s"), genesisHeader.Hash().String())
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting blockchain is done."))
 }
 
 func (s *BlockChainServer) setChannel() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting channel..."))
-
-	s.mempool.SetChannel()
 
 	s.pendedCh = s.mempool.Produce()
 	s.protoBlockCh = s.blockChain.Produce()
@@ -224,6 +216,12 @@ labelServer:
 			vote.ResponseCh <- s.GetSuccessSubmitVote(vote.Hash.String())
 
 		case pended := <-s.pendedCh:
+			if pended.IsExpired() {
+				log.Printf(" %+v | %+v\n", pended, pended.GetCachedOptions())
+
+				continue
+			}
+
 			go s.createNewBlock(pended)
 
 		case <-s.ExitSignalCh:

@@ -46,6 +46,13 @@ func NewBlockChainWithGenesisBlock(storer *store.JsonStorer) *BlockChain {
 	bc := NewBlockChain(storer)
 
 	bc.attachBlock(gb)
+
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block ID=%s"), gb.VotingID)
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block MerkleRoot=%s"), gb.MerkleRoot.String())
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block Height=%d"), gb.Height)
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block PrevBlockHash=%s"), gb.PrevBlockHash.String())
+	log.Printf(util.BlockChainString("BLOCKCHAIN: Genesis block BlockHash=%s"), gb.Hash().String())
+
 	bc.storer.SaveBlock(gb)
 
 	return bc

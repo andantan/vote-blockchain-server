@@ -80,7 +80,7 @@ func main() {
 		"K-콘텐츠 해외 진출 전략",
 	}
 
-	max := 6
+	max := 3
 
 	wg.Add(max)
 
@@ -130,16 +130,21 @@ func RequestVote(vote *Vote) *VoteResponse {
 }
 
 func RequestLoop(topic string, wg *sync.WaitGroup) {
+	// time.Sleep(time.Duration(util.RandRange(5, 30)) * time.Second)
+
 	defer wg.Done()
 
 	log.Printf(util.YellowString("RequestLoop %.20s start"), topic)
 
 	requestCount := 0
+	requestOption := make(map[string]int)
 
 	for {
+		randOpt := randOpt()
+
 		vote := NewVote(
 			util.RandomHash().String(),
-			randOpt(),
+			randOpt,
 			topic,
 		)
 
@@ -150,10 +155,12 @@ func RequestLoop(topic string, wg *sync.WaitGroup) {
 		}
 
 		requestCount++
+		requestOption[randOpt]++
 		// log.Printf(util.YellowString("Response: { %+v }"), response)
 
-		time.Sleep(time.Duration(util.RandRange(50, 300)) * time.Millisecond)
+		time.Sleep(time.Duration(util.RandRange(10, 30)) * time.Millisecond)
 	}
+	log.Printf(util.CyanString("RequestLoop %s result | { %+v }"), topic, requestOption)
 	log.Printf(util.CyanString("RequestLoop %s exit | { requestCount: %d }"), topic, requestCount)
 }
 

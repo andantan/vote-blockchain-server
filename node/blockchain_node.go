@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	BlockTime = 30 * time.Second
-	MaxTxSize = uint32(300)
+	BlockTime = 1 * time.Minute
+	MaxTxSize = uint32(320)
 )
 
 const (
-	TestBlockTime = 10 * time.Second
-	TestMaxTxSize = uint32(50)
+	TestBlockTime = 5 * time.Second
+	TestMaxTxSize = uint32(200)
 )
 
 const (
@@ -28,8 +28,8 @@ func Start(wg *sync.WaitGroup) {
 	BCopts := server.NewBlockChainServerOpts()
 	BCopts.SetTopicOptions("tcp", uint16(9000))
 	BCopts.SetVoteOptions("tcp", uint16(9001))
-	BCopts.SetControllOptions(BlockTime, MaxTxSize)
-	// BCopts.SetControllOptions(TestBlockTime, TestMaxTxSize)
+	// BCopts.SetControllOptions(BlockTime, MaxTxSize)
+	BCopts.SetControllOptions(TestBlockTime, TestMaxTxSize)
 	BCopts.SetStorerDirectoryOptions(STORE_BASE_DIR, STORE_BLOCKS_DIR)
 	blockChainServer := server.NewBlockChainServer(BCopts)
 

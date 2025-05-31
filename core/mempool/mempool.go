@@ -29,10 +29,12 @@ type MemPool struct {
 
 func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 	mp := &MemPool{
-		BlockTime: blockTime,
-		MaxTxSize: maxTxSize,
-		wg:        &sync.WaitGroup{},
-		pendings:  make(map[types.Topic]*Pending),
+		BlockTime:  blockTime,
+		MaxTxSize:  maxTxSize,
+		wg:         &sync.WaitGroup{},
+		pendings:   make(map[types.Topic]*Pending),
+		pendedCh:   make(chan *Pended, PENDED_REQUEST_BUFFER_SIZE),
+		shutdownCh: make(chan struct{}),
 	}
 
 	mp.wg.Add(1)
@@ -40,19 +42,6 @@ func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 	go mp.closedPendingCollector()
 
 	return mp
-}
-
-func (mp *MemPool) SetChannel() {
-	log.Printf(
-		util.SystemString("SYSTEM: Memory pool setting channel... | { PENDED_REQUEST_BUFFER_SIZE: %d }"),
-		PENDED_REQUEST_BUFFER_SIZE,
-	)
-
-	mp.pendedCh = make(chan *Pended, PENDED_REQUEST_BUFFER_SIZE)
-	log.Println(util.SystemString("SYSTEM: Memory pool pended channel setting is done."))
-
-	mp.shutdownCh = make(chan struct{})
-	log.Println(util.SystemString("SYSTEM: Memory pool shutdown channel setting is done."))
 }
 
 func (mp *MemPool) Produce() <-chan *Pended {
@@ -64,13 +53,10 @@ func (mp *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) 
 		return fmt.Errorf("topic (%s) already opened pending", pendingId)
 	}
 
-	pn := NewPending()
+	pnOpts := NewPendingOpts(mp.MaxTxSize, mp.BlockTime, pendingId, pendingTime, mp.pendedCh)
+	pn := NewPending(pnOpts)
 
-	pn.SetLimitOptions(mp.MaxTxSize, mp.BlockTime)
-	pn.SetPendingOptions(pendingId, pendingTime)
-	pn.SetChannel(mp.pendedCh)
-
-	mp.AllocatePending(pendingId, pn)
+	mp.openPending(pendingId, pn)
 
 	go pn.Activate()
 
@@ -84,7 +70,6 @@ func (mp *MemPool) getPendingWithoutOpenCheck(pendingId types.Topic) *Pending {
 	return mp.pendings[pendingId]
 }
 
-// Check Pending is opened
 func (mp *MemPool) IsOpen(pendingId types.Topic) bool {
 	mp.mu.RLock()
 	defer mp.mu.RUnlock()
@@ -93,7 +78,7 @@ func (mp *MemPool) IsOpen(pendingId types.Topic) bool {
 	return ok
 }
 
-func (mp *MemPool) AllocatePending(pendingId types.Topic, open *Pending) {
+func (mp *MemPool) openPending(pendingId types.Topic, open *Pending) {
 	mp.mu.Lock()
 	defer mp.mu.Unlock()
 	mp.pendings[pendingId] = open
@@ -135,9 +120,12 @@ func (mp *MemPool) closedPendingCollector() {
 			topicsToRemove := []types.Topic{}
 
 			for topic, pending := range mp.pendings {
-				if pending.IsTimeout() && !pending.IsClosed() {
+				isTimeout := pending.IsTimeout()
+				isClosed := pending.IsClosed()
+
+				if isTimeout && !isClosed {
 					topicsOver = append(topicsOver, topic)
-				} else if pending.IsClosed() {
+				} else if isClosed {
 					topicsToRemove = append(topicsToRemove, topic)
 				} else {
 					topicsAlive = append(topicsAlive, topic)
