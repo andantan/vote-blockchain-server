@@ -3,7 +3,7 @@ package gRPC
 import (
 	"fmt"
 
-	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_message"
+	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_submit_message"
 	"github.com/andantan/vote-blockchain-server/types"
 )
 
@@ -18,7 +18,7 @@ type VoteSubmit struct {
 	ResponseCh chan *VoteSubmitResponse
 }
 
-func NewVoteSubmit(v *vote_message.VoteRequest) (*VoteSubmit, error) {
+func NewVoteSubmit(v *vote_submit_message.VoteSubmitRequest) (*VoteSubmit, error) {
 	s := v.GetHash()
 
 	if len(s) != HASH_STRING_SIZE {
@@ -61,8 +61,8 @@ func GetErrorSubmitVote(message string) *VoteSubmitResponse {
 }
 
 // TODO change proto message type name
-func (p *VoteSubmitResponse) GetVoteResponse() *vote_message.VoteResponse {
-	return &vote_message.VoteResponse{
+func (p *VoteSubmitResponse) GetVoteResponse() *vote_submit_message.VoteSubmitResponse {
+	return &vote_submit_message.VoteSubmitResponse{
 		Status:  p.Status,
 		Message: p.Message,
 		Success: p.Success,

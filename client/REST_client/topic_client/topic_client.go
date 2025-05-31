@@ -46,7 +46,7 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	topics := []*Topic{
-		NewTopic("2025 대선", 6),
+		NewTopic("2025 대선", 1),
 		NewTopic("2025 경선", 3),
 		NewTopic("2025 보건의료 여론조사", 7),
 		NewTopic("법률개정안 찬반 투표", 9),
@@ -78,7 +78,7 @@ func main() {
 		NewTopic("K-콘텐츠 해외 진출 전략", 7),
 	}
 
-	max := 3
+	max := 1
 
 	wg.Add(max)
 

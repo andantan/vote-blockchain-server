@@ -3,7 +3,7 @@ package gRPC
 import (
 	"time"
 
-	"github.com/andantan/vote-blockchain-server/network/gRPC/topic_message"
+	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_proposal_message"
 	"github.com/andantan/vote-blockchain-server/types"
 )
 
@@ -14,7 +14,7 @@ type VoteProposal struct {
 	ResponseCh chan *VoteProposalResponse
 }
 
-func NewVoteProposal(t *topic_message.TopicRequest) *VoteProposal {
+func NewVoteProposal(t *vote_proposal_message.VoteProposalRequest) *VoteProposal {
 	return &VoteProposal{
 		Topic:    types.Topic(t.GetTopic()),
 		Duration: time.Duration(t.GetDuration()) * time.Minute,
@@ -43,8 +43,8 @@ func GetErrorVoteProposal(message string) *VoteProposalResponse {
 	return NewVoteProposalResponse("ERROR", message, false)
 }
 
-func (p *VoteProposalResponse) GetTopicResponse() *topic_message.TopicResponse {
-	return &topic_message.TopicResponse{
+func (p *VoteProposalResponse) GetTopicResponse() *vote_proposal_message.VoteProposalResponse {
+	return &vote_proposal_message.VoteProposalResponse{
 		Status:  p.Status,
 		Message: p.Message,
 		Success: p.Success,

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package="../network/gRPC/vote_submit_message";
+
+package vote_submit_message;
+
+service BlockchainVoteSubmitService {
+  rpc SubmitVote(VoteSubmitRequest) returns (VoteSubmitResponse);
+}
+
+message VoteSubmitRequest {
+  string hash = 1;
+  string option = 2;
+  string topic = 3;
+}
+
+message VoteSubmitResponse {
+  string status = 1;
+  string message = 2;
+  bool success = 3;
+}

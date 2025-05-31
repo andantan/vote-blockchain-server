@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
-	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_message"
+	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_submit_message"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
@@ -35,7 +35,7 @@ func NewVoteSubmitListenerOption(network string, port, channelBufferSize uint16)
 
 type VoteSubmitListener struct {
 	*VoteSubmitListenerOption
-	vote_message.UnimplementedBlockchainVoteServiceServer
+	vote_submit_message.UnimplementedBlockchainVoteSubmitServiceServer
 	ctx          context.Context
 	cancel       context.CancelFunc
 	grpcServer   *grpc.Server
@@ -65,8 +65,8 @@ func (li *VoteSubmitListener) Consume() chan *gRPC.VoteSubmit {
 
 // gRPC
 func (listener *VoteSubmitListener) SubmitVote(
-	ctx context.Context, req *vote_message.VoteRequest,
-) (*vote_message.VoteResponse, error) {
+	ctx context.Context, req *vote_submit_message.VoteSubmitRequest,
+) (*vote_submit_message.VoteSubmitResponse, error) {
 	vs, err := gRPC.NewVoteSubmit(req)
 
 	if err != nil {
@@ -101,7 +101,7 @@ func (listener *VoteSubmitListener) Start(wg *sync.WaitGroup) {
 
 	go listener.stopVoteListener()
 
-	vote_message.RegisterBlockchainVoteServiceServer(listener.grpcServer, listener)
+	vote_submit_message.RegisterBlockchainVoteSubmitServiceServer(listener.grpcServer, listener)
 
 	log.Printf(util.SystemString("SYSTEM: Vote gRPC listener opened { port: %d }"), listener.port)
 	wg.Done()
