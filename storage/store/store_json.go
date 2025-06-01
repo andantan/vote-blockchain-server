@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -22,19 +21,11 @@ type JsonStorer struct {
 	baseDir     string
 	blocksDir   string
 	blockSaveCh chan *block.Block
-	ctx         context.Context
-	cancel      context.CancelFunc
 	wg          sync.WaitGroup
 }
 
 func NewStore(baseDir, blocksDir string) *JsonStorer {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	js := &JsonStorer{
-		ctx:    ctx,
-		cancel: cancel,
-	}
-
+	js := &JsonStorer{}
 	js.setBaseDirectory(baseDir, blocksDir)
 	js.setChannel()
 	js.wg.Add(1)
@@ -81,46 +72,78 @@ func (js *JsonStorer) saveBlocks() {
 
 	log.Printf(util.StorerString("STORER: Block storage directory '%s' ready"), blocksPath)
 
-	for {
-		select {
-		case block := <-js.blockSaveCh:
+	for block := range js.blockSaveCh {
 
-			jsonData, err := json.MarshalIndent(block, "", "  ")
+		jsonData, err := json.MarshalIndent(block, "", "  ")
 
-			if err != nil {
-				log.Printf(
-					util.StorerString("STORER: Block %s (Height %d) Failed to marshalling: %v"),
-					block.Header.VotingID,
-					block.Header.Height,
-					err,
-				)
-				continue
-			}
-
-			fileName := fmt.Sprintf("block_%d.json", block.Header.Height)
-			filePath := filepath.Join(blocksPath, fileName)
-
-			if err = os.WriteFile(filePath, jsonData, 0644); err != nil {
-				log.Printf(
-					util.FatalString("STORE: %s | 'block_%d.json' write failed: %v"),
-					block.Header.VotingID,
-					block.Header.Height,
-					err,
-				)
-
-				continue
-			}
-
+		if err != nil {
 			log.Printf(
-				util.StorerString("STORER: %s | Successfully saved to file 'block_%d.json'"),
+				util.StorerString("STORER: Block %s (Height %d) Failed to marshalling: %v"),
 				block.Header.VotingID,
 				block.Header.Height,
+				err,
+			)
+			continue
+		}
+
+		fileName := fmt.Sprintf("block_%d.json", block.Header.Height)
+		filePath := filepath.Join(blocksPath, fileName)
+
+		if err = os.WriteFile(filePath, jsonData, 0644); err != nil {
+			log.Printf(
+				util.FatalString("STORE: %s | 'block_%d.json' write failed: %v"),
+				block.Header.VotingID,
+				block.Header.Height,
+				err,
 			)
 
-		case <-js.ctx.Done():
-			return
+			continue
 		}
+
+		log.Printf(
+			util.StorerString("STORER: %s | Successfully saved to file 'block_%d.json'"),
+			block.Header.VotingID,
+			block.Header.Height,
+		)
 	}
+
+	// for {
+	// 	select {
+	// 	case block := <-js.blockSaveCh:
+
+	// 		jsonData, err := json.MarshalIndent(block, "", "  ")
+
+	// 		if err != nil {
+	// 			log.Printf(
+	// 				util.StorerString("STORER: Block %s (Height %d) Failed to marshalling: %v"),
+	// 				block.Header.VotingID,
+	// 				block.Header.Height,
+	// 				err,
+	// 			)
+	// 			continue
+	// 		}
+
+	// 		fileName := fmt.Sprintf("block_%d.json", block.Header.Height)
+	// 		filePath := filepath.Join(blocksPath, fileName)
+
+	// 		if err = os.WriteFile(filePath, jsonData, 0644); err != nil {
+	// 			log.Printf(
+	// 				util.FatalString("STORE: %s | 'block_%d.json' write failed: %v"),
+	// 				block.Header.VotingID,
+	// 				block.Header.Height,
+	// 				err,
+	// 			)
+
+	// 			continue
+	// 		}
+
+	// 		log.Printf(
+	// 			util.StorerString("STORER: %s | Successfully saved to file 'block_%d.json'"),
+	// 			block.Header.VotingID,
+	// 			block.Header.Height,
+	// 		)
+	// 	}
+	// }
 }
 
 func (js *JsonStorer) SaveBlock(block *block.Block) {
@@ -142,8 +165,9 @@ func (js *JsonStorer) SaveBlock(block *block.Block) {
 
 func (js *JsonStorer) Shutdown() {
 	log.Println(util.StorerString("STORER: Initiating shutdown for JsonStorer. Closing blockSave channel"))
-	js.cancel()
-	js.wg.Wait()
+
 	close(js.blockSaveCh)
+	js.wg.Wait()
+
 	log.Println(util.StorerString("STORER: JsonStorer shutdown complete"))
 }

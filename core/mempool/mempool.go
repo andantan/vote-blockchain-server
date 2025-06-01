@@ -91,12 +91,12 @@ func (mp *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Tran
 
 	pn := mp.getPendingWithoutOpenCheck(pendingId)
 
-	if pn.IsTimeout() {
-		return fmt.Errorf("pending(%s) time over", pendingId)
-	}
-
 	if pn.IsClosed() {
 		return fmt.Errorf("pending(%s) is closed", pendingId)
+	}
+
+	if pn.IsTimeout() {
+		return fmt.Errorf("pending(%s) time over", pendingId)
 	}
 
 	if err := pn.PushTx(tx); err != nil {
@@ -142,11 +142,8 @@ func (mp *MemPool) closedPendingCollector() {
 			for _, topic := range topicsToRemove {
 				mp.closePending(topic)
 			}
-		case <-mp.shutdownCh:
-			for _, pending := range mp.pendings {
-				pending.ctx.Done()
-			}
 
+		case <-mp.shutdownCh:
 			return
 		}
 	}
@@ -159,10 +156,27 @@ func (mp *MemPool) closePending(pendingId types.Topic) {
 	mp.mu.Unlock()
 }
 
-func (mp *MemPool) Shutdown() {
-	log.Println(util.MemPoolString("MEMPOOL: Initiating shutdown for MemPool"))
+func (mp *MemPool) shutDownclosedPendingCollector() {
 	close(mp.shutdownCh)
 	mp.wg.Wait()
+}
+
+func (mp *MemPool) Shutdown() {
+	log.Println(util.MemPoolString("MEMPOOL: Initiating shutdown for MemPool"))
+	mp.shutDownclosedPendingCollector()
+
+	mwg := &sync.WaitGroup{}
+	mwg.Add(len(mp.pendings))
+
+	for _, pending := range mp.pendings {
+		go pending.Shutdown(mwg)
+	}
+
+	mwg.Wait()
+
+	log.Println(util.MemPoolString("MEMPOOL: All of pendings shutdown complete"))
+
 	close(mp.pendedCh)
+
 	log.Println(util.MemPoolString("MEMPOOL: MemPool shutdown complete"))
 }

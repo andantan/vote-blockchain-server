@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
@@ -126,7 +127,22 @@ func (s *BlockChainServer) Start() {
 labelServer:
 	for {
 		select {
+
 		case proposal := <-voteProposalCh:
+			if strings.Compare(string(proposal.Topic), "exit") == 0 {
+				log.Println(util.SystemString("============================== SHUTDOWN NODE =============================="))
+				proposal.ResponseCh <- gRPC.GetSuccessVoteProposal("shutdown")
+
+				s.VoteProposalListener.Shutdown()
+				s.VoteSubmitListener.Shutdown()
+				s.mempool.Shutdown()
+				s.processClosedPendedCh()
+				s.blockChain.Shutdown()
+				s.storer.Shutdown()
+
+				break labelServer
+			}
+
 			if err := s.mempool.AddPending(proposal.Topic, proposal.Duration); err != nil {
 				proposal.ResponseCh <- gRPC.GetErrorVoteProposal(err.Error())
 				continue
@@ -182,5 +198,19 @@ func (s *BlockChainServer) createNewBlock(p *mempool.Pended) {
 		log.Printf(util.BlockChainString("failed to push block %s: block channel is likely full or closed during send attempt"),
 			currentProtoBlock.VotingID)
 		return
+	}
+}
+
+func (s *BlockChainServer) processClosedPendedCh() {
+	log.Println(util.MemPoolString("MEMPOOL: Process closed tx channel"))
+
+	for pended := range s.pendedCh {
+		if pended.IsExpired() {
+			log.Printf(" %+v | %+v\n", pended, pended.GetCachedOptions())
+
+			continue
+		}
+
+		go s.createNewBlock(pended)
 	}
 }

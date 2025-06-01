@@ -25,9 +25,9 @@ type Pended struct {
 
 func NewPended(pendingID types.Topic, txx map[string]*transaction.Transaction) *Pended {
 	return &Pended{
+		pendingMetaData: newPendingMetaData(false, nil),
 		pendingID:       pendingID,
 		txx:             txx,
-		pendingMetaData: newPendingMetaData(false, nil),
 	}
 }
 
@@ -36,9 +36,9 @@ func NewExpiredPended(
 	cachedOption map[string]int,
 ) *Pended {
 	return &Pended{
+		pendingMetaData: newPendingMetaData(true, cachedOption),
 		pendingID:       pendingID,
 		txx:             txx,
-		pendingMetaData: newPendingMetaData(true, cachedOption),
 	}
 }
 

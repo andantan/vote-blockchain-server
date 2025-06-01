@@ -97,11 +97,11 @@ func (listener *VoteProposalListener) Start(wg *sync.WaitGroup) {
 
 	vote_proposal_message.RegisterBlockchainVoteProposalServiceServer(listener.grpcServer, listener)
 
-	log.Printf(util.SystemString("SYSTEM: Topic gRPC listener opened { port: %d }"), listener.port)
+	log.Printf(util.SystemString("SYSTEM: Vote proposal gRPC listener opened { port: %d }"), listener.port)
 	wg.Done()
 
 	if err := listener.grpcServer.Serve(lis); err != nil {
-		log.Printf(util.FatalString("failed to server gRPC listener (Topic) over port %d: %v"), listener.port, err)
+		log.Printf(util.FatalString("failed to server gRPC listener (VoteProposal) over port %d: %v"), listener.port, err)
 		listener.exitCh <- 0
 	}
 }
@@ -110,13 +110,13 @@ func (listener *VoteProposalListener) stopTopicListener() {
 	defer close(listener.voteProposalCh)
 
 	<-listener.ctx.Done()
-	log.Println(util.SystemString("SYSTEM: Topic gRPC server received shutdown signal. Gracefully stopping..."))
+	log.Println(util.SystemString("SYSTEM: Vote proposal gRPC server received shutdown signal. Gracefully stopping..."))
 	listener.grpcServer.GracefulStop()
-	log.Println(util.SystemString("SYSTEM: Topic gRPC server stopped"))
+	log.Println(util.SystemString("SYSTEM: Vote proposal gRPC server stopped"))
 }
 
 func (listener *VoteProposalListener) Shutdown() {
-	log.Println(util.SystemString("SYSTEM: Requesting BlockChainTopicServer to stop"))
+	log.Println(util.SystemString("SYSTEM: Requesting VoteProposalListener to stop"))
 	listener.cancel()
-	log.Println(util.SystemString("SYSTEM: BlockChainTopicServer has stopped"))
+	log.Println(util.SystemString("SYSTEM: VoteProposalListener has stopped"))
 }

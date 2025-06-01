@@ -13,8 +13,8 @@ const (
 )
 
 const (
-	TestBlockTime = 5 * time.Second
-	TestMaxTxSize = uint32(200)
+	TestBlockTime = 30 * time.Second
+	TestMaxTxSize = uint32(600)
 )
 
 const (

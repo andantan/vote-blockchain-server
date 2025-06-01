@@ -15,6 +15,8 @@ import (
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
+var httpClient *http.Client
+
 const (
 	PROTOCOL = "http"
 	ADDRESS  = "localhost"
@@ -24,30 +26,34 @@ const (
 
 var URL string = fmt.Sprintf("%s://%s:%d/%s", PROTOCOL, ADDRESS, PORT, API)
 
-type Vote struct {
+type VoteSubmitRequest struct {
 	Hash   string `json:"hash"`
 	Option string `json:"option"`
 	Topic  string `json:"topic"`
 }
 
-func NewVote(hash, option, topic string) *Vote {
-	return &Vote{
+func NewVoteSubmitRequest(hash, option, topic string) *VoteSubmitRequest {
+	return &VoteSubmitRequest{
 		Hash:   hash,
 		Option: option,
 		Topic:  topic,
 	}
 }
 
-type VoteResponse struct {
+type VoteSubmitResponse struct {
 	Success string `json:"success"`
 	Message string `json:"message"`
 	Status  string `json:"status"`
 }
 
 func main() {
+	httpClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
+
 	wg := &sync.WaitGroup{}
 
-	topics := []string{
+	proposals := []string{
 		"2025 대선",
 		"2025 경선",
 		"2025 보건의료 여론조사",
@@ -80,11 +86,11 @@ func main() {
 		"K-콘텐츠 해외 진출 전략",
 	}
 
-	max := 3
+	max := 14
 
 	wg.Add(max)
 
-	for i, topic := range topics {
+	for i, topic := range proposals {
 		if max <= i {
 			break
 		}
@@ -95,18 +101,18 @@ func main() {
 	wg.Wait()
 }
 
-func RequestVote(vote *Vote) *VoteResponse {
-	jsonData, err := json.Marshal(vote)
+func RequestVote(v *VoteSubmitRequest) *VoteSubmitResponse {
+	jsonData, err := json.Marshal(v)
 
 	if err != nil {
 		log.Fatalf("error marshalling JSON: %v", err)
 	}
 
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
+	// client := &http.Client{
+	// 	Timeout: time.Second * 10,
+	// }
 
-	resp, err := client.Post(URL, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := httpClient.Post(URL, "application/json", bytes.NewBuffer(jsonData))
 
 	if err != nil {
 		log.Fatalf("error POST request: %v", err)
@@ -120,13 +126,13 @@ func RequestVote(vote *Vote) *VoteResponse {
 		log.Fatalf("Error reading response body: %v", err)
 	}
 
-	response := VoteResponse{}
+	r := VoteSubmitResponse{}
 
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &r); err != nil {
 		log.Fatalf("error unmarshalling response JSON: %v", err)
 	}
 
-	return &response
+	return &r
 }
 
 func RequestLoop(topic string, wg *sync.WaitGroup) {
@@ -142,7 +148,7 @@ func RequestLoop(topic string, wg *sync.WaitGroup) {
 	for {
 		randOpt := randOpt()
 
-		vote := NewVote(
+		vote := NewVoteSubmitRequest(
 			util.RandomHash().String(),
 			randOpt,
 			topic,
@@ -158,10 +164,9 @@ func RequestLoop(topic string, wg *sync.WaitGroup) {
 		requestOption[randOpt]++
 		// log.Printf(util.YellowString("Response: { %+v }"), response)
 
-		time.Sleep(time.Duration(util.RandRange(10, 30)) * time.Millisecond)
+		time.Sleep(time.Duration(util.RandRange(40, 60)) * time.Millisecond)
 	}
-	log.Printf(util.CyanString("RequestLoop %s result | { %+v }"), topic, requestOption)
-	log.Printf(util.CyanString("RequestLoop %s exit | { requestCount: %d }"), topic, requestCount)
+	log.Printf(util.CyanString("RequestLoop %s exit | { requestCount: %d , result: %+v }"), topic, requestCount, requestOption)
 }
 
 func randOpt() string {
