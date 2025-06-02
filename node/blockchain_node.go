@@ -1,10 +1,13 @@
 package node
 
 import (
+	"log"
 	"sync"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/network/server"
+	SyncBlock "github.com/andantan/vote-blockchain-server/storage/sync"
+	"github.com/andantan/vote-blockchain-server/util"
 )
 
 const (
@@ -37,6 +40,13 @@ const (
 func Start(wg *sync.WaitGroup) {
 	defer wg.Done()
 
+	log.Println(util.SystemString("VALIDATE: Validate blockchain data"))
+
+	syncDir := SyncBlock.NewSyncDir(STORE_BASE_DIR, STORE_BLOCKS_DIR)
+	validator := SyncBlock.NewValidator(syncDir)
+	validator.StartValidate()
+	syncedHeaders := validator.GetSyncedBlockHeaders()
+
 	listenerOption := server.NewListenerOption()
 	listenerOption.SetVoteProposalListenerOption(VOTE_PROPOSAL_NETWORK, VOTE_PROPOSAL_PORT, VOTE_PROPOSAL_CHANNEL_BUFFER_SIZE)
 	listenerOption.SetVoteSubmitListenerOption(VOTE_SUBMIT_NETWORK, VOTE_SUBMIT_PORT, VOTE_SUBMIT_CHANNEL_BUFFER_SIZE)
@@ -50,7 +60,7 @@ func Start(wg *sync.WaitGroup) {
 	serverOption.SetBlockOption(blockOption)
 	serverOption.SetStoreOption(storeOption)
 
-	blockChainServer := server.NewBlockChainServer(serverOption)
+	blockChainServer := server.NewBlockChainServer(serverOption, syncedHeaders)
 
 	blockChainServer.Start()
 }

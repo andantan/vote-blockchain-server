@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/storage/store"
@@ -22,18 +23,20 @@ type BlockChain struct {
 	protoBlockCh chan *block.ProtoBlock
 }
 
-func NewBlockChain(storer *store.JsonStorer) *BlockChain {
+func NewBlockChain(storer *store.JsonStorer, syncedHeader []*block.Header) *BlockChain {
 
 	bc := &BlockChain{
-		headers: []*block.Header{},
-		wg:      &sync.WaitGroup{},
-		storer:  storer,
+		wg:     &sync.WaitGroup{},
+		storer: storer,
 	}
 
-	// log.Printf("%p", storer)
+	if len(syncedHeader) != 0 {
+		bc.setSyncedHeaders(syncedHeader)
+	} else {
+		bc.headers = []*block.Header{}
+	}
 
 	bc.setChannel()
-
 	bc.wg.Add(1)
 
 	go bc.Activate()
@@ -41,9 +44,9 @@ func NewBlockChain(storer *store.JsonStorer) *BlockChain {
 	return bc
 }
 
-func NewBlockChainWithGenesisBlock(storer *store.JsonStorer) *BlockChain {
+func NewGenesisBlockChain(storer *store.JsonStorer) *BlockChain {
 	gb := block.GenesisBlock()
-	bc := NewBlockChain(storer)
+	bc := NewBlockChain(storer, []*block.Header{})
 
 	bc.attachBlock(gb)
 
@@ -67,6 +70,22 @@ func (bc *BlockChain) setChannel() {
 	bc.protoBlockCh = make(chan *block.ProtoBlock, BLOCK_REQUEST_BUFFER_SIZE)
 
 	log.Println(util.SystemString("SYSTEM: Blockchain block channel setting is done."))
+}
+
+func (bc *BlockChain) setSyncedHeaders(syncedHeader []*block.Header) {
+	log.Printf(
+		util.BlockChainString("SYNCHRONIZATION: Synchronize blockchain headers... | { Block-height: %d }"),
+		len(syncedHeader)-1,
+	)
+
+	for _, header := range syncedHeader {
+		bc.headers = append(bc.headers, header)
+
+		log.Printf(util.BlockChainString("SYNCHRONIZATION: Header( 0x%s ) with Height( %d ) => "+util.YellowString("Synchronized")), header.Hash().String(), header.Height)
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	log.Println(util.BlockChainString("SYNCHRONIZATION: Blockchain headers synchronizion is done."))
 }
 
 func (bc *BlockChain) GetHeader(height uint32) (*block.Header, error) {
@@ -116,8 +135,6 @@ func (bc *BlockChain) Activate() {
 	log.Println(util.BlockChainString("BLOCKCHAIN: Starting block receiver and processor goroutine"))
 
 	for pb := range bc.protoBlockCh {
-		// log.Printf(util.BlockChainString("BLOCKCHAIN: Received protoBlock %s | { MerkleRoot: %s, TxxLength: %d }"),
-		// 	pb.VotingID, pb.MerkleRoot, pb.Len())
 
 		height := bc.Height()
 		prevHeader, err := bc.GetHeader(height)
@@ -140,6 +157,7 @@ func (bc *BlockChain) Activate() {
 		)
 
 		bc.storer.SaveBlock(currentBlock)
+		// TODO goroutine restapi this block height
 	}
 
 	log.Println(util.BlockChainString("BLOCKCHAIN: Block receiver and processor goroutine exited"))

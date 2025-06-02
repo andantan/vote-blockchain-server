@@ -156,16 +156,6 @@ func (p *Pending) Activate() {
 			p.closePending()
 
 			return
-
-			// case <-p.ctxTimer.C:
-			// 	p.closeTxChannel()
-			// 	p.processClosedTxCh()
-			// 	p.flushIfNotEmpty()
-			// 	p.emitExpiredPended()
-			// 	p.clearCache()
-			// 	p.closePending()
-
-			// 	return
 		}
 	}
 }
@@ -301,12 +291,10 @@ func (p *Pending) clearCache() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	log.Printf(util.PendingString("PENDING: %s | Cache { txCachedLength: %d, %+v }"), p.pendingID, len(p.txCache), p.optCache)
+	log.Printf(util.PendingString("PENDING: %s | Cache { txCachedLength: %d, txCachedOption: %v }"), p.pendingID, len(p.txCache), p.optCache)
 
 	p.txCache = make(map[string]struct{})
 	p.optCache = make(map[string]int)
-
-	log.Printf(util.PendingString("PENDING: %s | Cache cleared { txCachedLength: %d, %+v }"), p.pendingID, len(p.txx), p.optCache)
 }
 
 func (p *Pending) timeoutPending() {
@@ -351,16 +339,12 @@ func (p *Pending) startCloseTimer() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// log.Printf(util.PendingString("PENDING: %s | Start close timer"), p.pendingID)
-
 	p.closeTimer.Reset(CLOSE_TIMER_DURATION)
 }
 
 func (p *Pending) startContextTimer() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-
-	// log.Printf(util.PendingString("PENDING: %s | Start context timer"), p.pendingID)
 
 	p.ctxTimer.Reset(INTERRUPT_TIMER_DURATION)
 }
@@ -369,8 +353,6 @@ func (p *Pending) stopBlockTicker() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// log.Printf(util.PendingString("PENDING: %s | Stop block ticker"), p.pendingID)
-
 	p.blockTicker.Stop()
 }
 
@@ -378,16 +360,12 @@ func (p *Pending) stopPendingTicker() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// log.Printf(util.PendingString("PENDING: %s | Stop pending ticker"), p.pendingID)
-
 	p.pendingTicker.Stop()
 }
 
 func (p *Pending) stopCloseTimer() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-
-	// log.Printf(util.PendingString("PENDING: %s | Stop close timer"), p.pendingID)
 
 	p.closeTimer.Stop()
 }

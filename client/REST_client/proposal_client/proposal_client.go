@@ -49,13 +49,13 @@ func main() {
 		NewVoteProposalRequest("2025 대선", 1),
 		NewVoteProposalRequest("2025 경선", 2),
 		NewVoteProposalRequest("2025 보건의료 여론조사", 3),
-		NewVoteProposalRequest("법률개정안 찬반 투표", 4),
-		NewVoteProposalRequest("상법개정안 시범 기간 조사", 5),
-		NewVoteProposalRequest("기후변화 대응 방안 선호도 조사", 6),
-		NewVoteProposalRequest("인공지능 교육 도입 찬반 설문", 7),
-		NewVoteProposalRequest("수원시 대중교통 만족도 평가", 8),
-		NewVoteProposalRequest("청년 주거 정책 의견 수렴", 9),
-		NewVoteProposalRequest("국민연금 개편안 대국민 토론", 10),
+		NewVoteProposalRequest("법률개정안 찬반 투표", 3),
+		NewVoteProposalRequest("상법개정안 시범 기간 조사", 4),
+		NewVoteProposalRequest("기후변화 대응 방안 선호도 조사", 5),
+		NewVoteProposalRequest("인공지능 교육 도입 찬반 설문", 5),
+		NewVoteProposalRequest("수원시 대중교통 만족도 평가", 6),
+		NewVoteProposalRequest("청년 주거 정책 의견 수렴", 5),
+		NewVoteProposalRequest("국민연금 개편안 대국민 토론", 3),
 		NewVoteProposalRequest("미래 식량 기술 투자 필요성 조사", 1),
 		NewVoteProposalRequest("문화예술 바우처 사업 확대 여부", 2),
 		NewVoteProposalRequest("자율주행 자동차 상용화 시점 예측", 3),
@@ -78,7 +78,7 @@ func main() {
 		NewVoteProposalRequest("K-콘텐츠 해외 진출 전략", 10),
 	}
 
-	max := 14
+	max := 2
 
 	wg.Add(max)
 

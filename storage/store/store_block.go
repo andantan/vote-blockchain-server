@@ -106,44 +106,6 @@ func (js *JsonStorer) saveBlocks() {
 			block.Header.Height,
 		)
 	}
-
-	// for {
-	// 	select {
-	// 	case block := <-js.blockSaveCh:
-
-	// 		jsonData, err := json.MarshalIndent(block, "", "  ")
-
-	// 		if err != nil {
-	// 			log.Printf(
-	// 				util.StorerString("STORER: Block %s (Height %d) Failed to marshalling: %v"),
-	// 				block.Header.VotingID,
-	// 				block.Header.Height,
-	// 				err,
-	// 			)
-	// 			continue
-	// 		}
-
-	// 		fileName := fmt.Sprintf("block_%d.json", block.Header.Height)
-	// 		filePath := filepath.Join(blocksPath, fileName)
-
-	// 		if err = os.WriteFile(filePath, jsonData, 0644); err != nil {
-	// 			log.Printf(
-	// 				util.FatalString("STORE: %s | 'block_%d.json' write failed: %v"),
-	// 				block.Header.VotingID,
-	// 				block.Header.Height,
-	// 				err,
-	// 			)
-
-	// 			continue
-	// 		}
-
-	// 		log.Printf(
-	// 			util.StorerString("STORER: %s | Successfully saved to file 'block_%d.json'"),
-	// 			block.Header.VotingID,
-	// 			block.Header.Height,
-	// 		)
-	// 	}
-	// }
 }
 
 func (js *JsonStorer) SaveBlock(block *block.Block) {

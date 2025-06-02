@@ -86,7 +86,7 @@ func main() {
 		"K-콘텐츠 해외 진출 전략",
 	}
 
-	max := 14
+	max := 2
 
 	wg.Add(max)
 
@@ -107,10 +107,6 @@ func RequestVote(v *VoteSubmitRequest) *VoteSubmitResponse {
 	if err != nil {
 		log.Fatalf("error marshalling JSON: %v", err)
 	}
-
-	// client := &http.Client{
-	// 	Timeout: time.Second * 10,
-	// }
 
 	resp, err := httpClient.Post(URL, "application/json", bytes.NewBuffer(jsonData))
 

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -75,25 +76,42 @@ func (h Hash) String() string {
 }
 
 func (h Hash) MarshalJSON() ([]byte, error) {
-	return json.Marshal(h.String())
+	return json.Marshal("0x" + h.String())
+}
+
+func (h *Hash) UnmarshalJSON(data []byte) error {
+	var s string
+
+	if err := json.Unmarshal(data, &s); err != nil {
+		return fmt.Errorf("hash unmarshal: expected a JSON string, but got %s: %w", string(data), err)
+	}
+
+	s = strings.TrimPrefix(s, "0x")
+
+	parsedHash, err := HashFromHashString(s)
+
+	if err != nil {
+		return fmt.Errorf("hash unmarshal: %w", err)
+	}
+
+	*h = parsedHash
+
+	return nil
 }
 
 func HashFromString(s string) Hash {
 	return sha256.Sum256([]byte(s))
 }
 
-// b []byte len must be 32 & Return Hash that casted from bytes
 func HashFromBytes(b []byte) Hash {
 	if len(b) != DIGEST_SIZE {
 		msg := fmt.Sprintf("given bytes with length %d should be 32", len(b))
 
-		// System can not continue
 		panic(msg)
 	}
 
 	var t [DIGEST_SIZE]uint8
 
-	// Byte slice element by element. Not clone
 	for i := range DIGEST_SIZE {
 		t[i] = b[i]
 	}

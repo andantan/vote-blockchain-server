@@ -36,13 +36,11 @@ type BlockChainServer struct {
 	exitSignalCh chan uint8
 }
 
-func NewBlockChainServer(options BlockChainServerOpts) *BlockChainServer {
+func NewBlockChainServer(options BlockChainServerOpts, syncedHeaders []*block.Header) *BlockChainServer {
 	server := &BlockChainServer{serverOption: options}
 	server.exitSignalCh = make(chan uint8)
 
-	log.Println(util.SystemString("SYSTEM: BlockChainServer initialize..."))
-
-	server.Initialize()
+	server.initialize(syncedHeaders)
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer engine generated"))
 	log.Println(util.SystemString("SYSTEM: BlockChainServer initialization is done."))
@@ -50,13 +48,13 @@ func NewBlockChainServer(options BlockChainServerOpts) *BlockChainServer {
 	return server
 }
 
-func (s *BlockChainServer) Initialize() {
+func (s *BlockChainServer) initialize(syncedHeaders []*block.Header) {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer initialize..."))
 
 	s.setgRPCServer()
 	s.setMemPool()
 	s.setStorer()
-	s.setBlockChain()
+	s.setBlockChain(syncedHeaders)
 	s.setChannel()
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer initialization is done."))
@@ -97,13 +95,21 @@ func (s *BlockChainServer) setStorer() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting storer is done."))
 }
 
-func (s *BlockChainServer) setBlockChain() {
+func (s *BlockChainServer) setBlockChain(syncedHeaders []*block.Header) {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting blockchain..."))
 
-	s.blockChain = blockchain.NewBlockChainWithGenesisBlock(s.storer)
+	if len(syncedHeaders) == 0 {
+		s.blockChain = blockchain.NewGenesisBlockChain(s.storer)
 
-	if _, err := s.blockChain.GetHeader(0); err != nil {
-		log.Fatalf(util.RedString("Genesis block initialization error: %s"), err.Error())
+		if _, err := s.blockChain.GetHeader(0); err != nil {
+			log.Fatalf(util.RedString("Genesis block initialization error: %s"), err.Error())
+		}
+	} else {
+		s.blockChain = blockchain.NewBlockChain(s.storer, syncedHeaders)
+
+		if _, err := s.blockChain.GetHeader(0); err != nil {
+			log.Fatalf(util.RedString("Genesis block initialization error: %s"), err.Error())
+		}
 	}
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting blockchain is done."))
@@ -164,7 +170,8 @@ labelServer:
 
 		case pended := <-s.pendedCh:
 			if pended.IsExpired() {
-				log.Printf(" %+v | %+v\n", pended, pended.GetCachedOptions())
+				// TODO goroutine restapi this result
+				log.Printf(util.PendingString("PENDING: %s | Pending result = %v"), pended.GetPendingID(), pended.GetCachedOptions())
 
 				continue
 			}

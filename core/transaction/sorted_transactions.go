@@ -30,6 +30,16 @@ func NewSortedTxx(txMap map[string]*Transaction) *SortedTxx {
 	return s
 }
 
+func NewSortedTxxFromJson(txx []*Transaction) *SortedTxx {
+	s := &SortedTxx{
+		txx: txx,
+	}
+
+	sort.Sort(s)
+
+	return s
+}
+
 func (s *SortedTxx) Len() int {
 	return len(s.txx)
 }

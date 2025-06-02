@@ -7,13 +7,15 @@ import (
 	"github.com/andantan/vote-blockchain-server/types"
 )
 
+// TODO Hashall or only hash
 func CalculateMerkleRoot(txx *transaction.SortedTxx) types.Hash {
 	if txx == nil {
 		return types.NilHash()
 	}
 
+	// For genesis
 	if txx.Len() == 0 {
-		return types.EmptyHash()
+		return types.FFHashCompact()
 	}
 
 	hashes := txx.GetHashSlice()
