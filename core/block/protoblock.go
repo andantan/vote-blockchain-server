@@ -6,17 +6,17 @@ import (
 )
 
 type ProtoBlock struct {
-	VotingID   types.Topic
+	VotingID   types.Proposal
 	MerkleRoot types.Hash
 	txx        []*transaction.Transaction
 }
 
 // Preprocessing for create block
-func NewProtoBlock(ID types.Topic, txMap map[string]*transaction.Transaction) *ProtoBlock {
+func NewProtoBlock(proposal types.Proposal, txMap map[string]*transaction.Transaction) *ProtoBlock {
 	stx := transaction.NewSortedTxx(txMap)
 
 	return &ProtoBlock{
-		VotingID:   ID,
+		VotingID:   proposal,
 		MerkleRoot: CalculateMerkleRoot(stx),
 		txx:        stx.GetTxx(),
 	}

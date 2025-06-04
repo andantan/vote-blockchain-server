@@ -1,23 +1,25 @@
 package gRPC
 
 import (
+	"fmt"
 	"time"
 
+	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_proposal_message"
 	"github.com/andantan/vote-blockchain-server/types"
 )
 
 // Mapping request - response
 type VoteProposal struct {
-	Topic      types.Topic
+	Proposal   types.Proposal
 	Duration   time.Duration
 	ResponseCh chan *VoteProposalResponse
 }
 
-func NewVoteProposal(t *vote_proposal_message.VoteProposalRequest) *VoteProposal {
+func NewVoteProposal(p *vote_proposal_message.VoteProposalRequest) *VoteProposal {
 	return &VoteProposal{
-		Topic:    types.Topic(t.GetTopic()),
-		Duration: time.Duration(t.GetDuration()) * time.Minute,
+		Proposal: types.Proposal(p.GetTopic()),
+		Duration: time.Duration(p.GetDuration()) * time.Minute,
 	}
 }
 
@@ -35,12 +37,22 @@ func NewVoteProposalResponse(status, message string, success bool) *VoteProposal
 	}
 }
 
-func GetSuccessVoteProposal(message string) *VoteProposalResponse {
-	return NewVoteProposalResponse("SUCCESS", message, true)
+func NewSuccessVoteProposalResponse(proposal types.Proposal, duration time.Duration) *VoteProposalResponse {
+	msg := fmt.Sprintf("Proposal '%s' is now open for pending submissions. Duration: %s.", proposal, duration)
+
+	return NewVoteProposalResponse("OPEN", msg, true)
 }
 
-func GetErrorVoteProposal(message string) *VoteProposalResponse {
-	return NewVoteProposalResponse("ERROR", message, false)
+func NewErrorVoteProposalResponse(err error) *VoteProposalResponse {
+	if err == nil {
+		return NewVoteProposalResponse("INTERNAL_ERROR", "Unexpected error occurred (nil error provided).", false)
+	}
+
+	if werr, ok := err.(*werror.WrappedError); ok {
+		return NewVoteProposalResponse(werr.Code, werr.Message, false)
+	}
+
+	return NewVoteProposalResponse("UNKNOWN_ERROR", fmt.Sprintf("Unexpected error occurred: %v", err), false)
 }
 
 func (p *VoteProposalResponse) GetTopicResponse() *vote_proposal_message.VoteProposalResponse {

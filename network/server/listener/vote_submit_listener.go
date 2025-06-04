@@ -70,7 +70,7 @@ func (listener *VoteSubmitListener) SubmitVote(
 	vs, err := gRPC.NewVoteSubmit(req)
 
 	if err != nil {
-		return gRPC.GetErrorSubmitVote(err.Error()).GetVoteResponse(), nil
+		return gRPC.NewErrorVoteSubmitResponse(err).GetVoteResponse(), nil
 	}
 
 	ResponseCh := make(chan *gRPC.VoteSubmitResponse, 1)

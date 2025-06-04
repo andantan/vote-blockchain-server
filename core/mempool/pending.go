@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/transaction"
+	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
 )
@@ -26,7 +27,7 @@ const (
 )
 
 type Pending struct {
-	pendingID types.Topic // TopicID
+	pendingID types.Proposal // TopicID
 
 	mu       sync.RWMutex
 	txx      map[string]*transaction.Transaction
@@ -163,18 +164,19 @@ func (p *Pending) Activate() {
 func (p *Pending) Shutdown(mwg *sync.WaitGroup) {
 	defer mwg.Done()
 
-	log.Printf(util.PendingString("PENDING: %s | service shutdown initiated."), p.pendingID)
+	log.Printf(util.PendingString("PENDING: %s | service shutdown initiated"), p.pendingID)
 
 	p.cancel()
 
 	p.wg.Wait()
 
-	log.Printf(util.PendingString("PENDING: %s | service shutdown completed."), p.pendingID)
+	log.Printf(util.PendingString("PENDING: %s | service shutdown completed"), p.pendingID)
 }
 
 func (p *Pending) PushTx(tx *transaction.Transaction) error {
 	if p.collision(tx) {
-		return fmt.Errorf("given tx (%s) is already commited", tx.GetHashString())
+		msg := fmt.Sprintf("Vote transaction with hash '%s' for proposal '%s' has already been submitted.", tx.GetHashString(), p.pendingID)
+		return werror.NewWrappedError("DUPLICATE_VOTE_SUBMISSION", msg, nil)
 	}
 
 	p.mu.Lock()
@@ -184,6 +186,7 @@ func (p *Pending) PushTx(tx *transaction.Transaction) error {
 	case p.transactionCh <- tx:
 		return nil
 	default:
+		// TODO Retrive transaction
 		return fmt.Errorf("failed to push tx %s | %s: transaction channel is likely full or closed during send attempt",
 			p.pendingID,
 			tx.GetHashString(),

@@ -1,0 +1,3 @@
+blockchain:
+  block_time: "30s"
+  max_tx_size: 600

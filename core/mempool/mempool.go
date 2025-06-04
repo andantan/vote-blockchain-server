@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/transaction"
+	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
 )
@@ -21,7 +22,7 @@ type MemPool struct {
 
 	wg       *sync.WaitGroup
 	mu       sync.RWMutex
-	pendings map[types.Topic]*Pending
+	pendings map[types.Proposal]*Pending
 
 	pendedCh   chan *Pended
 	shutdownCh chan struct{}
@@ -32,7 +33,7 @@ func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
 		BlockTime:  blockTime,
 		MaxTxSize:  maxTxSize,
 		wg:         &sync.WaitGroup{},
-		pendings:   make(map[types.Topic]*Pending),
+		pendings:   make(map[types.Proposal]*Pending),
 		pendedCh:   make(chan *Pended, PENDED_REQUEST_BUFFER_SIZE),
 		shutdownCh: make(chan struct{}),
 	}
@@ -48,9 +49,10 @@ func (mp *MemPool) Consume() <-chan *Pended {
 	return mp.pendedCh
 }
 
-func (mp *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) error {
+func (mp *MemPool) AddPending(pendingId types.Proposal, pendingTime time.Duration) error {
 	if mp.IsOpen(pendingId) {
-		return fmt.Errorf("topic (%s) already opened pending", pendingId)
+		msg := fmt.Sprintf("Given proposal (%s) is already pending", pendingId)
+		return werror.NewWrappedError("PROPOSAL_ALREADY_OPEN", msg, nil)
 	}
 
 	pnOpts := NewPendingOpts(mp.MaxTxSize, mp.BlockTime, pendingId, pendingTime, mp.pendedCh)
@@ -66,11 +68,11 @@ func (mp *MemPool) AddPending(pendingId types.Topic, pendingTime time.Duration) 
 	return nil
 }
 
-func (mp *MemPool) getPendingWithoutOpenCheck(pendingId types.Topic) *Pending {
+func (mp *MemPool) getPendingWithoutOpenCheck(pendingId types.Proposal) *Pending {
 	return mp.pendings[pendingId]
 }
 
-func (mp *MemPool) IsOpen(pendingId types.Topic) bool {
+func (mp *MemPool) IsOpen(pendingId types.Proposal) bool {
 	mp.mu.RLock()
 	defer mp.mu.RUnlock()
 	_, ok := mp.pendings[pendingId]
@@ -78,25 +80,28 @@ func (mp *MemPool) IsOpen(pendingId types.Topic) bool {
 	return ok
 }
 
-func (mp *MemPool) openPending(pendingId types.Topic, open *Pending) {
+func (mp *MemPool) openPending(pendingId types.Proposal, open *Pending) {
 	mp.mu.Lock()
 	defer mp.mu.Unlock()
 	mp.pendings[pendingId] = open
 }
 
-func (mp *MemPool) CommitTransaction(pendingId types.Topic, tx *transaction.Transaction) error {
+func (mp *MemPool) CommitTransaction(pendingId types.Proposal, tx *transaction.Transaction) error {
 	if !mp.IsOpen(pendingId) {
-		return fmt.Errorf("pending(%s) does not opened", pendingId)
+		msg := fmt.Sprintf("Proposal (%s) is not open", pendingId)
+		return werror.NewWrappedError("PROPOSAL_NOT_OPEN", msg, nil)
 	}
 
 	pn := mp.getPendingWithoutOpenCheck(pendingId)
 
 	if pn.IsClosed() {
-		return fmt.Errorf("pending(%s) is closed", pendingId)
+		msg := fmt.Sprintf("Proposal (%s) is closed", pendingId)
+		return werror.NewWrappedError("CLOSED_PROPOSAL", msg, nil)
 	}
 
 	if pn.IsTimeout() {
-		return fmt.Errorf("pending(%s) time over", pendingId)
+		msg := fmt.Sprintf("Proposal (%s) has timed out", pendingId)
+		return werror.NewWrappedError("TIMEOUT_PROPOSAL", msg, nil)
 	}
 
 	if err := pn.PushTx(tx); err != nil {
@@ -115,9 +120,9 @@ func (mp *MemPool) closedPendingCollector() {
 		select {
 		case <-collector.C:
 
-			topicsAlive := []types.Topic{}
-			topicsOver := []types.Topic{}
-			topicsToRemove := []types.Topic{}
+			topicsAlive := []types.Proposal{}
+			topicsOver := []types.Proposal{}
+			topicsToRemove := []types.Proposal{}
 
 			for topic, pending := range mp.pendings {
 				isTimeout := pending.IsTimeout()
@@ -149,7 +154,7 @@ func (mp *MemPool) closedPendingCollector() {
 	}
 }
 
-func (mp *MemPool) closePending(pendingId types.Topic) {
+func (mp *MemPool) closePending(pendingId types.Proposal) {
 	mp.mu.Lock()
 	delete(mp.pendings, pendingId)
 	log.Printf(util.MemPoolString("MEMPOOL: %s| Pending successfully removed"), pendingId)

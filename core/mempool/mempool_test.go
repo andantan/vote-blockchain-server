@@ -26,7 +26,7 @@ func TestMempool(t *testing.T) {
 func TestPending(t *testing.T) {
 	t.Log(util.GreenString("+-+-+-+-+-+-+-+-+- mempool_test.go::TestPending \"RUN\" -+-+-+-+-+-+-+-+-+"))
 
-	pendingName := types.Topic("pending")
+	pendingName := types.Proposal("pending")
 
 	mp := NewMemPool(3*time.Second, uint32(50000))
 

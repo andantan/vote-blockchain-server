@@ -1,10 +1,10 @@
 package server
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/core/blockchain"
@@ -162,9 +162,10 @@ labelServer:
 		select {
 
 		case proposal := <-voteProposalCh:
-			if strings.Compare(string(proposal.Topic), "exit") == 0 {
+			// TODO: Make this tender
+			if strings.Compare(string(proposal.Proposal), "exit") == 0 {
 				log.Println(util.SystemString("============================== SHUTDOWN NODE =============================="))
-				proposal.ResponseCh <- gRPC.GetSuccessVoteProposal("shutdown")
+				proposal.ResponseCh <- gRPC.NewSuccessVoteProposalResponse("shutdown", 1*time.Hour)
 
 				s.VoteProposalListener.Shutdown()
 				s.VoteSubmitListener.Shutdown()
@@ -176,31 +177,25 @@ labelServer:
 				break labelServer
 			}
 
-			if err := s.mempool.AddPending(proposal.Topic, proposal.Duration); err != nil {
-				proposal.ResponseCh <- gRPC.GetErrorVoteProposal(err.Error())
+			if err := s.mempool.AddPending(proposal.Proposal, proposal.Duration); err != nil {
+				proposal.ResponseCh <- gRPC.NewErrorVoteProposalResponse(err)
 				continue
 			}
 
-			resMsg := fmt.Sprintf("pending opening success { topic: %s }", proposal.Topic)
-
-			proposal.ResponseCh <- gRPC.GetSuccessVoteProposal(resMsg)
+			proposal.ResponseCh <- gRPC.NewSuccessVoteProposalResponse(proposal.Proposal, proposal.Duration)
 
 		case submit := <-voteSubmitCh:
 			id, tx := submit.Fragmentation()
 
 			if err := s.mempool.CommitTransaction(id, tx); err != nil {
-				submit.ResponseCh <- gRPC.GetErrorSubmitVote(err.Error())
+				submit.ResponseCh <- gRPC.NewErrorVoteSubmitResponse(err)
 				continue
 			}
 
-			submit.ResponseCh <- gRPC.GetSuccessSubmitVote(submit.Hash.String())
+			submit.ResponseCh <- gRPC.NewSuccessVoteSubmitResponse(id, tx.Hash)
 
 		case pended := <-s.pendedCh:
 			if pended.IsExpired() {
-				// TODO goroutine restapi this result
-				// log.Printf(util.PendingString("PENDING: %s | Pending expired { cachedLength: %d, cachedOption: %v }"),
-				// 	pended.GetPendingID(), pended.GetCachedLength(), pended.GetCachedOptions())
-
 				go s.eventDeliver.UnicastExpiredPendingEvent(pended)
 
 				continue

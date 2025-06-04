@@ -134,8 +134,8 @@ func (bc *BlockChain) Produce() chan<- *block.ProtoBlock {
 const (
 	BLOCKCHAIN_NEW_CHAINED_BLOCK_LOG_MESSAGE = `BLOCKCHAIN: New block added to the chain.
 --------------------------------------------------------------------------------------
-| *H.Voting ID     : %-80s
-| *H.Merkle Root   : %-80s
+| *H.VotingID      : %-80s
+| *H.MerkleRoot    : %-80s
 | *H.Height        : %-80d
 | *H.PrevBlockHash : %-80s
 | B.BlockHash      : %-80s

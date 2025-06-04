@@ -7,6 +7,6 @@ import (
 	"github.com/andantan/vote-blockchain-server/types"
 )
 
-func (vs *VoteSubmit) Fragmentation() (types.Topic, *transaction.Transaction) {
+func (vs *VoteSubmit) Fragmentation() (types.Proposal, *transaction.Transaction) {
 	return vs.Topic, transaction.NewTransaction(vs.Hash, vs.Option, time.Now().UnixNano())
 }

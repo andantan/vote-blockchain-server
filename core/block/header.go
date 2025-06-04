@@ -10,10 +10,10 @@ import (
 
 // Height 0 will be a genesis block
 type Header struct {
-	VotingID      types.Topic `json:"voting_id"`
-	MerkleRoot    types.Hash  `json:"merkle_root"`
-	Height        uint64      `json:"height"`
-	PrevBlockHash types.Hash  `json:"prev_block_hash"`
+	VotingID      types.Proposal `json:"voting_id"`
+	MerkleRoot    types.Hash     `json:"merkle_root"`
+	Height        uint64         `json:"height"`
+	PrevBlockHash types.Hash     `json:"prev_block_hash"`
 }
 
 func (h *Header) Bytes() []byte {

@@ -9,7 +9,7 @@ import (
 type PendingOpts struct {
 	maxTxSize   uint32
 	blockTime   time.Duration
-	pendingID   types.Topic
+	pendingID   types.Proposal
 	pendingTime time.Duration
 	pendedCh    chan *Pended
 }
@@ -17,7 +17,7 @@ type PendingOpts struct {
 func NewPendingOpts(
 	maxTxSize uint32,
 	blockTime time.Duration,
-	pendingID types.Topic,
+	pendingID types.Proposal,
 	pendingTime time.Duration,
 	pendedCh chan *Pended,
 ) *PendingOpts {

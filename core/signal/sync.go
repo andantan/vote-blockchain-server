@@ -8,17 +8,17 @@ import (
 
 type PendingClosing struct {
 	wg    *sync.WaitGroup
-	topic types.Topic
+	topic types.Proposal
 }
 
-func NewPendingClosing(topic types.Topic) *PendingClosing {
+func NewPendingClosing(topic types.Proposal) *PendingClosing {
 	return &PendingClosing{
 		wg:    &sync.WaitGroup{},
 		topic: topic,
 	}
 }
 
-func (c *PendingClosing) GetTopic() types.Topic {
+func (c *PendingClosing) GetTopic() types.Proposal {
 	return c.topic
 }
 

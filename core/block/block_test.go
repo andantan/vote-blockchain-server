@@ -192,5 +192,5 @@ func getProtoBlockForTest(t *testing.T) *ProtoBlock {
 
 	id := "2025 대선"
 
-	return NewProtoBlock(types.Topic(id), txMap)
+	return NewProtoBlock(types.Proposal(id), txMap)
 }
