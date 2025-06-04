@@ -7,12 +7,14 @@ import (
 
 type pendingMetaData struct {
 	expired       bool
+	cachedLength  int
 	cachedOptions map[string]int
 }
 
-func newPendingMetaData(expire bool, cachedOption map[string]int) *pendingMetaData {
+func newPendingMetaData(expired bool, cachedLength int, cachedOption map[string]int) *pendingMetaData {
 	return &pendingMetaData{
-		expired:       expire,
+		expired:       expired,
+		cachedLength:  cachedLength,
 		cachedOptions: cachedOption,
 	}
 }
@@ -25,20 +27,18 @@ type Pended struct {
 
 func NewPended(pendingID types.Topic, txx map[string]*transaction.Transaction) *Pended {
 	return &Pended{
-		pendingMetaData: newPendingMetaData(false, nil),
+		pendingMetaData: newPendingMetaData(false, 0, nil),
 		pendingID:       pendingID,
 		txx:             txx,
 	}
 }
 
 func NewExpiredPended(
-	pendingID types.Topic, txx map[string]*transaction.Transaction,
-	cachedOption map[string]int,
+	pendingID types.Topic, cachedLength int, cachedOption map[string]int,
 ) *Pended {
 	return &Pended{
-		pendingMetaData: newPendingMetaData(true, cachedOption),
+		pendingMetaData: newPendingMetaData(true, cachedLength, cachedOption),
 		pendingID:       pendingID,
-		txx:             txx,
 	}
 }
 
@@ -48,6 +48,10 @@ func (p *Pended) GetPendingID() types.Topic {
 
 func (p *Pended) GetTxx() map[string]*transaction.Transaction {
 	return p.txx
+}
+
+func (p *Pended) GetCachedLength() int {
+	return p.cachedLength
 }
 
 func (p *Pended) GetCachedOptions() map[string]int {

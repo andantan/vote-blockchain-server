@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -21,10 +22,10 @@ const (
 	PROTOCOL = "http"
 	ADDRESS  = "localhost"
 	PORT     = 8080
-	API      = "vote/submit"
+	API      = "/vote/submit"
 )
 
-var URL string = fmt.Sprintf("%s://%s:%d/%s", PROTOCOL, ADDRESS, PORT, API)
+var URL string = fmt.Sprintf("%s://%s:%d%s", PROTOCOL, ADDRESS, PORT, API)
 
 type VoteSubmitRequest struct {
 	Hash   string `json:"hash"`
@@ -47,6 +48,10 @@ type VoteSubmitResponse struct {
 }
 
 func main() {
+	var max int
+	flag.IntVar(&max, "max", 10, "Limit submit loop entity")
+	flag.Parse()
+
 	httpClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -86,7 +91,9 @@ func main() {
 		"K-콘텐츠 해외 진출 전략",
 	}
 
-	max := 2
+	if len(proposals) < max {
+		panic(fmt.Sprintf("Cannot process %d submits: only %d proposals available. 'max' value must not exceed the total number of proposals.", max, len(proposals)))
+	}
 
 	wg.Add(max)
 

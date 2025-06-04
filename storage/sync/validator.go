@@ -62,7 +62,6 @@ func (v *Validator) StartValidate() {
 			v.syncBlockHeaders(blk)
 
 			log.Printf(util.CyanString("VALIDATE: Block( 0x%s ) with Height( %d ) => "+util.YellowString("Verified")), blk.BlockHash.String(), blk.Height)
-			time.Sleep(30 * time.Millisecond)
 		}
 	} else {
 		log.Println(util.CyanString("VALIDATE: GENESIS BLOCK NEED"))

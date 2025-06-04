@@ -223,7 +223,7 @@ func (p *Pending) emitAndFlush() {
 }
 
 func (p *Pending) emitExpiredPended() {
-	p.pendedCh <- NewExpiredPended(p.pendingID, p.txx, p.optCache)
+	p.pendedCh <- NewExpiredPended(p.pendingID, len(p.txCache), p.optCache)
 }
 
 func (p *Pending) flushIfNotEmpty() {

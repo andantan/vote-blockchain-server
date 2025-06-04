@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -17,11 +18,11 @@ const (
 	PROTOCOL = "http"
 	ADDRESS  = "localhost"
 	PORT     = 8080
-	API      = "topic/new"
+	API      = "/vote/proposal"
 )
 
 var (
-	URL string = fmt.Sprintf("%s://%s:%d/%s", PROTOCOL, ADDRESS, PORT, API)
+	URL string = fmt.Sprintf("%s://%s:%d%s", PROTOCOL, ADDRESS, PORT, API)
 )
 
 type VoteProposalRequest struct {
@@ -43,6 +44,10 @@ type TopicResponse struct {
 }
 
 func main() {
+	var max int
+	flag.IntVar(&max, "max", 10, "Limit proposal entity")
+	flag.Parse()
+
 	wg := &sync.WaitGroup{}
 
 	proposals := []*VoteProposalRequest{
@@ -78,7 +83,9 @@ func main() {
 		NewVoteProposalRequest("K-콘텐츠 해외 진출 전략", 10),
 	}
 
-	max := 2
+	if len(proposals) < max {
+		panic(fmt.Sprintf("Cannot process %d proposals: only %d proposals available. 'max' value must not exceed the total number of proposals.", max, len(proposals)))
+	}
 
 	wg.Add(max)
 

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
+	"github.com/andantan/vote-blockchain-server/network/deliver"
 	"github.com/andantan/vote-blockchain-server/storage/store"
 	"github.com/andantan/vote-blockchain-server/util"
 )
@@ -15,12 +15,20 @@ const (
 	BLOCK_REQUEST_BUFFER_SIZE = 64
 )
 
+const (
+	NEW_BLOCK_EVENT_PROTOCOL = "http"
+	NEW_BLOCK_EVENT_ADDRESS  = "127.0.0.1"
+	NEW_BLOCK_EVENT_PORT     = 8080
+	NEW_BLOCK_EVENT_API_PATH = "/event/new-block"
+)
+
 type BlockChain struct {
 	mu           sync.RWMutex
 	headers      []*block.Header
 	wg           *sync.WaitGroup
 	storer       *store.JsonStorer
 	protoBlockCh chan *block.ProtoBlock
+	eventDeliver *deliver.EventDeliver
 }
 
 func NewBlockChain(storer *store.JsonStorer, syncedHeader []*block.Header) *BlockChain {
@@ -28,7 +36,15 @@ func NewBlockChain(storer *store.JsonStorer, syncedHeader []*block.Header) *Bloc
 	bc := &BlockChain{
 		wg:     &sync.WaitGroup{},
 		storer: storer,
+		eventDeliver: deliver.NewEventDeliver(
+			NEW_BLOCK_EVENT_PROTOCOL, NEW_BLOCK_EVENT_ADDRESS, NEW_BLOCK_EVENT_PORT,
+		),
 	}
+
+	bc.eventDeliver.SetCreatedBlockEventDeliver(NEW_BLOCK_EVENT_API_PATH)
+
+	log.Printf(util.DeliverString("DELIVER: Blockchain created block event deliver endpoint: %s"),
+		bc.eventDeliver.CreatedBlockEventDeliver.GetUrl())
 
 	if len(syncedHeader) != 0 {
 		bc.setSyncedHeaders(syncedHeader)
@@ -82,7 +98,6 @@ func (bc *BlockChain) setSyncedHeaders(syncedHeader []*block.Header) {
 		bc.headers = append(bc.headers, header)
 
 		log.Printf(util.BlockChainString("SYNCHRONIZATION: Header( 0x%s ) with Height( %d ) => "+util.YellowString("Synchronized")), header.Hash().String(), header.Height)
-		time.Sleep(20 * time.Millisecond)
 	}
 
 	log.Println(util.BlockChainString("SYNCHRONIZATION: Blockchain headers synchronizion is done."))
@@ -157,7 +172,8 @@ func (bc *BlockChain) Activate() {
 		)
 
 		bc.storer.SaveBlock(currentBlock)
-		// TODO goroutine restapi this block height
+
+		go bc.eventDeliver.UnicastCreatedBlockEvent(currentBlock)
 	}
 
 	log.Println(util.BlockChainString("BLOCKCHAIN: Block receiver and processor goroutine exited"))

@@ -97,3 +97,7 @@ func TestOracleString(s string) string {
 func TestDecoratorString(s string) string {
 	return GreenString(s)
 }
+
+func DeliverString(s string) string {
+	return YellowString(s)
+}

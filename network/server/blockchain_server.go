@@ -9,10 +9,18 @@ import (
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/core/blockchain"
 	"github.com/andantan/vote-blockchain-server/core/mempool"
+	"github.com/andantan/vote-blockchain-server/network/deliver"
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
 	"github.com/andantan/vote-blockchain-server/network/server/listener"
 	"github.com/andantan/vote-blockchain-server/storage/store"
 	"github.com/andantan/vote-blockchain-server/util"
+)
+
+const (
+	EXPIRED_PENDING_EVENT_PROTOCOL = "http"
+	EXPIRED_PENDING_EVENT_ADDRESS  = "127.0.0.1"
+	EXPIRED_PENDING_EVENT_PORT     = 8080
+	EXPIRED_PENDING_EVENT_API_PATH = "/event/expired-pending"
 )
 
 const (
@@ -34,6 +42,8 @@ type BlockChainServer struct {
 	pendedCh     <-chan *mempool.Pended
 	protoBlockCh chan<- *block.ProtoBlock
 	exitSignalCh chan uint8
+
+	eventDeliver *deliver.EventDeliver
 }
 
 func NewBlockChainServer(options BlockChainServerOpts, syncedHeaders []*block.Header) *BlockChainServer {
@@ -56,6 +66,7 @@ func (s *BlockChainServer) initialize(syncedHeaders []*block.Header) {
 	s.setStorer()
 	s.setBlockChain(syncedHeaders)
 	s.setChannel()
+	s.setEventDeliver()
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer initialization is done."))
 }
@@ -124,6 +135,22 @@ func (s *BlockChainServer) setChannel() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting channel is done."))
 }
 
+func (s *BlockChainServer) setEventDeliver() {
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting deliver..."))
+
+	s.eventDeliver = deliver.NewEventDeliver(
+		EXPIRED_PENDING_EVENT_PROTOCOL,
+		EXPIRED_PENDING_EVENT_ADDRESS,
+		EXPIRED_PENDING_EVENT_PORT,
+	)
+
+	s.eventDeliver.SetExpirdPendingEventDeliver(EXPIRED_PENDING_EVENT_API_PATH)
+
+	log.Printf(util.DeliverString("DELIVER: BlockChainServer expired pending event deliver endpoint: %s"),
+		s.eventDeliver.ExpiredPendingEventDeliver.GetUrl())
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting deliver is done."))
+}
+
 func (s *BlockChainServer) Start() {
 	s.startgRPCListener()
 
@@ -171,7 +198,10 @@ labelServer:
 		case pended := <-s.pendedCh:
 			if pended.IsExpired() {
 				// TODO goroutine restapi this result
-				log.Printf(util.PendingString("PENDING: %s | Pending result = %v"), pended.GetPendingID(), pended.GetCachedOptions())
+				// log.Printf(util.PendingString("PENDING: %s | Pending expired { cachedLength: %d, cachedOption: %v }"),
+				// 	pended.GetPendingID(), pended.GetCachedLength(), pended.GetCachedOptions())
+
+				go s.eventDeliver.UnicastExpiredPendingEvent(pended)
 
 				continue
 			}
