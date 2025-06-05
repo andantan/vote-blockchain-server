@@ -52,8 +52,8 @@ func main() {
 
 	proposals := []*VoteProposalRequest{
 		NewVoteProposalRequest("2025 대선", 1),
-		NewVoteProposalRequest("2025 경선", 2),
-		NewVoteProposalRequest("2025 보건의료 여론조사", 3),
+		NewVoteProposalRequest("2025 경선", 3),
+		NewVoteProposalRequest("2025 보건의료 여론조사", 1),
 		NewVoteProposalRequest("법률개정안 찬반 투표", 3),
 		NewVoteProposalRequest("상법개정안 시범 기간 조사", 4),
 		NewVoteProposalRequest("기후변화 대응 방안 선호도 조사", 5),

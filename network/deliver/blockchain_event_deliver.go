@@ -23,7 +23,7 @@ func NewEventDeliver(defaultProtocol, defaultAddress string, defaultPort uint16)
 }
 
 func (d *EventDeliver) SetCreatedBlockEventDeliver(path string) {
-	cfg := event.NewBlockCreatedEventEndpoint(d.defaultProtocol, d.defaultAddress, d.defaultPort, path)
+	cfg := event.NewCreatedBlockEventEndpoint(d.defaultProtocol, d.defaultAddress, d.defaultPort, path)
 	d.CreatedBlockEventDeliver = event.NewCreatedBlockeventUnicaster(cfg)
 }
 

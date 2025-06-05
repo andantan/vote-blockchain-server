@@ -17,7 +17,7 @@ type CreatedBlockEventEndpoint struct {
 	*DefaultEndPoint
 }
 
-func NewBlockCreatedEventEndpoint(protocol, address string, port uint16, path string) *CreatedBlockEventEndpoint {
+func NewCreatedBlockEventEndpoint(protocol, address string, port uint16, path string) *CreatedBlockEventEndpoint {
 	return &CreatedBlockEventEndpoint{
 		&DefaultEndPoint{
 			protocol: protocol,
@@ -33,21 +33,22 @@ func (e *CreatedBlockEventEndpoint) getUrl() string {
 }
 
 type CreatedBlockEventRequest struct {
-	VotingId string `json:"voting_id"`
-	Height   uint64 `json:"height"`
+	VoteId string `json:"vote_id"`
+	Height uint64 `json:"height"`
 }
 
-func NewCreatedBlockEventRequest(votingId string, height uint64) *CreatedBlockEventRequest {
+func NewCreatedBlockEventRequest(voteId string, height uint64) *CreatedBlockEventRequest {
 	return &CreatedBlockEventRequest{
-		VotingId: votingId,
-		Height:   height,
+		VoteId: voteId,
+		Height: height,
 	}
 }
 
 type CreatedBlockEventResponse struct {
-	Caching  bool   `json:"caching"`
-	VotingID string `json:"voting_id"`
-	Height   uint64 `json:"height"`
+	Caching bool   `json:"caching"`
+	Message string `json:"message"`
+	VoteId  string `json:"vote_id"`
+	Height  uint64 `json:"height"`
 }
 
 type CreatedBlockeventUnicaster struct {
@@ -73,6 +74,11 @@ func (u *CreatedBlockeventUnicaster) Unicast(createdBlock *block.Block) {
 
 	buf, _ := json.Marshal(req)
 
+	log.Printf(
+		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast request { vote_id: %s, height: %d }"),
+		req.VoteId, req.Height,
+	)
+
 	res, err := u.client.Post(u.endPoint.getUrl(), JSON_CONTENT_TYPE, bytes.NewBuffer(buf))
 
 	if err != nil {
@@ -90,7 +96,7 @@ func (u *CreatedBlockeventUnicaster) Unicast(createdBlock *block.Block) {
 	}
 
 	log.Printf(
-		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { voting_id: %s, height: %d, caching: %t  }"),
-		dataReq.VotingID, dataReq.Height, dataReq.Caching,
+		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { vote_id: %s, height: %d, caching: %t, message: %s }"),
+		dataReq.VoteId, dataReq.Height, dataReq.Caching, dataReq.Message,
 	)
 }
