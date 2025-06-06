@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/storage/path"
 	"github.com/andantan/vote-blockchain-server/util"
@@ -24,15 +25,17 @@ type JsonStorer struct {
 	wg          sync.WaitGroup
 }
 
-func NewStore(baseDir, blocksDir string) *JsonStorer {
-	js := &JsonStorer{}
-	js.setBaseDirectory(baseDir, blocksDir)
-	js.setChannel()
-	js.wg.Add(1)
+func NewStore() *JsonStorer {
+	cfg := config.GetStorerConfiguration()
 
-	go js.saveBlocks()
+	storer := &JsonStorer{}
+	storer.setBaseDirectory(cfg.StoreBaseDir, cfg.StoreBlockDir)
+	storer.setChannel()
+	storer.wg.Add(1)
 
-	return js
+	go storer.saveBlocks()
+
+	return storer
 }
 
 func (js *JsonStorer) setBaseDirectory(baseDir, blocksDir string) {

@@ -1,0 +1,4 @@
+{
+    "BlockIntervalSeconds": 30,
+    "MaxTransactionSize": 600
+}

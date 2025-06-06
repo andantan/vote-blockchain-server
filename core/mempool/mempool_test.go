@@ -11,7 +11,7 @@ import (
 )
 
 func TestMempool(t *testing.T) {
-	p := NewMemPool(5*time.Second, uint32(50000))
+	p := NewMemPool()
 
 	assert.False(t, p.IsOpen("Pending1"))
 
@@ -28,7 +28,7 @@ func TestPending(t *testing.T) {
 
 	pendingName := types.Proposal("pending")
 
-	mp := NewMemPool(3*time.Second, uint32(50000))
+	mp := NewMemPool()
 
 	err := mp.AddPending(pendingName, 5*time.Second)
 	assert.Nil(t, err)

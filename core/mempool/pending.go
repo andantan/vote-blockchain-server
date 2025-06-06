@@ -7,24 +7,21 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
-const (
-	RESET_TIMER_DURATION = iota
-)
+// const (
+// 	RESET_TIMER_DURATION = iota
+// )
 
-const (
-	Tx_BUFFER_SIZE = 1024
-)
-
-const (
-	INTERRUPT_TIMER_DURATION = 5 * time.Second
-	CLOSE_TIMER_DURATION     = 10 * time.Second
-)
+// const (
+// 	INTERRUPT_TIMER_DURATION = 5 * time.Second
+// 	CLOSE_TIMER_DURATION     = 10 * time.Second
+// )
 
 type Pending struct {
 	pendingID types.Proposal // TopicID
@@ -50,6 +47,10 @@ type Pending struct {
 
 	closeTimer *time.Timer
 
+	resetTimerDuration     time.Duration
+	inturruptTimerDuration time.Duration
+	closeTimerDuration     time.Duration
+
 	maxTxSize uint32 // Tx size (system)
 
 	transactionCh chan *transaction.Transaction
@@ -59,21 +60,34 @@ type Pending struct {
 func NewPending(opts *PendingOpts) *Pending {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	__cfg := config.GetPendingInternalTimerConfiguration()
+	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+
+	__reset_timer_duartion := time.Duration(__cfg.ResetTimeDurationSeconds) * time.Second
+	__inturrupt_timer_duration := time.Duration(__cfg.InturruptTimerDurationSeconds) * time.Second
+	__close_timer_duration := time.Duration(__cfg.CloseTimerDurationSeconds) * time.Second
+
 	p := &Pending{
-		pendingID:     opts.pendingID,
-		txx:           make(map[string]*transaction.Transaction),
-		txCache:       make(map[string]struct{}),
-		optCache:      make(map[string]int),
-		timeout:       false,
-		closed:        false,
-		wg:            &sync.WaitGroup{},
-		ctx:           ctx,
-		cancel:        cancel,
-		pendingTime:   opts.pendingTime,
-		blockTime:     opts.blockTime,
-		maxTxSize:     opts.maxTxSize,
-		transactionCh: make(chan *transaction.Transaction, Tx_BUFFER_SIZE),
-		pendedCh:      opts.pendedCh,
+		pendingID:              opts.pendingID,
+		txx:                    make(map[string]*transaction.Transaction),
+		txCache:                make(map[string]struct{}),
+		optCache:               make(map[string]int),
+		timeout:                false,
+		closed:                 false,
+		wg:                     &sync.WaitGroup{},
+		ctx:                    ctx,
+		cancel:                 cancel,
+		pendingTime:            opts.pendingTime,
+		blockTime:              opts.blockTime,
+		resetTimerDuration:     __reset_timer_duartion,
+		inturruptTimerDuration: __inturrupt_timer_duration,
+		closeTimerDuration:     __close_timer_duration,
+		maxTxSize:              opts.maxTxSize,
+		transactionCh: make(
+			chan *transaction.Transaction,
+			__sys_channel_size.PendingTransactionChannelBufferSize,
+		),
+		pendedCh: opts.pendedCh,
 	}
 
 	p.wg.Add(1)
@@ -98,9 +112,9 @@ func (p *Pending) Activate() {
 	p.blockTicker = time.NewTicker(p.blockTime)
 	p.pendingTicker = time.NewTicker(p.pendingTime)
 
-	p.closeTimer = time.NewTimer(RESET_TIMER_DURATION)
+	p.closeTimer = time.NewTimer(p.resetTimerDuration)
 	<-p.closeTimer.C
-	p.ctxTimer = time.NewTimer(RESET_TIMER_DURATION)
+	p.ctxTimer = time.NewTimer(p.resetTimerDuration)
 	<-p.ctxTimer.C
 
 	defer func() {
@@ -342,14 +356,14 @@ func (p *Pending) startCloseTimer() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.closeTimer.Reset(CLOSE_TIMER_DURATION)
+	p.closeTimer.Reset(p.closeTimerDuration)
 }
 
 func (p *Pending) startContextTimer() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.ctxTimer.Reset(INTERRUPT_TIMER_DURATION)
+	p.ctxTimer.Reset(p.inturruptTimerDuration)
 }
 
 func (p *Pending) stopBlockTicker() {

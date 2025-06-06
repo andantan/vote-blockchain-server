@@ -6,14 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
-)
-
-const (
-	PENDED_REQUEST_BUFFER_SIZE = 128
 )
 
 type MemPool struct {
@@ -28,13 +25,21 @@ type MemPool struct {
 	shutdownCh chan struct{}
 }
 
-func NewMemPool(blockTime time.Duration, maxTxSize uint32) *MemPool {
+func NewMemPool() *MemPool {
+	__cfg := config.GetChainParameterConfiguration()
+	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+
+	blockInterval := time.Duration(__cfg.BlockIntervalSeconds) * time.Second
+
 	mp := &MemPool{
-		BlockTime:  blockTime,
-		MaxTxSize:  maxTxSize,
-		wg:         &sync.WaitGroup{},
-		pendings:   make(map[types.Proposal]*Pending),
-		pendedCh:   make(chan *Pended, PENDED_REQUEST_BUFFER_SIZE),
+		BlockTime: blockInterval,
+		MaxTxSize: __cfg.MaxTransactionSize,
+		wg:        &sync.WaitGroup{},
+		pendings:  make(map[types.Proposal]*Pending),
+		pendedCh: make(
+			chan *Pended,
+			__sys_channel_size.PendedPropaginateChannelBufferSize,
+		),
 		shutdownCh: make(chan struct{}),
 	}
 

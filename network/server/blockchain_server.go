@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/core/blockchain"
 	"github.com/andantan/vote-blockchain-server/core/mempool"
@@ -16,22 +17,7 @@ import (
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
-const (
-	EXPIRED_PENDING_EVENT_PROTOCOL = "http"
-	EXPIRED_PENDING_EVENT_ADDRESS  = "127.0.0.1"
-	EXPIRED_PENDING_EVENT_PORT     = 8080
-	EXPIRED_PENDING_EVENT_API_PATH = "/event/expired-pending"
-)
-
-const (
-	EXIT_SIGNAL = iota
-	CONVERT_SIGNAL
-	STANDBY_SIGNAL
-)
-
 type BlockChainServer struct {
-	serverOption BlockChainServerOpts
-
 	*listener.VoteProposalListener
 	*listener.VoteSubmitListener
 
@@ -46,8 +32,8 @@ type BlockChainServer struct {
 	eventDeliver *deliver.EventDeliver
 }
 
-func NewBlockChainServer(options BlockChainServerOpts, syncedHeaders []*block.Header) *BlockChainServer {
-	server := &BlockChainServer{serverOption: options}
+func NewBlockChainServer(syncedHeaders []*block.Header) *BlockChainServer {
+	server := &BlockChainServer{}
 	server.exitSignalCh = make(chan uint8)
 
 	server.initialize(syncedHeaders)
@@ -74,34 +60,22 @@ func (s *BlockChainServer) initialize(syncedHeaders []*block.Header) {
 func (s *BlockChainServer) setgRPCServer() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting gRPC server..."))
 
-	s.VoteProposalListener = listener.NewVoteProposalListener(s.serverOption.VoteProposalListenerOption, s.exitSignalCh)
-	s.VoteSubmitListener = listener.NewVoteSubmitListener(s.serverOption.VoteSubmitListenerOption, s.exitSignalCh)
+	s.VoteProposalListener = listener.NewVoteProposalListener(s.exitSignalCh)
+	s.VoteSubmitListener = listener.NewVoteSubmitListener(s.exitSignalCh)
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting gRPC server is done."))
 }
 
 func (s *BlockChainServer) setMemPool() {
-	log.Printf(
-		util.SystemString("SYSTEM: BlockChainServer setting memory pool... | { BlockTime: %s, MaxTxSize: %d }"),
-		s.serverOption.blockTime,
-		s.serverOption.maxTxSize,
-	)
-
-	s.mempool = mempool.NewMemPool(
-		s.serverOption.blockTime,
-		s.serverOption.maxTxSize,
-	)
-
+	log.Println(util.SystemString("SYSTEM: BlockChainServer setting memory pool..."))
+	s.mempool = mempool.NewMemPool()
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting memory pool is done."))
 }
 
 func (s *BlockChainServer) setStorer() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer storer channel..."))
 
-	s.storer = store.NewStore(
-		s.serverOption.StoreBaseDirectory,
-		s.serverOption.StoreBlocksDirectory,
-	)
+	s.storer = store.NewStore()
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting storer is done."))
 }
@@ -138,13 +112,15 @@ func (s *BlockChainServer) setChannel() {
 func (s *BlockChainServer) setEventDeliver() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting deliver..."))
 
+	__cfg := config.GetPendingEventUnicastConfiguration()
+
 	s.eventDeliver = deliver.NewEventDeliver(
-		EXPIRED_PENDING_EVENT_PROTOCOL,
-		EXPIRED_PENDING_EVENT_ADDRESS,
-		EXPIRED_PENDING_EVENT_PORT,
+		__cfg.PendingEventUnicastProtocol,
+		__cfg.PendingEventUnicastAddress,
+		__cfg.PendingEventUnicastPort,
 	)
 
-	s.eventDeliver.SetExpirdPendingEventDeliver(EXPIRED_PENDING_EVENT_API_PATH)
+	s.eventDeliver.SetExpirdPendingEventDeliver(__cfg.ExpiredPendingEventUnicastEndPoint)
 
 	log.Printf(util.DeliverString("DELIVER: BlockChainServer expired pending event deliver endpoint: %s"),
 		s.eventDeliver.ExpiredPendingEventDeliver.GetUrl())

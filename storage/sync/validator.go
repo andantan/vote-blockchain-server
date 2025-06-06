@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/core/transaction"
 	"github.com/andantan/vote-blockchain-server/types"
@@ -28,7 +29,10 @@ type Validator struct {
 	headers []*block.Header
 }
 
-func NewValidator(syncDir SyncDir) *Validator {
+func NewValidator() *Validator {
+	cfg := config.GetValidatorConfiguration()
+	syncDir := NewSyncDir(cfg.StoreBaseDir, cfg.StoreBlockDir)
+
 	return &Validator{
 		syncDir: syncDir,
 		headers: []*block.Header{},

@@ -5,22 +5,23 @@ import (
 	"log"
 	"sync"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/network/deliver"
 	"github.com/andantan/vote-blockchain-server/storage/store"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
-const (
-	BLOCK_REQUEST_BUFFER_SIZE = 64
-)
+// const (
+// 	BLOCK_REQUEST_BUFFER_SIZE = 64
+// )
 
-const (
-	NEW_BLOCK_EVENT_PROTOCOL = "http"
-	NEW_BLOCK_EVENT_ADDRESS  = "127.0.0.1"
-	NEW_BLOCK_EVENT_PORT     = 8080
-	NEW_BLOCK_EVENT_API_PATH = "/event/new-block"
-)
+// const (
+// 	NEW_BLOCK_EVENT_PROTOCOL = "http"
+// 	NEW_BLOCK_EVENT_ADDRESS  = "127.0.0.1"
+// 	NEW_BLOCK_EVENT_PORT     = 8080
+// 	NEW_BLOCK_EVENT_API_PATH = "/event/new-block"
+// )
 
 type BlockChain struct {
 	mu           sync.RWMutex
@@ -33,15 +34,19 @@ type BlockChain struct {
 
 func NewBlockChain(storer *store.JsonStorer, syncedHeader []*block.Header) *BlockChain {
 
+	__cfg := config.GetBlockEventUnicastConfiguration()
+
 	bc := &BlockChain{
 		wg:     &sync.WaitGroup{},
 		storer: storer,
 		eventDeliver: deliver.NewEventDeliver(
-			NEW_BLOCK_EVENT_PROTOCOL, NEW_BLOCK_EVENT_ADDRESS, NEW_BLOCK_EVENT_PORT,
+			__cfg.BlockEventUnicastProtocol,
+			__cfg.BlockEventUnicastAddress,
+			__cfg.BlockEventUnicastPort,
 		),
 	}
 
-	bc.eventDeliver.SetCreatedBlockEventDeliver(NEW_BLOCK_EVENT_API_PATH)
+	bc.eventDeliver.SetCreatedBlockEventDeliver(__cfg.CreatedBlockEventUnicastEndPoint)
 
 	log.Printf(util.DeliverString("DELIVER: Blockchain created block event deliver endpoint: %s"),
 		bc.eventDeliver.CreatedBlockEventDeliver.GetUrl())
@@ -78,12 +83,13 @@ func NewGenesisBlockChain(storer *store.JsonStorer) *BlockChain {
 }
 
 func (bc *BlockChain) setChannel() {
-	log.Printf(
-		util.SystemString("SYSTEM: Blockchain setting channel... | { BLOCK_REQUEST_BUFFER_SIZE: %d }"),
-		BLOCK_REQUEST_BUFFER_SIZE,
-	)
+	log.Println(util.SystemString("SYSTEM: Blockchain setting channel..."))
+	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
 
-	bc.protoBlockCh = make(chan *block.ProtoBlock, BLOCK_REQUEST_BUFFER_SIZE)
+	bc.protoBlockCh = make(
+		chan *block.ProtoBlock,
+		__sys_channel_size.BlockPropaginatedChannelBufferSize,
+	)
 
 	log.Println(util.SystemString("SYSTEM: Blockchain block channel setting is done."))
 }

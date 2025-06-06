@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
 	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_submit_message"
 	"github.com/andantan/vote-blockchain-server/util"
@@ -34,8 +35,8 @@ func NewVoteSubmitListenerOption(network string, port, channelBufferSize uint16)
 }
 
 type VoteSubmitListener struct {
-	*VoteSubmitListenerOption
 	vote_submit_message.UnimplementedBlockchainVoteSubmitServiceServer
+	option       *VoteSubmitListenerOption
 	ctx          context.Context
 	cancel       context.CancelFunc
 	grpcServer   *grpc.Server
@@ -43,15 +44,24 @@ type VoteSubmitListener struct {
 	exitCh       chan uint8
 }
 
-func NewVoteSubmitListener(opts *VoteSubmitListenerOption, exitCh chan uint8) *VoteSubmitListener {
+func NewVoteSubmitListener(exitCh chan uint8) *VoteSubmitListener {
+	__cfg := config.GetGrpcVoteSubmitListenerConfiguration()
+	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+
 	ctx, cancel := context.WithCancel(context.Background())
 
+	opts := NewVoteSubmitListenerOption(
+		__cfg.Network,
+		__cfg.Port,
+		__sys_channel_size.GrpcVoteProposalChannelBufferSize,
+	)
+
 	return &VoteSubmitListener{
-		VoteSubmitListenerOption: opts,
-		ctx:                      ctx,
-		cancel:                   cancel,
-		voteSubmitCh:             make(chan *gRPC.VoteSubmit, opts.channelBufferSize),
-		exitCh:                   exitCh,
+		option:       opts,
+		ctx:          ctx,
+		cancel:       cancel,
+		voteSubmitCh: make(chan *gRPC.VoteSubmit, opts.channelBufferSize),
+		exitCh:       exitCh,
 	}
 }
 
@@ -88,9 +98,9 @@ func (listener *VoteSubmitListener) SubmitVote(
 }
 
 func (listener *VoteSubmitListener) Start(wg *sync.WaitGroup) {
-	address := fmt.Sprintf(":%d", listener.port) // ":port"
+	address := fmt.Sprintf(":%d", listener.option.port) // ":port"
 
-	lis, err := net.Listen(listener.network, address)
+	lis, err := net.Listen(listener.option.network, address)
 
 	if err != nil {
 		log.Printf(util.FatalString("failed to listen on port 9000 (Vote): %v"), err)
@@ -103,11 +113,11 @@ func (listener *VoteSubmitListener) Start(wg *sync.WaitGroup) {
 
 	vote_submit_message.RegisterBlockchainVoteSubmitServiceServer(listener.grpcServer, listener)
 
-	log.Printf(util.SystemString("SYSTEM: Vote submit gRPC listener opened { port: %d }"), listener.port)
+	log.Printf(util.SystemString("SYSTEM: Vote submit gRPC listener opened { port: %d }"), listener.option.port)
 	wg.Done()
 
 	if err := listener.grpcServer.Serve(lis); err != nil {
-		log.Printf(util.FatalString("failed to server gRPC listener (VoteSubmit) over port %d: %v"), listener.port, err)
+		log.Printf(util.FatalString("failed to server gRPC listener (VoteSubmit) over port %d: %v"), listener.option.port, err)
 		listener.exitCh <- 0
 	}
 }
