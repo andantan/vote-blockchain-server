@@ -12,10 +12,10 @@ func parse[T any](fileName string, cfg *T) {
 	configFile, err := os.ReadFile(path)
 
 	if err != nil {
-		log.Fatalf("%s 파일 읽기 실패: %v", fileName, err)
+		log.Fatalf("%s - reading error: %v", fileName, err)
 	}
 	if err = json.Unmarshal(configFile, cfg); err != nil {
-		log.Fatalf("JSON 언마셜링 실패: %v", err)
+		log.Fatalf("JSON unmarshalling failed: %v", err)
 	}
 }
 

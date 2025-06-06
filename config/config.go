@@ -8,7 +8,7 @@ type ChannelBufferSizeSystemConfiguration struct {
 	GrpcVoteSubmitChannelBufferSize     uint16 `json:"GrpcVoteSubmitChannelBufferSize"`
 	PendingTransactionChannelBufferSize uint16 `json:"PendingTransactionChannelBufferSize"`
 	PendedPropaginateChannelBufferSize  uint16 `json:"PendedPropaginateChannelBufferSize"`
-	BlockPropaginatedChannelBufferSize  uint16 `json:"BlockPropaginatedChannelBufferSize"`
+	BlockPropaginateChannelBufferSize   uint16 `json:"BlockPropaginateChannelBufferSize"`
 }
 
 // #end

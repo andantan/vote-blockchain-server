@@ -88,7 +88,7 @@ func (bc *BlockChain) setChannel() {
 
 	bc.protoBlockCh = make(
 		chan *block.ProtoBlock,
-		__sys_channel_size.BlockPropaginatedChannelBufferSize,
+		__sys_channel_size.BlockPropaginateChannelBufferSize,
 	)
 
 	log.Println(util.SystemString("SYSTEM: Blockchain block channel setting is done."))
