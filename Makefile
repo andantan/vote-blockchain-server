@@ -1,3 +1,9 @@
+ifeq ($(OS),Windows_NT) 
+	CLEAR_COMMAND = @cls
+else 
+	CLEAR_COMMAND = @clear
+endif
+
 gen-protobuf:
 	@protoc \
 	--proto_path=protobuf -I "proto/transaction.proto" \
@@ -10,6 +16,7 @@ build:
 	@go build -o ./bin/node
 
 run: build
+	@$(CLEAR_COMMAND)
 	./bin/node
 
 test-debug:

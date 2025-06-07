@@ -12,7 +12,7 @@ import (
 func Start(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	log.Println(util.SystemString("VALIDATE: Validate blockchain data"))
+	log.Println(util.CyanString("VALIDATE: Validate blockchain data"))
 
 	validator := SyncBlock.NewValidator()
 	validator.StartValidate()
