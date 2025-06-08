@@ -1,7 +1,7 @@
 package config
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// System layer - Channel buffer size configuration
+// #def System layer - Channel buffer size configuration
 
 type ChannelBufferSizeSystemConfiguration struct {
 	GrpcVoteProposalChannelBufferSize   uint16 `json:"GrpcVoteProposalChannelBufferSize"`
@@ -11,11 +11,11 @@ type ChannelBufferSizeSystemConfiguration struct {
 	BlockPropaginateChannelBufferSize   uint16 `json:"BlockPropaginateChannelBufferSize"`
 }
 
-// #end
+// #end System layer
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// Block storage path
+// #def Block storage path
 
 type ValidatorConfiguration struct {
 	StoreBaseDir  string `json:"StoreBaseDir"`
@@ -27,11 +27,11 @@ type StorerConfiguration struct {
 	StoreBlockDir string `json:"StoreBlockDir"`
 }
 
-// #end
+// #end Block storage path
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// gRPC listener configuration
+// #def gRPC listener configuration
 
 type GrpcVoteProposalListenerConfiguration struct {
 	Network string `json:"ProposalGrpcListenerNetwork"`
@@ -43,22 +43,22 @@ type GrpcVoteSubmitListenerConfiguration struct {
 	Port    uint16 `json:"SubmitGrpcListenerPort"`
 }
 
-// #end
+// #end gRPC listener configuration
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// Chain parameter ( mempool configuration )
+// #def Chain parameter ( mempool configuration )
 
 type ChainParameterConfiguration struct {
 	BlockIntervalSeconds uint32 `json:"BlockIntervalSeconds"`
 	MaxTransactionSize   uint32 `json:"MaxTransactionSize"`
 }
 
-// #end
+// #end Chain parameter ( mempool configuration )
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// Event deliver ( Unicast ) configuration
+// #def Event deliver ( Unicast ) configuration
 
 type PendingEventUnicastConfiguration struct {
 	PendingEventUnicastProtocol        string `json:"PendingEventUnicastProtocol"`
@@ -74,11 +74,11 @@ type BlockEventUnicastConfiguration struct {
 	CreatedBlockEventUnicastEndPoint string `json:"CreatedBlockEventUnicastEndPoint"`
 }
 
-// #end
+// #end Event deliver ( Unicast ) configuration
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// Pending timer configuration
+// #def Pending timer configuration
 
 type PendingInternalTimerConfiguration struct {
 	ResetTimeDurationSeconds      uint8 `json:"ResetTimeDurationSeconds"`
@@ -86,5 +86,5 @@ type PendingInternalTimerConfiguration struct {
 	CloseTimerDurationSeconds     uint8 `json:"CloseTimerDurationSeconds"`
 }
 
-// #end
+// #end Pending timer configuration
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
