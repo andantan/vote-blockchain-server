@@ -15,14 +15,6 @@ test-race:
 test:
 	@go test ./...
 
-
-# 블록체인 노드 실행
-# make blockchain-node-run
-
-# Bursting 클라이언트 실행
-# 생성할 투표에 관한 정보는 "impulse-client/data/vote_data.json" 참고
-# makemake burst-client-run args="-max ${생성할 투표 개수}"
-
 install:
 	@echo "--- Installing blockchain-node dependencies ---"
 	@go mod tidy
