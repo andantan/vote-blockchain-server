@@ -3,6 +3,7 @@ package sync
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/config"
@@ -40,6 +41,11 @@ func NewValidator() *Validator {
 }
 
 func (v *Validator) StartValidate() {
+	log.Printf(
+		util.CyanString("VALIDATE: Starting blockchain data validation. Data path: %s"),
+		filepath.Join(v.syncDir.baseDir, v.syncDir.blocksDir),
+	)
+
 	startSyncTime := time.Now()
 
 	bfs, err := v.getSortedBlockFilePaths()
@@ -65,10 +71,14 @@ func (v *Validator) StartValidate() {
 			ph = blk.BlockHash
 			v.syncBlockHeaders(blk)
 
+			if blk.Height == 0 {
+				log.Printf(util.CyanString("VALIDATE: Block( 0x%s ) with Height( %d ) => "+util.YellowString("Verified ( GENESIS BLOCK )")), blk.BlockHash.String(), blk.Height)
+			}
+
 			log.Printf(util.CyanString("VALIDATE: Block( 0x%s ) with Height( %d ) => "+util.YellowString("Verified")), blk.BlockHash.String(), blk.Height)
 		}
 	} else {
-		log.Println(util.CyanString("VALIDATE: GENESIS BLOCK NEED"))
+		log.Println(util.FatalString("SYSTEM: No existing blockchain data found. Initializing new blockchain with a genesis block."))
 	}
 
 	elapsedSyncTime := time.Since(startSyncTime)

@@ -1,0 +1,7 @@
+{
+    "RestVoteProposalProtocol": "http",
+    "RestVoteProposalAddress": "127.0.0.1",
+    "RestVoteProposalPort": 8080,
+    "RestVoteProposalEndPoint": "/vote/proposal",
+    "RestVoteProposalContentType": "application/json"
+}

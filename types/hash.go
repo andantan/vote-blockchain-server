@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 const (
@@ -76,7 +75,7 @@ func (h Hash) String() string {
 }
 
 func (h Hash) MarshalJSON() ([]byte, error) {
-	return json.Marshal("0x" + h.String())
+	return json.Marshal(h.String())
 }
 
 func (h *Hash) UnmarshalJSON(data []byte) error {
@@ -85,8 +84,6 @@ func (h *Hash) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &s); err != nil {
 		return fmt.Errorf("hash unmarshal: expected a JSON string, but got %s: %w", string(data), err)
 	}
-
-	s = strings.TrimPrefix(s, "0x")
 
 	parsedHash, err := HashFromHashString(s)
 

@@ -1,0 +1,7 @@
+{
+    "RestVoteSubmitProtocol": "http",
+    "RestVoteSubmitAddress": "127.0.0.1",
+    "RestVoteSubmitPort": 8080,
+    "RestVoteSubmitEndPoint": "/vote/submit",
+    "RestVoteSubmitContentType": "application/json"
+}
