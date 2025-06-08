@@ -50,18 +50,24 @@ func BurstSubmitClient(max int) {
 }
 
 type SubmitClient struct {
-	Client   *http.Client
-	Wg       *sync.WaitGroup
-	Topics   config.Topics
-	EndPoint config.VoteSubmitEndPoint
+	Client                 *http.Client
+	Wg                     *sync.WaitGroup
+	Topics                 config.Topics
+	EndPoint               config.VoteSubmitEndPoint
+	MinimumRangeBurstClock int
+	MaximumRangeBurstClock int
 }
 
 func NewSubmitClient(max int) *SubmitClient {
+	cfg := config.GetRequestBurstRangeClock()
+
 	c := &SubmitClient{
-		Client:   &http.Client{Timeout: 10 * time.Second},
-		Wg:       &sync.WaitGroup{},
-		Topics:   config.GetTopics(),
-		EndPoint: config.GetVoteSubmitEndPoint(),
+		Client:                 &http.Client{Timeout: 10 * time.Second},
+		Wg:                     &sync.WaitGroup{},
+		Topics:                 config.GetTopics(),
+		EndPoint:               config.GetVoteSubmitEndPoint(),
+		MinimumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMinimunMilliSeconds),
+		MaximumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMaximumMilliSeconds),
 	}
 
 	if len(c.Topics.Votes) < max {
@@ -109,7 +115,7 @@ func (c *SubmitClient) RequestSubmitLoop(vote config.Vote) {
 		requestCount++
 		requestOption[randOpt]++
 
-		time.Sleep(time.Duration(util.RandRange(40, 60)) * time.Millisecond)
+		time.Sleep(time.Duration(util.RandRange(c.MinimumRangeBurstClock, c.MaximumRangeBurstClock)) * time.Millisecond)
 	}
 
 	log.Printf("RequestLoop %s exit | { requestCount: %d , result: %+v }", vote.Topic, requestCount, requestOption)

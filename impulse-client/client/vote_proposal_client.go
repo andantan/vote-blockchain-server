@@ -35,18 +35,24 @@ func BurstProposalClient(max int) {
 }
 
 type ProposalClient struct {
-	Client   *http.Client
-	Wg       *sync.WaitGroup
-	Topics   config.Topics
-	EndPoint config.VoteProposalEndPoint
+	Client                 *http.Client
+	Wg                     *sync.WaitGroup
+	Topics                 config.Topics
+	EndPoint               config.VoteProposalEndPoint
+	MinimumRangeBurstClock int
+	MaximumRangeBurstClock int
 }
 
 func NewProposalClient(max int) *ProposalClient {
+	cfg := config.GetRequestBurstRangeClock()
+
 	c := &ProposalClient{
-		Client:   &http.Client{Timeout: 10 * time.Second},
-		Wg:       &sync.WaitGroup{},
-		Topics:   config.GetTopics(),
-		EndPoint: config.GetVoteProposalEndPoint(),
+		Client:                 &http.Client{Timeout: 10 * time.Second},
+		Wg:                     &sync.WaitGroup{},
+		Topics:                 config.GetTopics(),
+		EndPoint:               config.GetVoteProposalEndPoint(),
+		MinimumRangeBurstClock: int(cfg.RestProposalRequestsRandomMinimumSeconds),
+		MaximumRangeBurstClock: int(cfg.RestProposalRequestsRandomMaximumSeconds),
 	}
 
 	if len(c.Topics.Votes) < max {
@@ -70,7 +76,7 @@ func (c *ProposalClient) GetUrl() string {
 func (c *ProposalClient) RequestProposal(vote config.Vote) {
 	defer c.Wg.Done()
 
-	time.Sleep(time.Duration(util.RandRange(2, 6)) * time.Second)
+	time.Sleep(time.Duration(util.RandRange(c.MinimumRangeBurstClock, c.MaximumRangeBurstClock)) * time.Second)
 
 	jsonData, err := json.Marshal(vote)
 

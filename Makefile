@@ -25,11 +25,11 @@ build: install
 	@go build -o ./bin/node
 	@echo "--- Building blockchain-node application completed ---"
 
-blockchain-node-run: build
+run-blockchain-node: build
 	@$(CLEAR_COMMAND)
 	./bin/node
 
-burst-client-run:
+run-burst-client:
 	@echo "--- Running burst-client application ---"
 	@make -C $(CLIENT_DIR) run ARGS="$(ARGS)"
 

@@ -24,3 +24,10 @@ type VoteSubmitEndPoint struct {
 	RestVoteSubmitEndPoint    string `json:"RestVoteSubmitEndPoint"`
 	RestVoteSubmitContentType string `json:"RestVoteSubmitContentType"`
 }
+
+type RequestBurstRangeClock struct {
+	RestProposalRequestsRandomMinimumSeconds    uint8  `json:"RestProposalRequestsRandomMinimumSeconds"`
+	RestProposalRequestsRandomMaximumSeconds    uint8  `json:"RestProposalRequestsRandomMaximumSeconds"`
+	RestSubmitRequestsRandomMinimunMilliSeconds uint32 `json:"RestSubmitRequestsRandomMinimunMilliSeconds"`
+	RestSubmitRequestsRandomMaximumMilliSeconds uint32 `json:"RestSubmitRequestsRandomMaximumMilliSeconds"`
+}

@@ -1,4 +1,6 @@
-/bin/*
 /temp/*.go
 /blocks/*.json
+
 *.exe
+
+bin
