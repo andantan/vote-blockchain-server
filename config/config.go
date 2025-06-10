@@ -47,6 +47,22 @@ type GrpcVoteSubmitListenerConfiguration struct {
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// #def Explorer server configuration
+
+type ExplorerFilePathConfiguration struct {
+	ExplorerBaseDir  string `json:"ExplorerBaseDir"`
+	ExplorerBlockDir string `json:"ExplorerBlockDir"`
+}
+
+type ExplorerListenerConfiguration struct {
+	ExplorerListenerPort     uint16 `json:"ExplorerListenerPort"`
+	ExplorerListenerEndPoint string `json:"ExplorerListenerEndPoint"`
+}
+
+// #end Explorer server configuration
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // #def Chain parameter ( mempool configuration )
 
 type ChainParameterConfiguration struct {

@@ -8,7 +8,8 @@ import (
 
 func main() {
 	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	go node.Start(wg)
+	wg.Add(2)
+	go node.StartBlockChainNode(wg)
+	go node.StartBlockChainExplorer(wg)
 	wg.Wait()
 }

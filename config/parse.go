@@ -22,6 +22,7 @@ func parse[T any](fileName string, cfg *T) {
 const (
 	SYSTEM_VALIDATOR_CONFIG_JSON              = "system_validator_config.json"
 	SYSTEM_STORER_CONFIG_JSON                 = "system_storer_config.json"
+	SYSTEM_EXPLORER_PATH_CONFIG_JSON          = "system_explorer_path_config.json"
 	SYSTEM_CHAIN_PARAMS_CONFIG_JSON           = "system_chain_params_config.json"
 	SYSTEM_CHANNEL_BUFFER_SIZE_CONFIG_JSON    = "system_channel_buffer_size_config.json"
 	SYSTEM_PENDING_INTERNAL_TIMER_CONFIG_JSON = "system_pending_internal_timer_config.json"
@@ -30,8 +31,9 @@ const (
 const (
 	CONNECTION_GRPC_VOTE_PROPOSAL_LISTENER_CONFIG_JSON = "connection_grpc_vote_proposal_listener_config.json"
 	CONNECTION_GRPC_VOTE_SUBMIT_LISTENER_CONFIG_JSON   = "connection_grpc_vote_submit_listener_config.json"
-	CONNECTION_PENDING_EVENT_UNICAST_CONFIG_JSON       = "connection_pending_event_unicast_config.json"
-	CONNECTION_BLOCK_EVENT_UNICAST_CONFIG_JSON         = "connection_block_event_unicast_config.json"
+	CONNECTION_REST_EXPLORER_LISTENER_CONFIG_JSON      = "connection_rest_explorer_listener_config.json"
+	CONNECTION_UNICAST_PENDING_EVENT_CONFIG_JSON       = "connection_unicast_pending_event_config.json"
+	CONNECTION_UNICAST_BLOCK_EVENT_CONFIG_JSON         = "connection_unicast_block_event_config.json"
 )
 
 func GetChannelBufferSizeSystemConfiguration() ChannelBufferSizeSystemConfiguration {
@@ -61,6 +63,15 @@ func GetStorerConfiguration() StorerConfiguration {
 	return cfg
 }
 
+func GetExplorerFilePathConfiguration() ExplorerFilePathConfiguration {
+	cfgFileName := SYSTEM_EXPLORER_PATH_CONFIG_JSON
+	cfg := ExplorerFilePathConfiguration{}
+
+	parse(cfgFileName, &cfg)
+
+	return cfg
+}
+
 func GetGrpcVoteProposalListenerConfiguration() GrpcVoteProposalListenerConfiguration {
 	cfgFileName := CONNECTION_GRPC_VOTE_PROPOSAL_LISTENER_CONFIG_JSON
 	cfg := GrpcVoteProposalListenerConfiguration{}
@@ -79,6 +90,15 @@ func GetGrpcVoteSubmitListenerConfiguration() GrpcVoteSubmitListenerConfiguratio
 	return cfg
 }
 
+func GetExplorerListenerConfiguration() ExplorerListenerConfiguration {
+	cfgFileName := CONNECTION_REST_EXPLORER_LISTENER_CONFIG_JSON
+	cfg := ExplorerListenerConfiguration{}
+
+	parse(cfgFileName, &cfg)
+
+	return cfg
+}
+
 func GetChainParameterConfiguration() ChainParameterConfiguration {
 	cfgFileName := SYSTEM_CHAIN_PARAMS_CONFIG_JSON
 	cfg := ChainParameterConfiguration{}
@@ -89,7 +109,7 @@ func GetChainParameterConfiguration() ChainParameterConfiguration {
 }
 
 func GetPendingEventUnicastConfiguration() PendingEventUnicastConfiguration {
-	cfgFileName := CONNECTION_PENDING_EVENT_UNICAST_CONFIG_JSON
+	cfgFileName := CONNECTION_UNICAST_PENDING_EVENT_CONFIG_JSON
 	cfg := PendingEventUnicastConfiguration{}
 
 	parse(cfgFileName, &cfg)
@@ -98,7 +118,7 @@ func GetPendingEventUnicastConfiguration() PendingEventUnicastConfiguration {
 }
 
 func GetBlockEventUnicastConfiguration() BlockEventUnicastConfiguration {
-	cfgFileName := CONNECTION_BLOCK_EVENT_UNICAST_CONFIG_JSON
+	cfgFileName := CONNECTION_UNICAST_BLOCK_EVENT_CONFIG_JSON
 	cfg := BlockEventUnicastConfiguration{}
 
 	parse(cfgFileName, &cfg)
