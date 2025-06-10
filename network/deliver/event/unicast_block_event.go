@@ -47,10 +47,10 @@ func NewCreatedBlockEventRequest(voteId string, length, height uint64) *CreatedB
 }
 
 type CreatedBlockEventResponse struct {
-	Caching bool   `json:"caching"`
-	Message string `json:"message"`
-	VoteId  string `json:"vote_id"`
-	Height  uint32 `json:"height"`
+	VoteId string `json:"vote_id"`
+	Cached bool   `json:"cached"`
+	Status string `json:"status"`
+	Height uint32 `json:"height"`
 }
 
 type CreatedBlockeventUnicaster struct {
@@ -101,7 +101,7 @@ func (u *CreatedBlockeventUnicaster) Unicast(createdBlock *block.Block) {
 	}
 
 	log.Printf(
-		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { vote_id: %s, height: %d, caching: %t, message: %s }"),
-		dataReq.VoteId, dataReq.Height, dataReq.Caching, dataReq.Message,
+		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { vote_id: %s, height: %d, cached: %t, status: %s }"),
+		dataReq.VoteId, dataReq.Height, dataReq.Cached, dataReq.Status,
 	)
 }
