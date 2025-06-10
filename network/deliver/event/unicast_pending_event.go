@@ -97,7 +97,7 @@ func (u *ExpiredPendingEventUnicaster) Unicast(expiredPending *mempool.Pended) {
 	}
 
 	log.Printf(
-		util.DeliverString("DELIVER: ExpiredPendingEventUnicaster.Unicast response { voting_id: %s, coutn: %d, caching: %t, message: %s }"),
+		util.DeliverString("DELIVER: ExpiredPendingEventUnicaster.Unicast response { voting_id: %s, count: %d, caching: %t, message: %s }"),
 		dataReq.VoteId, dataReq.VoteCount, dataReq.Caching, dataReq.Message,
 	)
 }

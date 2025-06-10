@@ -12,17 +12,6 @@ import (
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
-// const (
-// 	BLOCK_REQUEST_BUFFER_SIZE = 64
-// )
-
-// const (
-// 	NEW_BLOCK_EVENT_PROTOCOL = "http"
-// 	NEW_BLOCK_EVENT_ADDRESS  = "127.0.0.1"
-// 	NEW_BLOCK_EVENT_PORT     = 8080
-// 	NEW_BLOCK_EVENT_API_PATH = "/event/new-block"
-// )
-
 type BlockChain struct {
 	mu           sync.RWMutex
 	headers      []*block.Header

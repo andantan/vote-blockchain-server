@@ -34,12 +34,14 @@ func (e *CreatedBlockEventEndpoint) getUrl() string {
 
 type CreatedBlockEventRequest struct {
 	VoteId string `json:"vote_id"`
+	Length uint64 `json:"length"`
 	Height uint64 `json:"height"`
 }
 
-func NewCreatedBlockEventRequest(voteId string, height uint64) *CreatedBlockEventRequest {
+func NewCreatedBlockEventRequest(voteId string, length, height uint64) *CreatedBlockEventRequest {
 	return &CreatedBlockEventRequest{
 		VoteId: voteId,
+		Length: length,
 		Height: height,
 	}
 }
@@ -48,7 +50,7 @@ type CreatedBlockEventResponse struct {
 	Caching bool   `json:"caching"`
 	Message string `json:"message"`
 	VoteId  string `json:"vote_id"`
-	Height  uint64 `json:"height"`
+	Height  uint32 `json:"height"`
 }
 
 type CreatedBlockeventUnicaster struct {
@@ -70,13 +72,16 @@ func (u *CreatedBlockeventUnicaster) GetUrl() string {
 }
 
 func (u *CreatedBlockeventUnicaster) Unicast(createdBlock *block.Block) {
-	req := NewCreatedBlockEventRequest(string(createdBlock.VotingID), createdBlock.Height)
+	req := NewCreatedBlockEventRequest(
+		string(createdBlock.VotingID),
+		uint64(len(createdBlock.Transactions)),
+		createdBlock.Height)
 
 	buf, _ := json.Marshal(req)
 
 	log.Printf(
-		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast request { vote_id: %s, height: %d }"),
-		req.VoteId, req.Height,
+		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast request { vote_id: %s, length: %d, height: %d }"),
+		req.VoteId, req.Length, req.Height,
 	)
 
 	res, err := u.client.Post(u.endPoint.getUrl(), JSON_CONTENT_TYPE, bytes.NewBuffer(buf))

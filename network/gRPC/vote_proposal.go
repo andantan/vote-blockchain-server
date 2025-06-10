@@ -16,7 +16,7 @@ type VoteProposal struct {
 	ResponseCh chan *VoteProposalResponse
 }
 
-func NewVoteProposal(p *vote_proposal_message.VoteProposalRequest) *VoteProposal {
+func NewVoteProposal(p *vote_proposal_message.OpenProposalRequest) *VoteProposal {
 	return &VoteProposal{
 		Proposal: types.Proposal(p.GetTopic()),
 		Duration: time.Duration(p.GetDuration()) * time.Minute,
@@ -40,7 +40,7 @@ func NewVoteProposalResponse(status, message string, success bool) *VoteProposal
 func NewSuccessVoteProposalResponse(proposal types.Proposal, duration time.Duration) *VoteProposalResponse {
 	msg := fmt.Sprintf("Proposal '%s' is now open for pending submissions. Duration: %s.", proposal, duration)
 
-	return NewVoteProposalResponse("OPEN", msg, true)
+	return NewVoteProposalResponse("OK", msg, true)
 }
 
 func NewErrorVoteProposalResponse(err error) *VoteProposalResponse {
@@ -55,8 +55,8 @@ func NewErrorVoteProposalResponse(err error) *VoteProposalResponse {
 	return NewVoteProposalResponse("UNKNOWN_ERROR", fmt.Sprintf("Unexpected error occurred: %v", err), false)
 }
 
-func (p *VoteProposalResponse) GetTopicResponse() *vote_proposal_message.VoteProposalResponse {
-	return &vote_proposal_message.VoteProposalResponse{
+func (p *VoteProposalResponse) GetTopicResponse() *vote_proposal_message.OpenProposalResponse {
+	return &vote_proposal_message.OpenProposalResponse{
 		Status:  p.Status,
 		Message: p.Message,
 		Success: p.Success,

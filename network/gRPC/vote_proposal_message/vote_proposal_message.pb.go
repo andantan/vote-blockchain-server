@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type VoteProposalRequest struct {
+type OpenProposalRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Topic         string                 `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 	Duration      int64                  `protobuf:"varint,2,opt,name=duration,proto3" json:"duration,omitempty"`
@@ -29,20 +29,20 @@ type VoteProposalRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *VoteProposalRequest) Reset() {
-	*x = VoteProposalRequest{}
+func (x *OpenProposalRequest) Reset() {
+	*x = OpenProposalRequest{}
 	mi := &file_vote_proposal_message_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *VoteProposalRequest) String() string {
+func (x *OpenProposalRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*VoteProposalRequest) ProtoMessage() {}
+func (*OpenProposalRequest) ProtoMessage() {}
 
-func (x *VoteProposalRequest) ProtoReflect() protoreflect.Message {
+func (x *OpenProposalRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_vote_proposal_message_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -54,26 +54,26 @@ func (x *VoteProposalRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use VoteProposalRequest.ProtoReflect.Descriptor instead.
-func (*VoteProposalRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use OpenProposalRequest.ProtoReflect.Descriptor instead.
+func (*OpenProposalRequest) Descriptor() ([]byte, []int) {
 	return file_vote_proposal_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *VoteProposalRequest) GetTopic() string {
+func (x *OpenProposalRequest) GetTopic() string {
 	if x != nil {
 		return x.Topic
 	}
 	return ""
 }
 
-func (x *VoteProposalRequest) GetDuration() int64 {
+func (x *OpenProposalRequest) GetDuration() int64 {
 	if x != nil {
 		return x.Duration
 	}
 	return 0
 }
 
-type VoteProposalResponse struct {
+type OpenProposalResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
@@ -82,20 +82,20 @@ type VoteProposalResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *VoteProposalResponse) Reset() {
-	*x = VoteProposalResponse{}
+func (x *OpenProposalResponse) Reset() {
+	*x = OpenProposalResponse{}
 	mi := &file_vote_proposal_message_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *VoteProposalResponse) String() string {
+func (x *OpenProposalResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*VoteProposalResponse) ProtoMessage() {}
+func (*OpenProposalResponse) ProtoMessage() {}
 
-func (x *VoteProposalResponse) ProtoReflect() protoreflect.Message {
+func (x *OpenProposalResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_vote_proposal_message_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -107,26 +107,26 @@ func (x *VoteProposalResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use VoteProposalResponse.ProtoReflect.Descriptor instead.
-func (*VoteProposalResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use OpenProposalResponse.ProtoReflect.Descriptor instead.
+func (*OpenProposalResponse) Descriptor() ([]byte, []int) {
 	return file_vote_proposal_message_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *VoteProposalResponse) GetStatus() string {
+func (x *OpenProposalResponse) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *VoteProposalResponse) GetMessage() string {
+func (x *OpenProposalResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *VoteProposalResponse) GetSuccess() bool {
+func (x *OpenProposalResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
@@ -138,15 +138,15 @@ var File_vote_proposal_message_proto protoreflect.FileDescriptor
 const file_vote_proposal_message_proto_rawDesc = "" +
 	"\n" +
 	"\x1bvote_proposal_message.proto\x12\x15vote_proposal_message\"G\n" +
-	"\x13VoteProposalRequest\x12\x14\n" +
+	"\x13OpenProposalRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x1a\n" +
 	"\bduration\x18\x02 \x01(\x03R\bduration\"b\n" +
-	"\x14VoteProposalResponse\x12\x16\n" +
+	"\x14OpenProposalResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x18\n" +
-	"\asuccess\x18\x03 \x01(\bR\asuccess2\x88\x01\n" +
-	"\x1dBlockchainVoteProposalService\x12g\n" +
-	"\fProposalVote\x12*.vote_proposal_message.VoteProposalRequest\x1a+.vote_proposal_message.VoteProposalResponseB'Z%../network/gRPC/vote_proposal_messageb\x06proto3"
+	"\asuccess\x18\x03 \x01(\bR\asuccess2\x8f\x01\n" +
+	"\x1dBlockchainVoteProposalService\x12n\n" +
+	"\x13OpenProposalPending\x12*.vote_proposal_message.OpenProposalRequest\x1a+.vote_proposal_message.OpenProposalResponseB'Z%../network/gRPC/vote_proposal_messageb\x06proto3"
 
 var (
 	file_vote_proposal_message_proto_rawDescOnce sync.Once
@@ -162,12 +162,12 @@ func file_vote_proposal_message_proto_rawDescGZIP() []byte {
 
 var file_vote_proposal_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_vote_proposal_message_proto_goTypes = []any{
-	(*VoteProposalRequest)(nil),  // 0: vote_proposal_message.VoteProposalRequest
-	(*VoteProposalResponse)(nil), // 1: vote_proposal_message.VoteProposalResponse
+	(*OpenProposalRequest)(nil),  // 0: vote_proposal_message.OpenProposalRequest
+	(*OpenProposalResponse)(nil), // 1: vote_proposal_message.OpenProposalResponse
 }
 var file_vote_proposal_message_proto_depIdxs = []int32{
-	0, // 0: vote_proposal_message.BlockchainVoteProposalService.ProposalVote:input_type -> vote_proposal_message.VoteProposalRequest
-	1, // 1: vote_proposal_message.BlockchainVoteProposalService.ProposalVote:output_type -> vote_proposal_message.VoteProposalResponse
+	0, // 0: vote_proposal_message.BlockchainVoteProposalService.OpenProposalPending:input_type -> vote_proposal_message.OpenProposalRequest
+	1, // 1: vote_proposal_message.BlockchainVoteProposalService.OpenProposalPending:output_type -> vote_proposal_message.OpenProposalResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

@@ -74,9 +74,9 @@ func (li *VoteProposalListener) Consume() chan *gRPC.VoteProposal {
 }
 
 // gRPC
-func (listener *VoteProposalListener) ProposalVote(
-	ctx context.Context, req *vote_proposal_message.VoteProposalRequest,
-) (*vote_proposal_message.VoteProposalResponse, error) {
+func (listener *VoteProposalListener) OpenProposalPending(
+	ctx context.Context, req *vote_proposal_message.OpenProposalRequest,
+) (*vote_proposal_message.OpenProposalResponse, error) {
 	ResponseCh := make(chan *gRPC.VoteProposalResponse, 1)
 	defer close(ResponseCh)
 
