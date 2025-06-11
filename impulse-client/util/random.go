@@ -10,7 +10,7 @@ func RandRange(min, max int) int {
 	return rand.Intn(max-min) + min
 }
 
-func RandOption(params []rune) string {
+func RandOption(params []string) string {
 	return string(params[rand.Intn(len(params))])
 }
 

@@ -33,16 +33,16 @@ func (e *ExpiredPendingEventEndPoint) getUrl() string {
 }
 
 type ExpiredPendingEventRequest struct {
-	VoteId           string         `json:"vote_id"`
-	VoteCount        int            `json:"vote_count"`
-	VoteOptionCounts map[string]int `json:"vote_option_counts"`
+	VoteId      string         `json:"vote_id"`
+	VoteCount   int            `json:"vote_count"`
+	VoteOptions map[string]int `json:"vote_options"`
 }
 
-func NewExpiredPendingEventRequest(voteId string, voteCount int, voteOptionCounts map[string]int) *ExpiredPendingEventRequest {
+func NewExpiredPendingEventRequest(voteId string, voteCount int, voteOptions map[string]int) *ExpiredPendingEventRequest {
 	return &ExpiredPendingEventRequest{
-		VoteId:           voteId,
-		VoteCount:        voteCount,
-		VoteOptionCounts: voteOptionCounts,
+		VoteId:      voteId,
+		VoteCount:   voteCount,
+		VoteOptions: voteOptions,
 	}
 }
 

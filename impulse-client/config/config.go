@@ -1,14 +1,5 @@
 package config
 
-type Vote struct {
-	Topic           string `json:"topic"`
-	DurationMinutes uint16 `json:"duration"`
-}
-
-type Topics struct {
-	Votes []Vote `json:"topics"`
-}
-
 type VoteProposalEndPoint struct {
 	RestVoteProposalProtocol    string `json:"RestVoteProposalProtocol"`
 	RestVoteProposalAddress     string `json:"RestVoteProposalAddress"`

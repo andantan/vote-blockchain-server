@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/impulse-client/config"
+	"github.com/andantan/vote-blockchain-server/impulse-client/data"
 	"github.com/andantan/vote-blockchain-server/impulse-client/util"
 )
 
@@ -37,7 +38,7 @@ func BurstProposalClient(max int) {
 type ProposalClient struct {
 	Client                 *http.Client
 	Wg                     *sync.WaitGroup
-	Topics                 config.Topics
+	Topics                 data.Topics
 	EndPoint               config.VoteProposalEndPoint
 	MinimumRangeBurstClock int
 	MaximumRangeBurstClock int
@@ -49,7 +50,7 @@ func NewProposalClient(max int) *ProposalClient {
 	c := &ProposalClient{
 		Client:                 &http.Client{Timeout: 10 * time.Second},
 		Wg:                     &sync.WaitGroup{},
-		Topics:                 config.GetTopics(),
+		Topics:                 data.GetTopics(),
 		EndPoint:               config.GetVoteProposalEndPoint(),
 		MinimumRangeBurstClock: int(cfg.RestProposalRequestsRandomMinimumSeconds),
 		MaximumRangeBurstClock: int(cfg.RestProposalRequestsRandomMaximumSeconds),
@@ -73,7 +74,7 @@ func (c *ProposalClient) GetUrl() string {
 	)
 }
 
-func (c *ProposalClient) RequestProposal(vote config.Vote) {
+func (c *ProposalClient) RequestProposal(vote data.Vote) {
 	defer c.Wg.Done()
 
 	time.Sleep(time.Duration(util.RandRange(c.MinimumRangeBurstClock, c.MaximumRangeBurstClock)) * time.Second)

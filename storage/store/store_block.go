@@ -14,10 +14,6 @@ import (
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
-const (
-	BLOCK_SAVE_CHANNEL_BUFFER_SIZE = 128
-)
-
 type JsonStorer struct {
 	baseDir     string
 	blocksDir   string
@@ -27,10 +23,11 @@ type JsonStorer struct {
 
 func NewStore() *JsonStorer {
 	cfg := config.GetStorerConfiguration()
+	__cfg_buffer := config.GetChannelBufferSizeSystemConfiguration()
 
 	storer := &JsonStorer{}
 	storer.setBaseDirectory(cfg.StoreBaseDir, cfg.StoreBlockDir)
-	storer.setChannel()
+	storer.setChannel(__cfg_buffer.BlockStoreChannelBufferSize)
 	storer.wg.Add(1)
 
 	go storer.saveBlocks()
@@ -39,8 +36,7 @@ func NewStore() *JsonStorer {
 }
 
 func (js *JsonStorer) setBaseDirectory(baseDir, blocksDir string) {
-	log.Printf(util.SystemString("STORER: JsonStorer setting base directory { baseDir: %s, blocksDir: %s }"),
-		baseDir, blocksDir)
+	log.Println(util.SystemString("STORER: JsonStorer setting base directory..."))
 
 	js.baseDir = baseDir
 	js.blocksDir = blocksDir
@@ -48,13 +44,10 @@ func (js *JsonStorer) setBaseDirectory(baseDir, blocksDir string) {
 	log.Println(util.SystemString("SYSTEM: JsonStorer base directory setting is done"))
 }
 
-func (js *JsonStorer) setChannel() {
-	log.Printf(
-		util.SystemString("SYSTEM: JsonStorer setting channel... | { BLOCK_SAVE_CHANNEL_BUFFER_SIZE: %d }"),
-		BLOCK_SAVE_CHANNEL_BUFFER_SIZE,
-	)
+func (js *JsonStorer) setChannel(bufferSize uint16) {
+	log.Println(util.SystemString("SYSTEM: JsonStorer setting channel..."))
 
-	js.blockSaveCh = make(chan *block.Block, BLOCK_SAVE_CHANNEL_BUFFER_SIZE)
+	js.blockSaveCh = make(chan *block.Block, bufferSize)
 
 	log.Println(util.SystemString("SYSTEM: JsonStorer blockSave channel setting is done"))
 }

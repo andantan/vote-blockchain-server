@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/impulse-client/config"
+	"github.com/andantan/vote-blockchain-server/impulse-client/data"
 	"github.com/andantan/vote-blockchain-server/impulse-client/util"
 )
 
@@ -52,7 +53,7 @@ func BurstSubmitClient(max int) {
 type SubmitClient struct {
 	Client                 *http.Client
 	Wg                     *sync.WaitGroup
-	Topics                 config.Topics
+	Topics                 data.Topics
 	EndPoint               config.VoteSubmitEndPoint
 	MinimumRangeBurstClock int
 	MaximumRangeBurstClock int
@@ -64,7 +65,7 @@ func NewSubmitClient(max int) *SubmitClient {
 	c := &SubmitClient{
 		Client:                 &http.Client{Timeout: 10 * time.Second},
 		Wg:                     &sync.WaitGroup{},
-		Topics:                 config.GetTopics(),
+		Topics:                 data.GetTopics(),
 		EndPoint:               config.GetVoteSubmitEndPoint(),
 		MinimumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMinimunMilliSeconds),
 		MaximumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMaximumMilliSeconds),
@@ -88,7 +89,7 @@ func (c *SubmitClient) GetUrl() string {
 	)
 }
 
-func (c *SubmitClient) RequestSubmitLoop(vote config.Vote) {
+func (c *SubmitClient) RequestSubmitLoop(vote data.Vote) {
 	defer c.Wg.Done()
 
 	log.Printf("RequestLoop %.20s start", vote.Topic)
@@ -96,8 +97,10 @@ func (c *SubmitClient) RequestSubmitLoop(vote config.Vote) {
 	requestCount := 0
 	requestOption := make(map[string]int)
 
+	ballotOptions := data.GetBallotOptions()
+
 	for {
-		randOpt := util.RandOption([]rune("12345"))
+		randOpt := util.RandOption(ballotOptions.BallotOptions)
 
 		v := NewSubmitRequest(
 			util.RandomHashString(),

@@ -9,6 +9,7 @@ type ChannelBufferSizeSystemConfiguration struct {
 	PendingTransactionChannelBufferSize uint16 `json:"PendingTransactionChannelBufferSize"`
 	PendedPropaginateChannelBufferSize  uint16 `json:"PendedPropaginateChannelBufferSize"`
 	BlockPropaginateChannelBufferSize   uint16 `json:"BlockPropaginateChannelBufferSize"`
+	BlockStoreChannelBufferSize         uint16 `json:"BlockStoreChannelBufferSize"`
 }
 
 // #end System layer

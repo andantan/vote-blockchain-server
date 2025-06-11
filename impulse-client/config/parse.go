@@ -8,10 +8,6 @@ import (
 )
 
 const (
-	VOTE_DATA_JSON = "vote_data.json"
-)
-
-const (
 	SYSTEM_BURST_CLOCK_CONFIG_JSON = "system_burst_clock_config.json"
 )
 
@@ -21,7 +17,7 @@ const (
 )
 
 func parse[T any](fileName string, cfg *T) {
-	path := filepath.Join("./", "data", fileName)
+	path := filepath.Join("./", "config", fileName)
 	configFile, err := os.ReadFile(path)
 
 	if err != nil {
@@ -30,15 +26,6 @@ func parse[T any](fileName string, cfg *T) {
 	if err = json.Unmarshal(configFile, cfg); err != nil {
 		log.Fatalf("JSON unmarshalling failed: %v", err)
 	}
-}
-
-func GetTopics() Topics {
-	cfgFileName := VOTE_DATA_JSON
-	cfg := Topics{}
-
-	parse(cfgFileName, &cfg)
-
-	return cfg
 }
 
 func GetVoteProposalEndPoint() VoteProposalEndPoint {
