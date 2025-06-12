@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BlockchainVoteProposalServiceClient interface {
-	OpenProposalPending(ctx context.Context, in *OpenProposalRequest, opts ...grpc.CallOption) (*OpenProposalResponse, error)
+	OpenProposalPending(ctx context.Context, in *OpenProposalPendingRequest, opts ...grpc.CallOption) (*OpenProposalPendingResponse, error)
 }
 
 type blockchainVoteProposalServiceClient struct {
@@ -37,9 +37,9 @@ func NewBlockchainVoteProposalServiceClient(cc grpc.ClientConnInterface) Blockch
 	return &blockchainVoteProposalServiceClient{cc}
 }
 
-func (c *blockchainVoteProposalServiceClient) OpenProposalPending(ctx context.Context, in *OpenProposalRequest, opts ...grpc.CallOption) (*OpenProposalResponse, error) {
+func (c *blockchainVoteProposalServiceClient) OpenProposalPending(ctx context.Context, in *OpenProposalPendingRequest, opts ...grpc.CallOption) (*OpenProposalPendingResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(OpenProposalResponse)
+	out := new(OpenProposalPendingResponse)
 	err := c.cc.Invoke(ctx, BlockchainVoteProposalService_OpenProposalPending_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (c *blockchainVoteProposalServiceClient) OpenProposalPending(ctx context.Co
 // All implementations must embed UnimplementedBlockchainVoteProposalServiceServer
 // for forward compatibility.
 type BlockchainVoteProposalServiceServer interface {
-	OpenProposalPending(context.Context, *OpenProposalRequest) (*OpenProposalResponse, error)
+	OpenProposalPending(context.Context, *OpenProposalPendingRequest) (*OpenProposalPendingResponse, error)
 	mustEmbedUnimplementedBlockchainVoteProposalServiceServer()
 }
 
@@ -62,7 +62,7 @@ type BlockchainVoteProposalServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedBlockchainVoteProposalServiceServer struct{}
 
-func (UnimplementedBlockchainVoteProposalServiceServer) OpenProposalPending(context.Context, *OpenProposalRequest) (*OpenProposalResponse, error) {
+func (UnimplementedBlockchainVoteProposalServiceServer) OpenProposalPending(context.Context, *OpenProposalPendingRequest) (*OpenProposalPendingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OpenProposalPending not implemented")
 }
 func (UnimplementedBlockchainVoteProposalServiceServer) mustEmbedUnimplementedBlockchainVoteProposalServiceServer() {
@@ -88,7 +88,7 @@ func RegisterBlockchainVoteProposalServiceServer(s grpc.ServiceRegistrar, srv Bl
 }
 
 func _BlockchainVoteProposalService_OpenProposalPending_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OpenProposalRequest)
+	in := new(OpenProposalPendingRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func _BlockchainVoteProposalService_OpenProposalPending_Handler(srv interface{},
 		FullMethod: BlockchainVoteProposalService_OpenProposalPending_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BlockchainVoteProposalServiceServer).OpenProposalPending(ctx, req.(*OpenProposalRequest))
+		return srv.(BlockchainVoteProposalServiceServer).OpenProposalPending(ctx, req.(*OpenProposalPendingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

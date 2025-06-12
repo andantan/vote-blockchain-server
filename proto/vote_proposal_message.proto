@@ -5,15 +5,16 @@ option go_package="../network/gRPC/vote_proposal_message";
 package vote_proposal_message;
 
 service BlockchainVoteProposalService {
-  rpc OpenProposalPending(OpenProposalRequest) returns (OpenProposalResponse);
+  rpc OpenProposalPending(OpenProposalPendingRequest) 
+  returns (OpenProposalPendingResponse);
 }
 
-message OpenProposalRequest {
+message OpenProposalPendingRequest {
   string topic = 1;
   int64 duration = 2;
 }
 
-message OpenProposalResponse {
+message OpenProposalPendingResponse {
   string status = 1;
   string message = 2;
   bool success = 3;

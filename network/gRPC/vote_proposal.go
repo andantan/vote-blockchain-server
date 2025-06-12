@@ -16,7 +16,7 @@ type VoteProposal struct {
 	ResponseCh chan *VoteProposalResponse
 }
 
-func NewVoteProposal(p *vote_proposal_message.OpenProposalRequest) *VoteProposal {
+func NewVoteProposal(p *vote_proposal_message.OpenProposalPendingRequest) *VoteProposal {
 	return &VoteProposal{
 		Proposal: types.Proposal(p.GetTopic()),
 		Duration: time.Duration(p.GetDuration()) * time.Minute,
@@ -55,8 +55,8 @@ func NewErrorVoteProposalResponse(err error) *VoteProposalResponse {
 	return NewVoteProposalResponse("UNKNOWN_ERROR", fmt.Sprintf("Unexpected error occurred: %v", err), false)
 }
 
-func (p *VoteProposalResponse) GetTopicResponse() *vote_proposal_message.OpenProposalResponse {
-	return &vote_proposal_message.OpenProposalResponse{
+func (p *VoteProposalResponse) GetTopicResponse() *vote_proposal_message.OpenProposalPendingResponse {
+	return &vote_proposal_message.OpenProposalPendingResponse{
 		Status:  p.Status,
 		Message: p.Message,
 		Success: p.Success,
