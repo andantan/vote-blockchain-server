@@ -33,6 +33,6 @@ func (e *BlockChainExplorer) Start() {
 
 	addr := fmt.Sprintf(":%d", e.ExplorerPort)
 
-	log.Printf(util.SystemString("SYSTEM: Explorer listener openend { port: %d }"), e.ExplorerPort)
+	log.Printf(util.SystemString("SYSTEM: Explorer listener opened { port: %d }"), e.ExplorerPort)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }

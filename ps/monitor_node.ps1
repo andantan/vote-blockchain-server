@@ -5,7 +5,7 @@ while ($true) {
     Write-Host "프로세스 이름         메모리 사용량 (MB)"
     Write-Host "==================================="
 
-    tasklist | Select-String -Pattern "^node" -CaseSensitive:$false | ForEach-Object {
+    tasklist | Select-String -Pattern "^blockchain-node" -CaseSensitive:$false | ForEach-Object {
         $line = $_.ToString()
         if ($line -match '(\d{1,3}(,\d{3})*) K') {
             $kbMemory = $matches[1] -replace ',', ''

@@ -36,10 +36,10 @@ type SubmitResponse struct {
 	Status  string `json:"status"`
 }
 
-func BurstSubmitClient(max int) {
-	client := NewSubmitClient(max)
+func BurstSubmitClient(max int, votes []data.Vote) {
+	client := NewSubmitClient(max, votes)
 
-	for i, vote := range client.Topics.Votes {
+	for i, vote := range client.Topics {
 		if max <= i {
 			break
 		}
@@ -53,26 +53,26 @@ func BurstSubmitClient(max int) {
 type SubmitClient struct {
 	Client                 *http.Client
 	Wg                     *sync.WaitGroup
-	Topics                 data.Topics
+	Topics                 []data.Vote
 	EndPoint               config.VoteSubmitEndPoint
 	MinimumRangeBurstClock int
 	MaximumRangeBurstClock int
 }
 
-func NewSubmitClient(max int) *SubmitClient {
+func NewSubmitClient(max int, votes []data.Vote) *SubmitClient {
 	cfg := config.GetRequestBurstRangeClock()
 
 	c := &SubmitClient{
 		Client:                 &http.Client{Timeout: 10 * time.Second},
 		Wg:                     &sync.WaitGroup{},
-		Topics:                 data.GetTopics(),
+		Topics:                 votes,
 		EndPoint:               config.GetVoteSubmitEndPoint(),
 		MinimumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMinimunMilliSeconds),
 		MaximumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMaximumMilliSeconds),
 	}
 
-	if len(c.Topics.Votes) < max {
-		panic(fmt.Sprintf("Cannot process %d proposals: only %d proposals available. 'max' value must not exceed the total number of proposals.", max, len(c.Topics.Votes)))
+	if len(c.Topics) < max {
+		panic(fmt.Sprintf("Cannot process %d proposals: only %d proposals available. 'max' value must not exceed the total number of proposals.", max, len(c.Topics)))
 	}
 
 	c.Wg.Add(max)
@@ -98,12 +98,15 @@ func (c *SubmitClient) RequestSubmitLoop(vote data.Vote) {
 	requestOption := make(map[string]int)
 
 	ballotOptions := data.GetBallotOptions()
+	users := data.GetUsers()
 
-	for {
+	users.ShuffleUserHashs()
+
+	for i := range users.UserLength {
 		randOpt := util.RandOption(ballotOptions.BallotOptions)
 
 		v := NewSubmitRequest(
-			util.RandomHashString(),
+			users.GetUserHash(i),
 			randOpt,
 			vote.Topic,
 		)
@@ -111,7 +114,14 @@ func (c *SubmitClient) RequestSubmitLoop(vote data.Vote) {
 		response := c.RequestSubmit(v)
 
 		if strings.Compare(response.Success, "false") == 0 {
-			fmt.Printf("%+v\n", response)
+			if strings.Compare(response.Status, "DUPLICATE_VOTE_SUBMISSION") == 0 {
+				continue
+			}
+
+			if strings.Compare(response.Status, "UNKNOWN_ERROR") == 0 {
+				continue
+			}
+			fmt.Printf("Topic: %s ,response: %+v\n", vote.Topic, response)
 			break
 		}
 
@@ -155,7 +165,7 @@ func (c *SubmitClient) RequestSubmit(vote *SubmitRequest) *SubmitResponse {
 		log.Fatalf("error unmarshalling response JSON: %v", err)
 	}
 
-	log.Printf("Vote submit response: %+v", response)
+	log.Printf("Vote submit Topic: %s, response: %+v", vote.Topic, response)
 
 	return response
 }

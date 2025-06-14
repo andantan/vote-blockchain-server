@@ -21,8 +21,9 @@ type ProposalResponse struct {
 	Status  string `json:"status"`
 }
 
-func BurstProposalClient(max int) {
+func BurstProposalClient(max int) []data.Vote {
 	client := NewProposalClient(max)
+	client.Topics.ShuffleTopics()
 
 	for i, vote := range client.Topics.Votes {
 		if max <= i {
@@ -33,6 +34,8 @@ func BurstProposalClient(max int) {
 	}
 
 	client.Wg.Wait()
+
+	return client.Topics.Votes[:max]
 }
 
 type ProposalClient struct {
@@ -76,6 +79,8 @@ func (c *ProposalClient) GetUrl() string {
 
 func (c *ProposalClient) RequestProposal(vote data.Vote) {
 	defer c.Wg.Done()
+
+	fmt.Printf("%+v\n", vote)
 
 	time.Sleep(time.Duration(util.RandRange(c.MinimumRangeBurstClock, c.MaximumRangeBurstClock)) * time.Second)
 

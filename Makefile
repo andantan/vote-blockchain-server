@@ -22,12 +22,12 @@ install:
 
 build: install
 	@echo "--- Building blockchain-node application ---"
-	@go build -o ./bin/node
+	@go build -o ./bin/blockchain-node
 	@echo "--- Building blockchain-node application completed ---"
 
 run-blockchain-node: build
 	@$(CLEAR_COMMAND)
-	./bin/node
+	./bin/blockchain-node
 
 run-burst-client:
 	@echo "--- Running burst-client application ---"

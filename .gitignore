@@ -4,3 +4,7 @@
 *.exe
 
 bin
+
+/impulse-client/data/voting_db.users_dummy.json
+/impulse-client/data/voting_db.users_raw.json
+/impulse-client/data/voting_db.votes_dummy.json

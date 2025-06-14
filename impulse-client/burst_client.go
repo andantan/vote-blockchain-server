@@ -4,13 +4,23 @@ import (
 	"flag"
 
 	"github.com/andantan/vote-blockchain-server/impulse-client/client"
+	"github.com/andantan/vote-blockchain-server/impulse-client/util"
 )
 
 func main() {
 	var max int
-	flag.IntVar(&max, "max", 10, "Limit proposal entity")
+	var registerMode bool
+
+	flag.IntVar(&max, "max", 10, "Controls the number of operations. Its meaning changes based on '--register'.")
+	flag.BoolVar(&registerMode, "register", false, "When true, enables user registration mode. Affects the meaning of '--max'.")
 	flag.Parse()
 
-	client.BurstProposalClient(max)
-	client.BurstSubmitClient(max)
+	if registerMode {
+		util.MakeRandomUsers(max)
+		client.RegisterUsers()
+	} else {
+		openedVotes := client.BurstProposalClient(max)
+		client.BurstSubmitClient(max, openedVotes)
+	}
+
 }
