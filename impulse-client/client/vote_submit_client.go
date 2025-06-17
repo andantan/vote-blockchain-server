@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -31,9 +30,14 @@ func NewSubmitRequest(hash, option, topic string) *SubmitRequest {
 }
 
 type SubmitResponse struct {
-	Success string `json:"success"`
-	Message string `json:"message"`
-	Status  string `json:"status"`
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	Status         string `json:"status"`
+	Topic          string `json:"topic"`
+	HttpStatusCude int    `json:"http_status_code"`
+	UserHash       string `json:"user_hash"`
+	VoteHash       string `json:"vote_hash"`
+	VoteOption     string `json:"vote_option"`
 }
 
 func BurstSubmitClient(max int, votes []data.Vote) {
@@ -113,15 +117,7 @@ func (c *SubmitClient) RequestSubmitLoop(vote data.Vote) {
 
 		response := c.RequestSubmit(v)
 
-		if strings.Compare(response.Success, "false") == 0 {
-			if strings.Compare(response.Status, "DUPLICATE_VOTE_SUBMISSION") == 0 {
-				continue
-			}
-
-			if strings.Compare(response.Status, "UNKNOWN_ERROR") == 0 {
-				continue
-			}
-			fmt.Printf("Topic: %s ,response: %+v\n", vote.Topic, response)
+		if !response.Success {
 			break
 		}
 

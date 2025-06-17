@@ -15,10 +15,28 @@ import (
 	"github.com/andantan/vote-blockchain-server/impulse-client/util"
 )
 
+type ProposalRequest struct {
+	Topic    string   `json:"topic"`
+	Duration uint16   `json:"duration"`
+	Options  []string `json:"options"`
+}
+
+func NewProposalRequest(v data.Vote) ProposalRequest {
+	opts := data.GetBallotOptions()
+	return ProposalRequest{
+		Topic:    v.Topic,
+		Duration: v.DurationMinutes,
+		Options:  opts.BallotOptions,
+	}
+}
+
 type ProposalResponse struct {
-	Success string `json:"success"`
-	Message string `json:"message"`
-	Status  string `json:"status"`
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	Status         string `json:"status"`
+	Topic          string `json:"topic"`
+	Duration       int    `json:"duration"`
+	HttpStatusCude int    `json:"http_status_code"`
 }
 
 func BurstProposalClient(max int) []data.Vote {
@@ -80,11 +98,12 @@ func (c *ProposalClient) GetUrl() string {
 func (c *ProposalClient) RequestProposal(vote data.Vote) {
 	defer c.Wg.Done()
 
-	fmt.Printf("%+v\n", vote)
-
 	time.Sleep(time.Duration(util.RandRange(c.MinimumRangeBurstClock, c.MaximumRangeBurstClock)) * time.Second)
 
-	jsonData, err := json.Marshal(vote)
+	data := NewProposalRequest(vote)
+	log.Printf("%+v\n", data)
+
+	jsonData, err := json.Marshal(data)
 
 	if err != nil {
 		log.Fatalf("error marshalling JSON: %v", err)
