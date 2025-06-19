@@ -33,25 +33,25 @@ func (e *CreatedBlockEventEndpoint) getUrl() string {
 }
 
 type CreatedBlockEventRequest struct {
-	VoteId string `json:"vote_id"`
-	Length uint64 `json:"length"`
-	Height uint64 `json:"height"`
+	Topic   string `json:"topic"`
+	TxCount uint64 `json:"transaction_count"`
+	Height  uint64 `json:"height"`
 }
 
-func NewCreatedBlockEventRequest(voteId string, length, height uint64) *CreatedBlockEventRequest {
+func NewCreatedBlockEventRequest(topic string, txCount, height uint64) *CreatedBlockEventRequest {
 	return &CreatedBlockEventRequest{
-		VoteId: voteId,
-		Length: length,
-		Height: height,
+		Topic:   topic,
+		TxCount: txCount,
+		Height:  height,
 	}
 }
 
 type CreatedBlockEventResponse struct {
-	VoteId string `json:"vote_id"`
-	Cached bool   `json:"cached"`
-	Status string `json:"status"`
-	Length uint32 `json:"length"`
-	Height uint32 `json:"height"`
+	Topic   string `json:"topic"`
+	Cached  bool   `json:"cached"`
+	Status  string `json:"status"`
+	TxCount uint32 `json:"transaction_count"`
+	Height  uint32 `json:"height"`
 }
 
 type CreatedBlockeventUnicaster struct {
@@ -81,8 +81,8 @@ func (u *CreatedBlockeventUnicaster) Unicast(createdBlock *block.Block) {
 	buf, _ := json.Marshal(req)
 
 	log.Printf(
-		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast request { vote_id: %s, length: %d, height: %d }"),
-		req.VoteId, req.Length, req.Height,
+		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast request { topic: %s, TxCount: %d, height: %d }"),
+		req.Topic, req.TxCount, req.Height,
 	)
 
 	res, err := u.client.Post(u.endPoint.getUrl(), JSON_CONTENT_TYPE, bytes.NewBuffer(buf))
@@ -102,7 +102,7 @@ func (u *CreatedBlockeventUnicaster) Unicast(createdBlock *block.Block) {
 	}
 
 	log.Printf(
-		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { vote_id: %s, height: %d, length: %d, cached: %t, status: %s }"),
-		dataReq.VoteId, dataReq.Height, dataReq.Length, dataReq.Cached, dataReq.Status,
+		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { topic: %s, height: %d, transaction_count: %d, cached: %t, status: %s }"),
+		dataReq.Topic, dataReq.Height, dataReq.TxCount, dataReq.Cached, dataReq.Status,
 	)
 }

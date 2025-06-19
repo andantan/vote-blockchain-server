@@ -2,5 +2,5 @@
     "BlockEventUnicastProtocol": "http",
     "BlockEventUnicastAddress": "127.0.0.1",
     "BlockEventUnicastPort": 8080,
-    "CreatedBlockEventUnicastEndPoint": "/api/v1/event/new-block"
+    "CreatedBlockEventUnicastEndPoint": "/unicast/notification/new-block"
 }
