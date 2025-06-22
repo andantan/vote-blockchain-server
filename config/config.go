@@ -9,6 +9,7 @@ type ChannelBufferSizeSystemConfiguration struct {
 	PendingTransactionChannelBufferSize uint16 `json:"PendingTransactionChannelBufferSize"`
 	PendedPropaginateChannelBufferSize  uint16 `json:"PendedPropaginateChannelBufferSize"`
 	BlockPropaginateChannelBufferSize   uint16 `json:"BlockPropaginateChannelBufferSize"`
+	BlockStoreChannelBufferSize         uint16 `json:"BlockStoreChannelBufferSize"`
 }
 
 // #end System layer
@@ -44,6 +45,22 @@ type GrpcVoteSubmitListenerConfiguration struct {
 }
 
 // #end gRPC listener configuration
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// #def Explorer server configuration
+
+type ExplorerFilePathConfiguration struct {
+	ExplorerBaseDir  string `json:"ExplorerBaseDir"`
+	ExplorerBlockDir string `json:"ExplorerBlockDir"`
+}
+
+type ExplorerListenerConfiguration struct {
+	ExplorerListenerPort     uint16 `json:"ExplorerListenerPort"`
+	ExplorerListenerEndPoint string `json:"ExplorerListenerEndPoint"`
+}
+
+// #end Explorer server configuration
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

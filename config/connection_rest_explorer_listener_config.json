@@ -1,0 +1,4 @@
+{
+    "ExplorerListenerPort": 9100,
+    "ExplorerListenerEndPoint": "/block/query"
+}

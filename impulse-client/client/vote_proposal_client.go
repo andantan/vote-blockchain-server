@@ -11,17 +11,37 @@ import (
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/impulse-client/config"
+	"github.com/andantan/vote-blockchain-server/impulse-client/data"
 	"github.com/andantan/vote-blockchain-server/impulse-client/util"
 )
 
-type ProposalResponse struct {
-	Success string `json:"success"`
-	Message string `json:"message"`
-	Status  string `json:"status"`
+type ProposalRequest struct {
+	Topic    string   `json:"topic"`
+	Duration uint16   `json:"duration"`
+	Options  []string `json:"options"`
 }
 
-func BurstProposalClient(max int) {
+func NewProposalRequest(v data.Vote) ProposalRequest {
+	opts := data.GetBallotOptions()
+	return ProposalRequest{
+		Topic:    v.Topic,
+		Duration: v.DurationMinutes,
+		Options:  opts.BallotOptions,
+	}
+}
+
+type ProposalResponse struct {
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	Status         string `json:"status"`
+	Topic          string `json:"topic"`
+	Duration       int    `json:"duration"`
+	HttpStatusCude int    `json:"http_status_code"`
+}
+
+func BurstProposalClient(max int) []data.Vote {
 	client := NewProposalClient(max)
+	client.Topics.ShuffleTopics()
 
 	for i, vote := range client.Topics.Votes {
 		if max <= i {
@@ -32,12 +52,14 @@ func BurstProposalClient(max int) {
 	}
 
 	client.Wg.Wait()
+
+	return client.Topics.Votes[:max]
 }
 
 type ProposalClient struct {
 	Client                 *http.Client
 	Wg                     *sync.WaitGroup
-	Topics                 config.Topics
+	Topics                 data.Topics
 	EndPoint               config.VoteProposalEndPoint
 	MinimumRangeBurstClock int
 	MaximumRangeBurstClock int
@@ -49,7 +71,7 @@ func NewProposalClient(max int) *ProposalClient {
 	c := &ProposalClient{
 		Client:                 &http.Client{Timeout: 10 * time.Second},
 		Wg:                     &sync.WaitGroup{},
-		Topics:                 config.GetTopics(),
+		Topics:                 data.GetTopics(),
 		EndPoint:               config.GetVoteProposalEndPoint(),
 		MinimumRangeBurstClock: int(cfg.RestProposalRequestsRandomMinimumSeconds),
 		MaximumRangeBurstClock: int(cfg.RestProposalRequestsRandomMaximumSeconds),
@@ -73,12 +95,15 @@ func (c *ProposalClient) GetUrl() string {
 	)
 }
 
-func (c *ProposalClient) RequestProposal(vote config.Vote) {
+func (c *ProposalClient) RequestProposal(vote data.Vote) {
 	defer c.Wg.Done()
 
 	time.Sleep(time.Duration(util.RandRange(c.MinimumRangeBurstClock, c.MaximumRangeBurstClock)) * time.Second)
 
-	jsonData, err := json.Marshal(vote)
+	data := NewProposalRequest(vote)
+	log.Printf("%+v\n", data)
+
+	jsonData, err := json.Marshal(data)
 
 	if err != nil {
 		log.Fatalf("error marshalling JSON: %v", err)

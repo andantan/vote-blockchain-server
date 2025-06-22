@@ -94,7 +94,7 @@ func (mp *MemPool) openPending(pendingId types.Proposal, open *Pending) {
 func (mp *MemPool) CommitTransaction(pendingId types.Proposal, tx *transaction.Transaction) error {
 	if !mp.IsOpen(pendingId) {
 		msg := fmt.Sprintf("Proposal (%s) is not open", pendingId)
-		return werror.NewWrappedError("PROPOSAL_NOT_OPEN", msg, nil)
+		return werror.NewWrappedError("PROPOSAL_NOT_FOUND", msg, nil)
 	}
 
 	pn := mp.getPendingWithoutOpenCheck(pendingId)

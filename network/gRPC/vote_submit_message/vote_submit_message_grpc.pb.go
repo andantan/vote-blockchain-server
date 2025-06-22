@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BlockchainVoteSubmitService_SubmitVote_FullMethodName = "/vote_submit_message.BlockchainVoteSubmitService/SubmitVote"
+	BlockchainVoteSubmitService_SubmitBallotTransaction_FullMethodName = "/vote_submit_message.BlockchainVoteSubmitService/SubmitBallotTransaction"
 )
 
 // BlockchainVoteSubmitServiceClient is the client API for BlockchainVoteSubmitService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BlockchainVoteSubmitServiceClient interface {
-	SubmitVote(ctx context.Context, in *VoteSubmitRequest, opts ...grpc.CallOption) (*VoteSubmitResponse, error)
+	SubmitBallotTransaction(ctx context.Context, in *SubmitBallotTransactionRequest, opts ...grpc.CallOption) (*SubmitBallotTransactionResponse, error)
 }
 
 type blockchainVoteSubmitServiceClient struct {
@@ -37,10 +37,10 @@ func NewBlockchainVoteSubmitServiceClient(cc grpc.ClientConnInterface) Blockchai
 	return &blockchainVoteSubmitServiceClient{cc}
 }
 
-func (c *blockchainVoteSubmitServiceClient) SubmitVote(ctx context.Context, in *VoteSubmitRequest, opts ...grpc.CallOption) (*VoteSubmitResponse, error) {
+func (c *blockchainVoteSubmitServiceClient) SubmitBallotTransaction(ctx context.Context, in *SubmitBallotTransactionRequest, opts ...grpc.CallOption) (*SubmitBallotTransactionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(VoteSubmitResponse)
-	err := c.cc.Invoke(ctx, BlockchainVoteSubmitService_SubmitVote_FullMethodName, in, out, cOpts...)
+	out := new(SubmitBallotTransactionResponse)
+	err := c.cc.Invoke(ctx, BlockchainVoteSubmitService_SubmitBallotTransaction_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (c *blockchainVoteSubmitServiceClient) SubmitVote(ctx context.Context, in *
 // All implementations must embed UnimplementedBlockchainVoteSubmitServiceServer
 // for forward compatibility.
 type BlockchainVoteSubmitServiceServer interface {
-	SubmitVote(context.Context, *VoteSubmitRequest) (*VoteSubmitResponse, error)
+	SubmitBallotTransaction(context.Context, *SubmitBallotTransactionRequest) (*SubmitBallotTransactionResponse, error)
 	mustEmbedUnimplementedBlockchainVoteSubmitServiceServer()
 }
 
@@ -62,8 +62,8 @@ type BlockchainVoteSubmitServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedBlockchainVoteSubmitServiceServer struct{}
 
-func (UnimplementedBlockchainVoteSubmitServiceServer) SubmitVote(context.Context, *VoteSubmitRequest) (*VoteSubmitResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SubmitVote not implemented")
+func (UnimplementedBlockchainVoteSubmitServiceServer) SubmitBallotTransaction(context.Context, *SubmitBallotTransactionRequest) (*SubmitBallotTransactionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitBallotTransaction not implemented")
 }
 func (UnimplementedBlockchainVoteSubmitServiceServer) mustEmbedUnimplementedBlockchainVoteSubmitServiceServer() {
 }
@@ -87,20 +87,20 @@ func RegisterBlockchainVoteSubmitServiceServer(s grpc.ServiceRegistrar, srv Bloc
 	s.RegisterService(&BlockchainVoteSubmitService_ServiceDesc, srv)
 }
 
-func _BlockchainVoteSubmitService_SubmitVote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VoteSubmitRequest)
+func _BlockchainVoteSubmitService_SubmitBallotTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitBallotTransactionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BlockchainVoteSubmitServiceServer).SubmitVote(ctx, in)
+		return srv.(BlockchainVoteSubmitServiceServer).SubmitBallotTransaction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BlockchainVoteSubmitService_SubmitVote_FullMethodName,
+		FullMethod: BlockchainVoteSubmitService_SubmitBallotTransaction_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BlockchainVoteSubmitServiceServer).SubmitVote(ctx, req.(*VoteSubmitRequest))
+		return srv.(BlockchainVoteSubmitServiceServer).SubmitBallotTransaction(ctx, req.(*SubmitBallotTransactionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -113,8 +113,8 @@ var BlockchainVoteSubmitService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BlockchainVoteSubmitServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SubmitVote",
-			Handler:    _BlockchainVoteSubmitService_SubmitVote_Handler,
+			MethodName: "SubmitBallotTransaction",
+			Handler:    _BlockchainVoteSubmitService_SubmitBallotTransaction_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

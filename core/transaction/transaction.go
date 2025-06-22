@@ -12,9 +12,9 @@ type Transaction struct {
 	TimeStamp int64      `json:"time_stamp"`
 }
 
-func NewTransaction(hash types.Hash, option string, timeStamp int64) *Transaction {
+func NewTransaction(voteHash types.Hash, option string, timeStamp int64) *Transaction {
 	return &Transaction{
-		Hash:      hash,
+		Hash:      voteHash,
 		Option:    option,
 		TimeStamp: timeStamp,
 	}

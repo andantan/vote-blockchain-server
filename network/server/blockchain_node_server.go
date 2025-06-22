@@ -168,7 +168,7 @@ labelServer:
 				continue
 			}
 
-			submit.ResponseCh <- gRPC.NewSuccessVoteSubmitResponse(id, tx.Hash)
+			submit.ResponseCh <- gRPC.NewSuccessVoteSubmitResponse(tx.Hash)
 
 		case pended := <-s.pendedCh:
 			if pended.IsExpired() {

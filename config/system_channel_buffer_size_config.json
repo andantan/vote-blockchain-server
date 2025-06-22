@@ -3,5 +3,6 @@
     "GrpcVoteSubmitChannelBufferSize": 2048,
     "PendingTransactionChannelBufferSize": 1024,
     "PendedPropaginateChannelBufferSize": 128,
-    "BlockPropaginateChannelBufferSize": 128
+    "BlockPropaginateChannelBufferSize": 128,
+    "BlockStoreChannelBufferSize": 128
 }

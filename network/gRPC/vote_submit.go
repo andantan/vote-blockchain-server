@@ -13,14 +13,14 @@ const (
 )
 
 type VoteSubmit struct {
-	Hash       types.Hash
+	UserHash   types.Hash
 	Option     string
 	Topic      types.Proposal
 	ResponseCh chan *VoteSubmitResponse
 }
 
-func NewVoteSubmit(v *vote_submit_message.VoteSubmitRequest) (*VoteSubmit, error) {
-	s := v.GetHash()
+func NewVoteSubmit(v *vote_submit_message.SubmitBallotTransactionRequest) (*VoteSubmit, error) {
+	s := v.GetUserHash()
 
 	if len(s) != HASH_STRING_SIZE {
 		msg := fmt.Sprintf("Given string hash with length %d should be %d", len(s), HASH_STRING_SIZE)
@@ -35,49 +35,47 @@ func NewVoteSubmit(v *vote_submit_message.VoteSubmitRequest) (*VoteSubmit, error
 	}
 
 	return &VoteSubmit{
-		Hash:   h,
-		Option: v.GetOption(),
-		Topic:  types.Proposal(v.GetTopic()),
+		UserHash: h,
+		Option:   v.GetOption(),
+		Topic:    types.Proposal(v.GetTopic()),
 	}, nil
 }
 
 type VoteSubmitResponse struct {
-	Status  string
-	Message string
-	Success bool
+	VoteHash string
+	Success  bool
+	Status   string
 }
 
-func NewVoteSubmitResponse(status, message string, success bool) *VoteSubmitResponse {
+func NewVoteSubmitResponse(status, voteHash string, success bool) *VoteSubmitResponse {
 	return &VoteSubmitResponse{
-		Status:  status,
-		Message: message,
-		Success: success,
+		VoteHash: voteHash,
+		Success:  success,
+		Status:   status,
 	}
 }
 
-func NewSuccessVoteSubmitResponse(proposal types.Proposal, hash types.Hash) *VoteSubmitResponse {
-	msg := fmt.Sprintf("Vote for proposal '%s' has been successfully submitted with transaction hash '%s'.", proposal, hash)
-
-	return NewVoteSubmitResponse("SUBMITTED", msg, true)
+func NewSuccessVoteSubmitResponse(hash types.Hash) *VoteSubmitResponse {
+	return NewVoteSubmitResponse("SUBMITTED", hash.String(), true)
 }
 
 func NewErrorVoteSubmitResponse(err error) *VoteSubmitResponse {
 	if err == nil {
-		return NewVoteSubmitResponse("INTERNAL_ERROR", "Unexpected error occurred (nil error provided).", false)
+		return NewVoteSubmitResponse("INTERNAL_ERROR", types.NilHash().String(), false)
 	}
 
 	if werr, ok := err.(*werror.WrappedError); ok {
-		return NewVoteSubmitResponse(werr.Code, werr.Message, false)
+		return NewVoteSubmitResponse(werr.Code, types.NilHash().String(), false)
 	}
 
-	return NewVoteSubmitResponse("UNKNOWN_ERROR", fmt.Sprintf("Unexpected error occurred: %v", err), false)
+	return NewVoteSubmitResponse("UNKNOWN_ERROR", types.NilHash().String(), false)
 }
 
 // TODO change proto message type name
-func (p *VoteSubmitResponse) GetVoteResponse() *vote_submit_message.VoteSubmitResponse {
-	return &vote_submit_message.VoteSubmitResponse{
-		Status:  p.Status,
-		Message: p.Message,
-		Success: p.Success,
+func (p *VoteSubmitResponse) GetVoteResponse() *vote_submit_message.SubmitBallotTransactionResponse {
+	return &vote_submit_message.SubmitBallotTransactionResponse{
+		VoteHash: p.VoteHash,
+		Success:  p.Success,
+		Status:   p.Status,
 	}
 }

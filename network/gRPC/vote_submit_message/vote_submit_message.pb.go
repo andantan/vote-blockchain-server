@@ -21,29 +21,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type VoteSubmitRequest struct {
+type SubmitBallotTransactionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Hash          string                 `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	UserHash      string                 `protobuf:"bytes,1,opt,name=user_hash,json=userHash,proto3" json:"user_hash,omitempty"`
 	Option        string                 `protobuf:"bytes,2,opt,name=option,proto3" json:"option,omitempty"`
 	Topic         string                 `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *VoteSubmitRequest) Reset() {
-	*x = VoteSubmitRequest{}
+func (x *SubmitBallotTransactionRequest) Reset() {
+	*x = SubmitBallotTransactionRequest{}
 	mi := &file_vote_submit_message_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *VoteSubmitRequest) String() string {
+func (x *SubmitBallotTransactionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*VoteSubmitRequest) ProtoMessage() {}
+func (*SubmitBallotTransactionRequest) ProtoMessage() {}
 
-func (x *VoteSubmitRequest) ProtoReflect() protoreflect.Message {
+func (x *SubmitBallotTransactionRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_vote_submit_message_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,55 +55,55 @@ func (x *VoteSubmitRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use VoteSubmitRequest.ProtoReflect.Descriptor instead.
-func (*VoteSubmitRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SubmitBallotTransactionRequest.ProtoReflect.Descriptor instead.
+func (*SubmitBallotTransactionRequest) Descriptor() ([]byte, []int) {
 	return file_vote_submit_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *VoteSubmitRequest) GetHash() string {
+func (x *SubmitBallotTransactionRequest) GetUserHash() string {
 	if x != nil {
-		return x.Hash
+		return x.UserHash
 	}
 	return ""
 }
 
-func (x *VoteSubmitRequest) GetOption() string {
+func (x *SubmitBallotTransactionRequest) GetOption() string {
 	if x != nil {
 		return x.Option
 	}
 	return ""
 }
 
-func (x *VoteSubmitRequest) GetTopic() string {
+func (x *SubmitBallotTransactionRequest) GetTopic() string {
 	if x != nil {
 		return x.Topic
 	}
 	return ""
 }
 
-type VoteSubmitResponse struct {
+type SubmitBallotTransactionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	VoteHash      string                 `protobuf:"bytes,2,opt,name=vote_hash,json=voteHash,proto3" json:"vote_hash,omitempty"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	Success       bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *VoteSubmitResponse) Reset() {
-	*x = VoteSubmitResponse{}
+func (x *SubmitBallotTransactionResponse) Reset() {
+	*x = SubmitBallotTransactionResponse{}
 	mi := &file_vote_submit_message_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *VoteSubmitResponse) String() string {
+func (x *SubmitBallotTransactionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*VoteSubmitResponse) ProtoMessage() {}
+func (*SubmitBallotTransactionResponse) ProtoMessage() {}
 
-func (x *VoteSubmitResponse) ProtoReflect() protoreflect.Message {
+func (x *SubmitBallotTransactionResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_vote_submit_message_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -115,26 +115,26 @@ func (x *VoteSubmitResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use VoteSubmitResponse.ProtoReflect.Descriptor instead.
-func (*VoteSubmitResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SubmitBallotTransactionResponse.ProtoReflect.Descriptor instead.
+func (*SubmitBallotTransactionResponse) Descriptor() ([]byte, []int) {
 	return file_vote_submit_message_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *VoteSubmitResponse) GetStatus() string {
+func (x *SubmitBallotTransactionResponse) GetVoteHash() string {
+	if x != nil {
+		return x.VoteHash
+	}
+	return ""
+}
+
+func (x *SubmitBallotTransactionResponse) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *VoteSubmitResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *VoteSubmitResponse) GetSuccess() bool {
+func (x *SubmitBallotTransactionResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
@@ -145,18 +145,17 @@ var File_vote_submit_message_proto protoreflect.FileDescriptor
 
 const file_vote_submit_message_proto_rawDesc = "" +
 	"\n" +
-	"\x19vote_submit_message.proto\x12\x13vote_submit_message\"U\n" +
-	"\x11VoteSubmitRequest\x12\x12\n" +
-	"\x04hash\x18\x01 \x01(\tR\x04hash\x12\x16\n" +
+	"\x19vote_submit_message.proto\x12\x13vote_submit_message\"k\n" +
+	"\x1eSubmitBallotTransactionRequest\x12\x1b\n" +
+	"\tuser_hash\x18\x01 \x01(\tR\buserHash\x12\x16\n" +
 	"\x06option\x18\x02 \x01(\tR\x06option\x12\x14\n" +
-	"\x05topic\x18\x03 \x01(\tR\x05topic\"`\n" +
-	"\x12VoteSubmitResponse\x12\x16\n" +
+	"\x05topic\x18\x03 \x01(\tR\x05topic\"p\n" +
+	"\x1fSubmitBallotTransactionResponse\x12\x1b\n" +
+	"\tvote_hash\x18\x02 \x01(\tR\bvoteHash\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12\x18\n" +
-	"\asuccess\x18\x03 \x01(\bR\asuccess2|\n" +
-	"\x1bBlockchainVoteSubmitService\x12]\n" +
-	"\n" +
-	"SubmitVote\x12&.vote_submit_message.VoteSubmitRequest\x1a'.vote_submit_message.VoteSubmitResponseB%Z#../network/gRPC/vote_submit_messageb\x06proto3"
+	"\asuccess\x18\x03 \x01(\bR\asuccess2\xa4\x01\n" +
+	"\x1bBlockchainVoteSubmitService\x12\x84\x01\n" +
+	"\x17SubmitBallotTransaction\x123.vote_submit_message.SubmitBallotTransactionRequest\x1a4.vote_submit_message.SubmitBallotTransactionResponseB%Z#../network/gRPC/vote_submit_messageb\x06proto3"
 
 var (
 	file_vote_submit_message_proto_rawDescOnce sync.Once
@@ -172,12 +171,12 @@ func file_vote_submit_message_proto_rawDescGZIP() []byte {
 
 var file_vote_submit_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_vote_submit_message_proto_goTypes = []any{
-	(*VoteSubmitRequest)(nil),  // 0: vote_submit_message.VoteSubmitRequest
-	(*VoteSubmitResponse)(nil), // 1: vote_submit_message.VoteSubmitResponse
+	(*SubmitBallotTransactionRequest)(nil),  // 0: vote_submit_message.SubmitBallotTransactionRequest
+	(*SubmitBallotTransactionResponse)(nil), // 1: vote_submit_message.SubmitBallotTransactionResponse
 }
 var file_vote_submit_message_proto_depIdxs = []int32{
-	0, // 0: vote_submit_message.BlockchainVoteSubmitService.SubmitVote:input_type -> vote_submit_message.VoteSubmitRequest
-	1, // 1: vote_submit_message.BlockchainVoteSubmitService.SubmitVote:output_type -> vote_submit_message.VoteSubmitResponse
+	0, // 0: vote_submit_message.BlockchainVoteSubmitService.SubmitBallotTransaction:input_type -> vote_submit_message.SubmitBallotTransactionRequest
+	1, // 1: vote_submit_message.BlockchainVoteSubmitService.SubmitBallotTransaction:output_type -> vote_submit_message.SubmitBallotTransactionResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

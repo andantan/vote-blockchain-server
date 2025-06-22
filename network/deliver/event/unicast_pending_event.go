@@ -33,22 +33,22 @@ func (e *ExpiredPendingEventEndPoint) getUrl() string {
 }
 
 type ExpiredPendingEventRequest struct {
-	VoteId           string         `json:"vote_id"`
-	VoteCount        int            `json:"vote_count"`
-	VoteOptionCounts map[string]int `json:"vote_option_counts"`
+	VoteId      string         `json:"vote_id"`
+	VoteCount   int            `json:"vote_count"`
+	VoteOptions map[string]int `json:"vote_options"`
 }
 
-func NewExpiredPendingEventRequest(voteId string, voteCount int, voteOptionCounts map[string]int) *ExpiredPendingEventRequest {
+func NewExpiredPendingEventRequest(voteId string, voteCount int, voteOptions map[string]int) *ExpiredPendingEventRequest {
 	return &ExpiredPendingEventRequest{
-		VoteId:           voteId,
-		VoteCount:        voteCount,
-		VoteOptionCounts: voteOptionCounts,
+		VoteId:      voteId,
+		VoteCount:   voteCount,
+		VoteOptions: voteOptions,
 	}
 }
 
 type ExpiredPendingEventResponse struct {
-	Caching   bool   `json:"caching"`
-	Message   string `json:"message"`
+	Cached    bool   `json:"cached"`
+	Status    string `json:"status"`
 	VoteId    string `json:"vote_id"`
 	VoteCount int    `josn:"vote_count"`
 }
@@ -97,7 +97,7 @@ func (u *ExpiredPendingEventUnicaster) Unicast(expiredPending *mempool.Pended) {
 	}
 
 	log.Printf(
-		util.DeliverString("DELIVER: ExpiredPendingEventUnicaster.Unicast response { voting_id: %s, coutn: %d, caching: %t, message: %s }"),
-		dataReq.VoteId, dataReq.VoteCount, dataReq.Caching, dataReq.Message,
+		util.DeliverString("DELIVER: ExpiredPendingEventUnicaster.Unicast response { voting_id: %s, count: %d, caching: %t, status: %s }"),
+		dataReq.VoteId, dataReq.VoteCount, dataReq.Cached, dataReq.Status,
 	)
 }

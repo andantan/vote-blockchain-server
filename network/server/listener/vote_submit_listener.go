@@ -74,9 +74,9 @@ func (li *VoteSubmitListener) Consume() chan *gRPC.VoteSubmit {
 }
 
 // gRPC
-func (listener *VoteSubmitListener) SubmitVote(
-	ctx context.Context, req *vote_submit_message.VoteSubmitRequest,
-) (*vote_submit_message.VoteSubmitResponse, error) {
+func (listener *VoteSubmitListener) SubmitBallotTransaction(
+	ctx context.Context, req *vote_submit_message.SubmitBallotTransactionRequest,
+) (*vote_submit_message.SubmitBallotTransactionResponse, error) {
 	vs, err := gRPC.NewVoteSubmit(req)
 
 	if err != nil {

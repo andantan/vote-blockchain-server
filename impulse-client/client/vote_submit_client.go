@@ -7,11 +7,11 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/andantan/vote-blockchain-server/impulse-client/config"
+	"github.com/andantan/vote-blockchain-server/impulse-client/data"
 	"github.com/andantan/vote-blockchain-server/impulse-client/util"
 )
 
@@ -30,15 +30,20 @@ func NewSubmitRequest(hash, option, topic string) *SubmitRequest {
 }
 
 type SubmitResponse struct {
-	Success string `json:"success"`
-	Message string `json:"message"`
-	Status  string `json:"status"`
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	Status         string `json:"status"`
+	Topic          string `json:"topic"`
+	HttpStatusCude int    `json:"http_status_code"`
+	UserHash       string `json:"user_hash"`
+	VoteHash       string `json:"vote_hash"`
+	VoteOption     string `json:"vote_option"`
 }
 
-func BurstSubmitClient(max int) {
-	client := NewSubmitClient(max)
+func BurstSubmitClient(max int, votes []data.Vote) {
+	client := NewSubmitClient(max, votes)
 
-	for i, vote := range client.Topics.Votes {
+	for i, vote := range client.Topics {
 		if max <= i {
 			break
 		}
@@ -52,26 +57,26 @@ func BurstSubmitClient(max int) {
 type SubmitClient struct {
 	Client                 *http.Client
 	Wg                     *sync.WaitGroup
-	Topics                 config.Topics
+	Topics                 []data.Vote
 	EndPoint               config.VoteSubmitEndPoint
 	MinimumRangeBurstClock int
 	MaximumRangeBurstClock int
 }
 
-func NewSubmitClient(max int) *SubmitClient {
+func NewSubmitClient(max int, votes []data.Vote) *SubmitClient {
 	cfg := config.GetRequestBurstRangeClock()
 
 	c := &SubmitClient{
 		Client:                 &http.Client{Timeout: 10 * time.Second},
 		Wg:                     &sync.WaitGroup{},
-		Topics:                 config.GetTopics(),
+		Topics:                 votes,
 		EndPoint:               config.GetVoteSubmitEndPoint(),
 		MinimumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMinimunMilliSeconds),
 		MaximumRangeBurstClock: int(cfg.RestSubmitRequestsRandomMaximumMilliSeconds),
 	}
 
-	if len(c.Topics.Votes) < max {
-		panic(fmt.Sprintf("Cannot process %d proposals: only %d proposals available. 'max' value must not exceed the total number of proposals.", max, len(c.Topics.Votes)))
+	if len(c.Topics) < max {
+		panic(fmt.Sprintf("Cannot process %d proposals: only %d proposals available. 'max' value must not exceed the total number of proposals.", max, len(c.Topics)))
 	}
 
 	c.Wg.Add(max)
@@ -88,7 +93,7 @@ func (c *SubmitClient) GetUrl() string {
 	)
 }
 
-func (c *SubmitClient) RequestSubmitLoop(vote config.Vote) {
+func (c *SubmitClient) RequestSubmitLoop(vote data.Vote) {
 	defer c.Wg.Done()
 
 	log.Printf("RequestLoop %.20s start", vote.Topic)
@@ -96,19 +101,23 @@ func (c *SubmitClient) RequestSubmitLoop(vote config.Vote) {
 	requestCount := 0
 	requestOption := make(map[string]int)
 
-	for {
-		randOpt := util.RandOption([]rune("12345"))
+	ballotOptions := data.GetBallotOptions()
+	users := data.GetUsers()
+
+	users.ShuffleUserHashs()
+
+	for i := range users.UserLength {
+		randOpt := util.RandOption(ballotOptions.BallotOptions)
 
 		v := NewSubmitRequest(
-			util.RandomHashString(),
+			users.GetUserHash(i),
 			randOpt,
 			vote.Topic,
 		)
 
 		response := c.RequestSubmit(v)
 
-		if strings.Compare(response.Success, "false") == 0 {
-			fmt.Printf("%+v\n", response)
+		if !response.Success {
 			break
 		}
 
@@ -152,7 +161,7 @@ func (c *SubmitClient) RequestSubmit(vote *SubmitRequest) *SubmitResponse {
 		log.Fatalf("error unmarshalling response JSON: %v", err)
 	}
 
-	log.Printf("Vote submit response: %+v", response)
+	log.Printf("Vote submit Topic: %s, response: %+v", vote.Topic, response)
 
 	return response
 }

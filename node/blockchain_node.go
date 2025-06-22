@@ -7,7 +7,7 @@ import (
 	SyncBlock "github.com/andantan/vote-blockchain-server/storage/sync"
 )
 
-func Start(wg *sync.WaitGroup) {
+func StartBlockChainNode(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	validator := SyncBlock.NewValidator()
