@@ -31,8 +31,10 @@ type Validator struct {
 }
 
 func NewValidator() *Validator {
-	cfg := config.GetValidatorConfiguration()
-	syncDir := NewSyncDir(cfg.StoreBaseDir, cfg.StoreBlockDir)
+	systemBlockchainStoreBaseDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BASE_DIR")
+	systemBlockchainStoreBlockDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BLOCK_DIR")
+
+	syncDir := NewSyncDir(systemBlockchainStoreBaseDir, systemBlockchainStoreBlockDir)
 
 	return &Validator{
 		syncDir: syncDir,

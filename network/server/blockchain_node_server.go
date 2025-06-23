@@ -112,15 +112,18 @@ func (s *BlockChainServer) setChannel() {
 func (s *BlockChainServer) setEventDeliver() {
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting deliver..."))
 
-	__cfg := config.GetPendingEventUnicastConfiguration()
+	connectionUnicastPendingEventProtocol := config.GetEnvVar("CONNECTION_UNICAST_PENDING_EVENT_PROTOCOL")
+	connectionUnicastPendingEventAddress := config.GetEnvVar("CONNECTION_UNICAST_PENDING_EVENT_ADDRESS")
+	connectionUnicastPendingEventPort := config.GetIntEnvVar("CONNECTION_UNICAST_PENDING_EVENT_PORT")
+	connectionUnicastPendingEventEndpoint := config.GetEnvVar("CONNECTION_UNICAST_PENDING_EVENT_ENDPOINT")
 
 	s.eventDeliver = deliver.NewEventDeliver(
-		__cfg.PendingEventUnicastProtocol,
-		__cfg.PendingEventUnicastAddress,
-		__cfg.PendingEventUnicastPort,
+		connectionUnicastPendingEventProtocol,
+		connectionUnicastPendingEventAddress,
+		uint16(connectionUnicastPendingEventPort),
 	)
 
-	s.eventDeliver.SetExpirdPendingEventDeliver(__cfg.ExpiredPendingEventUnicastEndPoint)
+	s.eventDeliver.SetExpirdPendingEventDeliver(connectionUnicastPendingEventEndpoint)
 
 	log.Printf(util.DeliverString("DELIVER: BlockChainServer expired pending event deliver endpoint: %s"),
 		s.eventDeliver.ExpiredPendingEventDeliver.GetUrl())

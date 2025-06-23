@@ -22,20 +22,22 @@ type BlockChain struct {
 }
 
 func NewBlockChain(storer *store.JsonStorer, syncedHeader []*block.Header) *BlockChain {
-
-	__cfg := config.GetBlockEventUnicastConfiguration()
+	connectionUnicastBlockEventProtocol := config.GetEnvVar("CONNECTION_UNICAST_BLOCK_EVENT_PROTOCOL")
+	connectionUnicastBlockEventAddress := config.GetEnvVar("CONNECTION_UNICAST_BLOCK_EVENT_ADDRESS")
+	connectionUnicastBlockEventPort := config.GetIntEnvVar("CONNECTION_UNICAST_BLOCK_EVENT_PORT")
+	connectionUnicastBlockEventEndpoint := config.GetEnvVar("CONNECTION_UNICAST_BLOCK_EVENT_ENDPOINT")
 
 	bc := &BlockChain{
 		wg:     &sync.WaitGroup{},
 		storer: storer,
 		eventDeliver: deliver.NewEventDeliver(
-			__cfg.BlockEventUnicastProtocol,
-			__cfg.BlockEventUnicastAddress,
-			__cfg.BlockEventUnicastPort,
+			connectionUnicastBlockEventProtocol,
+			connectionUnicastBlockEventAddress,
+			uint16(connectionUnicastBlockEventPort),
 		),
 	}
 
-	bc.eventDeliver.SetCreatedBlockEventDeliver(__cfg.CreatedBlockEventUnicastEndPoint)
+	bc.eventDeliver.SetCreatedBlockEventDeliver(connectionUnicastBlockEventEndpoint)
 
 	log.Printf(util.DeliverString("DELIVER: Blockchain created block event deliver endpoint: %s"),
 		bc.eventDeliver.CreatedBlockEventDeliver.GetUrl())
@@ -73,11 +75,11 @@ func NewGenesisBlockChain(storer *store.JsonStorer) *BlockChain {
 
 func (bc *BlockChain) setChannel() {
 	log.Println(util.SystemString("SYSTEM: Blockchain setting channel..."))
-	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+	systemBlockPropaginateChannelBufferSize := config.GetIntEnvVar("SYSTEM_BLOCK_PROPAGINATE_CHANNEL_BUFFER_SIZE")
 
 	bc.protoBlockCh = make(
 		chan *block.ProtoBlock,
-		__sys_channel_size.BlockPropaginateChannelBufferSize,
+		systemBlockPropaginateChannelBufferSize,
 	)
 
 	log.Println(util.SystemString("SYSTEM: Blockchain block channel setting is done."))

@@ -22,12 +22,13 @@ type JsonStorer struct {
 }
 
 func NewStore() *JsonStorer {
-	cfg := config.GetStorerConfiguration()
-	__cfg_buffer := config.GetChannelBufferSizeSystemConfiguration()
+	systemBlockchainStoreBaseDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BASE_DIR")
+	systemBlockchainStoreBlockDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BLOCK_DIR")
+	systemBlockStoreChannelBufferSize := config.GetIntEnvVar("SYSTEM_BLOCK_STORE_CHANNEL_BUFFER_SIZE")
 
 	storer := &JsonStorer{}
-	storer.setBaseDirectory(cfg.StoreBaseDir, cfg.StoreBlockDir)
-	storer.setChannel(__cfg_buffer.BlockStoreChannelBufferSize)
+	storer.setBaseDirectory(systemBlockchainStoreBaseDir, systemBlockchainStoreBlockDir)
+	storer.setChannel(uint16(systemBlockStoreChannelBufferSize))
 	storer.wg.Add(1)
 
 	go storer.saveBlocks()
