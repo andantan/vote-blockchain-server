@@ -51,14 +51,15 @@ type Pending struct {
 func NewPending(opts *PendingOpts) *Pending {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	systemPendingResetIntervalTime := config.GetIntEnvVar("SYSTEM_PENDING_RESET_INTERVAL_TIME")
-	systemPendingInturruptIntervalTime := config.GetIntEnvVar("SYSTEM_PENDING_INTURRUPT_INTERVAL_TIME")
-	systemPendingCloseIntervalTime := config.GetIntEnvVar("SYSTEM_PENDING_CLOSE_INTERVAL_TIME")
+	systemPendingResetIntervalDuration := config.GetIntEnvVar("SYSTEM_PENDING_RESET_INTERVAL_DURATION")
+	systemPendingInturruptIntervalDuration := config.GetIntEnvVar("SYSTEM_PENDING_INTURRUPT_INTERVAL_DURATION")
+	systemPendingCloseIntervalDuration := config.GetIntEnvVar("SYSTEM_PENDING_CLOSE_INTERVAL_DURATION")
+	systemPendingIntervalTimeUnit := config.GetIntEnvVar("SYSTEM_PENDING_INTERVAL_TIME_UNIT")
 	systemPendingTransactionChannelBufferSize := config.GetIntEnvVar("SYSTEM_PENDING_TRANSACTION_CHANNEL_BUFFER_SIZE")
 
-	__reset_timer_duartion := time.Duration(systemPendingResetIntervalTime) * time.Second
-	__inturrupt_timer_duration := time.Duration(systemPendingInturruptIntervalTime) * time.Second
-	__close_timer_duration := time.Duration(systemPendingCloseIntervalTime) * time.Second
+	__reset_timer_duartion := time.Duration(systemPendingResetIntervalDuration * systemPendingIntervalTimeUnit)
+	__inturrupt_timer_duration := time.Duration(systemPendingInturruptIntervalDuration * systemPendingIntervalTimeUnit)
+	__close_timer_duration := time.Duration(systemPendingCloseIntervalDuration * systemPendingIntervalTimeUnit)
 
 	p := &Pending{
 		pendingID:              opts.pendingID,

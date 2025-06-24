@@ -26,11 +26,12 @@ type MemPool struct {
 }
 
 func NewMemPool() *MemPool {
-	systemBlockIntervalTime := config.GetIntEnvVar("SYSTEM_BLOCK_INTERVAL_TIME")
+	systemBlockIntervalTimeUnit := config.GetIntEnvVar("SYSTEM_BLOCK_INTERVAL_TIME_UNIT")
+	systemBlockIntervalTimeDuration := config.GetIntEnvVar("SYSTEM_BLOCK_INTERVAL_TIME_DURATION")
 	systemBlockTransactionSize := config.GetIntEnvVar("SYSTEM_BLOCK_TRANSACTION_SIZE")
 	systemPendedPropaginateChannelBufferSize := config.GetIntEnvVar("SYSTEM_PENDED_PROPAGINATE_CHANNEL_BUFFER_SIZE")
 
-	blockInterval := time.Duration(systemBlockIntervalTime) * time.Second
+	blockInterval := time.Duration(systemBlockIntervalTimeUnit * systemBlockIntervalTimeDuration)
 
 	mp := &MemPool{
 		BlockTime: blockInterval,
