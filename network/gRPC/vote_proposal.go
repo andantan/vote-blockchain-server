@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/andantan/vote-blockchain-server/config"
 	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/network/gRPC/vote_proposal_message"
 	"github.com/andantan/vote-blockchain-server/types"
@@ -17,9 +18,11 @@ type VoteProposal struct {
 }
 
 func NewVoteProposal(p *vote_proposal_message.OpenProposalPendingRequest) *VoteProposal {
+	systemProposalDurationIntervalUnit := int64(config.GetIntEnvVar("SYSTEM_PROPOSAL_DURATION_INTERVAL_UNIT"))
+
 	return &VoteProposal{
 		Proposal: types.Proposal(p.GetTopic()),
-		Duration: time.Duration(p.GetDuration()) * time.Minute,
+		Duration: time.Duration(p.GetDuration() * systemProposalDurationIntervalUnit),
 	}
 }
 

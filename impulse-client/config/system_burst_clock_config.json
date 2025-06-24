@@ -1,6 +1,6 @@
 {
-    "RestProposalRequestsRandomMinimumSeconds": 2,
-    "RestProposalRequestsRandomMaximumSeconds": 4,
-    "RestSubmitRequestsRandomMinimunMilliSeconds": 1,
-    "RestSubmitRequestsRandomMaximumMilliSeconds": 4
+    "RestProposalRequestsRandomMinimumSeconds": 0,
+    "RestProposalRequestsRandomMaximumSeconds": 2,
+    "RestSubmitRequestsRandomMinimunMilliSeconds": 80,
+    "RestSubmitRequestsRandomMaximumMilliSeconds": 120
 }
