@@ -26,19 +26,20 @@ type MemPool struct {
 }
 
 func NewMemPool() *MemPool {
-	__cfg := config.GetChainParameterConfiguration()
-	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+	systemBlockIntervalTime := config.GetIntEnvVar("SYSTEM_BLOCK_INTERVAL_TIME")
+	systemBlockTransactionSize := config.GetIntEnvVar("SYSTEM_BLOCK_TRANSACTION_SIZE")
+	systemPendedPropaginateChannelBufferSize := config.GetIntEnvVar("SYSTEM_PENDED_PROPAGINATE_CHANNEL_BUFFER_SIZE")
 
-	blockInterval := time.Duration(__cfg.BlockIntervalSeconds) * time.Second
+	blockInterval := time.Duration(systemBlockIntervalTime) * time.Second
 
 	mp := &MemPool{
 		BlockTime: blockInterval,
-		MaxTxSize: __cfg.MaxTransactionSize,
+		MaxTxSize: uint32(systemBlockTransactionSize),
 		wg:        &sync.WaitGroup{},
 		pendings:  make(map[types.Proposal]*Pending),
 		pendedCh: make(
 			chan *Pended,
-			__sys_channel_size.PendedPropaginateChannelBufferSize,
+			systemPendedPropaginateChannelBufferSize,
 		),
 		shutdownCh: make(chan struct{}),
 	}

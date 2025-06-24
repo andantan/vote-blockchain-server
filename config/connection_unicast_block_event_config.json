@@ -1,6 +1,0 @@
-{
-    "BlockEventUnicastProtocol": "http",
-    "BlockEventUnicastAddress": "127.0.0.1",
-    "BlockEventUnicastPort": 8080,
-    "CreatedBlockEventUnicastEndPoint": "/unicast/notification/new-block"
-}

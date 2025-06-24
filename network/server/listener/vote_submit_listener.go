@@ -45,15 +45,16 @@ type VoteSubmitListener struct {
 }
 
 func NewVoteSubmitListener(exitCh chan uint8) *VoteSubmitListener {
-	__cfg := config.GetGrpcVoteSubmitListenerConfiguration()
-	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+	connectionGrpcSubmitListenerNetwork := config.GetEnvVar("CONNECTION_GRPC_SUBMIT_LISTENER_NETWORK")
+	connectionGrpcSubmitListenerPort := config.GetIntEnvVar("CONNECTION_GRPC_SUBMIT_LISTENER_PORT")
+	systemGrpcSubmitChannelBufferSize := config.GetIntEnvVar("SYSTEM_GRPC_SUBMIT_CHANNEL_BUFFER_SIZE")
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	opts := NewVoteSubmitListenerOption(
-		__cfg.Network,
-		__cfg.Port,
-		__sys_channel_size.GrpcVoteProposalChannelBufferSize,
+		connectionGrpcSubmitListenerNetwork,
+		uint16(connectionGrpcSubmitListenerPort),
+		uint16(systemGrpcSubmitChannelBufferSize),
 	)
 
 	return &VoteSubmitListener{

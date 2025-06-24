@@ -14,15 +14,6 @@ import (
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
-// const (
-// 	RESET_TIMER_DURATION = iota
-// )
-
-// const (
-// 	INTERRUPT_TIMER_DURATION = 5 * time.Second
-// 	CLOSE_TIMER_DURATION     = 10 * time.Second
-// )
-
 type Pending struct {
 	pendingID types.Proposal // TopicID
 
@@ -60,12 +51,14 @@ type Pending struct {
 func NewPending(opts *PendingOpts) *Pending {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	__cfg := config.GetPendingInternalTimerConfiguration()
-	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+	systemPendingResetIntervalTime := config.GetIntEnvVar("SYSTEM_PENDING_RESET_INTERVAL_TIME")
+	systemPendingInturruptIntervalTime := config.GetIntEnvVar("SYSTEM_PENDING_INTURRUPT_INTERVAL_TIME")
+	systemPendingCloseIntervalTime := config.GetIntEnvVar("SYSTEM_PENDING_CLOSE_INTERVAL_TIME")
+	systemPendingTransactionChannelBufferSize := config.GetIntEnvVar("SYSTEM_PENDING_TRANSACTION_CHANNEL_BUFFER_SIZE")
 
-	__reset_timer_duartion := time.Duration(__cfg.ResetTimeDurationSeconds) * time.Second
-	__inturrupt_timer_duration := time.Duration(__cfg.InturruptTimerDurationSeconds) * time.Second
-	__close_timer_duration := time.Duration(__cfg.CloseTimerDurationSeconds) * time.Second
+	__reset_timer_duartion := time.Duration(systemPendingResetIntervalTime) * time.Second
+	__inturrupt_timer_duration := time.Duration(systemPendingInturruptIntervalTime) * time.Second
+	__close_timer_duration := time.Duration(systemPendingCloseIntervalTime) * time.Second
 
 	p := &Pending{
 		pendingID:              opts.pendingID,
@@ -85,7 +78,7 @@ func NewPending(opts *PendingOpts) *Pending {
 		maxTxSize:              opts.maxTxSize,
 		transactionCh: make(
 			chan *transaction.Transaction,
-			__sys_channel_size.PendingTransactionChannelBufferSize,
+			systemPendingTransactionChannelBufferSize,
 		),
 		pendedCh: opts.pendedCh,
 	}

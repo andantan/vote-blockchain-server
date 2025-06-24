@@ -1,6 +1,0 @@
-{
-    "PendingEventUnicastProtocol": "http",
-    "PendingEventUnicastAddress": "127.0.0.1",
-    "PendingEventUnicastPort": 8080,
-    "ExpiredPendingEventUnicastEndPoint": "/unicast/notification/expired-pending"
-}

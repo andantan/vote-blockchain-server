@@ -17,14 +17,16 @@ type BlockChainExplorer struct {
 }
 
 func NewBlockChainExplorer() *BlockChainExplorer {
-	_cfg_path := config.GetExplorerFilePathConfiguration()
-	_cfg_end_point := config.GetExplorerListenerConfiguration()
+	systemBlockchainStoreBaseDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BASE_DIR")
+	systemBlockchainStoreBlockDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BLOCK_DIR")
+	connectionRestExplorerListenerPort := config.GetIntEnvVar("CONNECTION_REST_EXPLORER_LISTENER_PORT")
+	connectionRestExplorerListenerEndpoint := config.GetEnvVar("CONNECTION_REST_EXPLORER_LISTENER_ENDPOINT")
 
 	return &BlockChainExplorer{
-		baseDir:          _cfg_path.ExplorerBaseDir,
-		blocksDir:        _cfg_path.ExplorerBlockDir,
-		ExplorerPort:     _cfg_end_point.ExplorerListenerPort,
-		ExplorerEndPoint: _cfg_end_point.ExplorerListenerEndPoint,
+		baseDir:          systemBlockchainStoreBaseDir,
+		blocksDir:        systemBlockchainStoreBlockDir,
+		ExplorerPort:     uint16(connectionRestExplorerListenerPort),
+		ExplorerEndPoint: connectionRestExplorerListenerEndpoint,
 	}
 }
 

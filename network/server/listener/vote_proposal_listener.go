@@ -45,13 +45,14 @@ type VoteProposalListener struct {
 }
 
 func NewVoteProposalListener(exitCh chan uint8) *VoteProposalListener {
-	__cfg := config.GetGrpcVoteProposalListenerConfiguration()
-	__sys_channel_size := config.GetChannelBufferSizeSystemConfiguration()
+	connectionGrpcProposalListenerNetwork := config.GetEnvVar("CONNECTION_GRPC_PROPOSAL_LISTENER_NETWORK")
+	connectionGrpcProposalListenerPort := config.GetIntEnvVar("CONNECTION_GRPC_PROPOSAL_LISTENER_PORT")
+	systemGrpcProposalChannelBufferSize := config.GetIntEnvVar("SYSTEM_GRPC_PROPOSAL_CHANNEL_BUFFER_SIZE")
 
 	opts := NewVoteProposalListenerOption(
-		__cfg.Network,
-		__cfg.Port,
-		__sys_channel_size.GrpcVoteProposalChannelBufferSize,
+		connectionGrpcProposalListenerNetwork,
+		uint16(connectionGrpcProposalListenerPort),
+		uint16(systemGrpcProposalChannelBufferSize),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
