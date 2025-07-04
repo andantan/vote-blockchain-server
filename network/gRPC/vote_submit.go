@@ -56,7 +56,7 @@ func NewVoteSubmitResponse(status, voteHash string, success bool) *VoteSubmitRes
 }
 
 func NewSuccessVoteSubmitResponse(hash types.Hash) *VoteSubmitResponse {
-	return NewVoteSubmitResponse("SUBMITTED", hash.String(), true)
+	return NewVoteSubmitResponse("OK", hash.String(), true)
 }
 
 func NewErrorVoteSubmitResponse(err error) *VoteSubmitResponse {
