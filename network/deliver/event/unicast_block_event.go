@@ -47,11 +47,13 @@ func NewCreatedBlockEventRequest(topic string, txCount, height uint64) *CreatedB
 }
 
 type CreatedBlockEventResponse struct {
-	Topic   string `json:"topic"`
-	Cached  bool   `json:"cached"`
-	Status  string `json:"status"`
-	TxCount uint32 `json:"transaction_count"`
-	Height  uint32 `json:"height"`
+	Success         bool   `json:"success"`
+	Message         string `json:"message"`
+	Status          string `json:"status"`
+	HttpsStatusCode int    `json:"http_status_code"`
+	Topic           string `json:"topic"`
+	TxCount         uint32 `json:"tx_count"`
+	Height          uint32 `json:"height"`
 }
 
 type CreatedBlockeventUnicaster struct {
@@ -102,7 +104,7 @@ func (u *CreatedBlockeventUnicaster) Unicast(createdBlock *block.Block) {
 	}
 
 	log.Printf(
-		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { topic: %s, height: %d, transaction_count: %d, cached: %t, status: %s }"),
-		dataReq.Topic, dataReq.Height, dataReq.TxCount, dataReq.Cached, dataReq.Status,
+		util.DeliverString("DELIVER: BlockCreatedEventUnicaster.Unicast response { success: %t, message: %s, status: %s, http_status_code: %d, topic: %s, height: %d, tx_count: %d}"),
+		dataReq.Success, dataReq.Message, dataReq.Status, dataReq.HttpsStatusCode, dataReq.Topic, dataReq.Height, dataReq.TxCount,
 	)
 }
