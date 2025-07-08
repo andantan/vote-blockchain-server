@@ -20,6 +20,7 @@ import (
 type BlockChainServer struct {
 	*listener.VoteProposalListener
 	*listener.VoteSubmitListener
+	*listener.AdminCommandListener
 
 	mempool    *mempool.MemPool
 	blockChain *blockchain.BlockChain
@@ -62,6 +63,7 @@ func (s *BlockChainServer) setgRPCServer() {
 
 	s.VoteProposalListener = listener.NewVoteProposalListener(s.exitSignalCh)
 	s.VoteSubmitListener = listener.NewVoteSubmitListener(s.exitSignalCh)
+	s.AdminCommandListener = listener.NewAdminCommandListener(s.exitSignalCh)
 
 	log.Println(util.SystemString("SYSTEM: BlockChainServer setting gRPC server is done."))
 }
@@ -191,10 +193,11 @@ labelServer:
 
 func (s *BlockChainServer) startgRPCListener() {
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
 	go s.VoteProposalListener.Start(wg)
 	go s.VoteSubmitListener.Start(wg)
+	go s.AdminCommandListener.Start(wg)
 
 	wg.Wait()
 }
