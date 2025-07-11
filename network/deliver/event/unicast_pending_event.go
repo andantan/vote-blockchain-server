@@ -47,10 +47,10 @@ func NewExpiredPendingEventRequest(voteId string, voteCount int, voteOptions map
 }
 
 type ExpiredPendingEventResponse struct {
-	Cached    bool   `json:"cached"`
+	Cached    bool   `json:"success"`
 	Status    string `json:"status"`
 	VoteId    string `json:"vote_id"`
-	VoteCount int    `josn:"vote_count"`
+	VoteCount int    `json:"vote_count"`
 }
 
 type ExpiredPendingEventUnicaster struct {
