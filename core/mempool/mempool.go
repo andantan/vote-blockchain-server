@@ -121,7 +121,7 @@ func (mp *MemPool) CommitTransaction(pendingId types.Proposal, tx *transaction.T
 func (mp *MemPool) closedPendingCollector() {
 	defer mp.wg.Done()
 
-	collector := time.NewTicker(5 * time.Second)
+	collector := time.NewTicker(time.Minute)
 
 	for {
 		select {
