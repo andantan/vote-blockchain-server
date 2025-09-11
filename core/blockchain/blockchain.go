@@ -118,6 +118,25 @@ func (bc *BlockChain) Height() uint32 {
 	return uint32(len(bc.headers) - 1)
 }
 
+func (bc *BlockChain) GetHeadersByRange(from, to uint32) []*block.Header {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+
+	reqFrom := from
+	reqTo := to
+	height := uint32(len(bc.headers) - 1)
+
+	if reqFrom > height {
+		reqFrom = height
+	}
+
+	if reqTo > height {
+		reqTo = height
+	}
+
+	return bc.headers[reqFrom : reqTo+1]
+}
+
 func (bc *BlockChain) attachBlock(b *block.Block) {
 	bc.mu.Lock()
 	bc.headers = append(bc.headers, b.Header)

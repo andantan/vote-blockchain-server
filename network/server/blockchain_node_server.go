@@ -11,6 +11,7 @@ import (
 	"github.com/andantan/vote-blockchain-server/core/blockchain"
 	"github.com/andantan/vote-blockchain-server/core/mempool"
 	"github.com/andantan/vote-blockchain-server/network/deliver"
+	"github.com/andantan/vote-blockchain-server/network/explorer"
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
 	"github.com/andantan/vote-blockchain-server/network/server/listener"
 	"github.com/andantan/vote-blockchain-server/storage/store"
@@ -134,6 +135,9 @@ func (s *BlockChainServer) setEventDeliver() {
 
 func (s *BlockChainServer) Start() {
 	s.startgRPCListener()
+
+	explorer := explorer.NewBlockChainExplorer(s.blockChain)
+	go explorer.Start()
 
 	voteProposalCh := s.VoteProposalListener.Consume()
 	voteSubmitCh := s.VoteSubmitListener.Consume()

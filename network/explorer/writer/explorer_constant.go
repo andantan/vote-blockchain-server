@@ -8,3 +8,19 @@ type ExplorerBlockAPIResponse struct {
 	Status  string       `json:"status"`
 	Block   *block.Block `json:"block"`
 }
+
+type ExplorerHeightAPIResponse struct {
+	Success string `json:"success"`
+	Message string `json:"message"`
+	Status  string `json:"status"`
+	Height  uint32 `json:"height"`
+}
+
+type ExplorerHeadersAPIResponse struct {
+	Success string          `json:"success"`
+	Message string          `json:"message"`
+	Status  string          `json:"status"`
+	From    uint32          `json:"from"`
+	To      uint32          `json:"to"`
+	Headers []*block.Header `json:"headers"`
+}

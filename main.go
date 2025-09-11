@@ -20,8 +20,8 @@ func main() {
 	go node.StartBlockChainNode(wg)
 	wg.Add(1)
 
-	go node.StartBlockChainExplorer(wg)
-	wg.Add(1)
+	// go node.StartBlockChainExplorer(wg)
+	// wg.Add(1)
 
 	wg.Wait()
 }

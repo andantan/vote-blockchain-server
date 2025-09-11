@@ -84,5 +84,82 @@ func (e *BlockChainExplorer) handleBlockQuery(w http.ResponseWriter, r *http.Req
 
 	writer.WriteJSONSuccessBlockResponse(w, blk)
 
-	log.Printf(util.CyanString("EXPLORER: Successfully served block %d from %s"), height, filePath)
+	log.Printf(util.CyanString("EXPLORER: Successfully served block query %d from %s"), height, filePath)
+}
+
+func (e *BlockChainExplorer) handleHeightQuery(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		errorMessage := fmt.Sprintf("%s method not allowed", r.Method)
+		wrappedError := werror.NewWrappedError("METHOD_NOT_ALLOWED", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusMethodNotAllowed, wrappedError)
+
+		return
+	}
+
+	height := e.chain.Height()
+	writer.WriteJSONSuccessHeightResponse(w, height)
+
+	log.Printf(util.CyanString("EXPLORER: Successfully served height(%d) query"), height)
+}
+
+func (e *BlockChainExplorer) handleHeadersQuery(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		errorMessage := fmt.Sprintf("%s method not allowed", r.Method)
+		wrappedError := werror.NewWrappedError("METHOD_NOT_ALLOWED", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusMethodNotAllowed, wrappedError)
+
+		return
+	}
+
+	queriedFromStr := r.URL.Query().Get("from")
+
+	if queriedFromStr == "" {
+		errorMessage := "Query parameter 'from' is required."
+		wrappedError := werror.NewWrappedError("EMPTY_QUERY_PARAMETER", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusBadRequest, wrappedError)
+
+		return
+	}
+
+	from, err := strconv.Atoi(queriedFromStr)
+
+	if err != nil || from < 0 {
+		errorMessage := fmt.Sprintf("Invalid 'from' value: %s. Must be a non-negative integer.", queriedFromStr)
+		wrappedError := werror.NewWrappedError("INVALID_QUERY_PARAMETER", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusBadRequest, wrappedError)
+
+		return
+	}
+
+	queriedToStr := r.URL.Query().Get("to")
+
+	if queriedToStr == "" {
+		errorMessage := "Query parameter 'to' is required."
+		wrappedError := werror.NewWrappedError("EMPTY_QUERY_PARAMETER", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusBadRequest, wrappedError)
+
+		return
+	}
+
+	to, err := strconv.Atoi(queriedToStr)
+
+	if err != nil || to < 0 {
+		errorMessage := fmt.Sprintf("Invalid 'to' value: %s. Must be a non-negative integer.", queriedToStr)
+		wrappedError := werror.NewWrappedError("INVALID_QUERY_PARAMETER", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusBadRequest, wrappedError)
+
+		return
+	}
+
+	headers := e.chain.GetHeadersByRange(uint32(from), uint32(to))
+
+	writer.WriteJSONSuccessHeadersResponse(w, uint32(from), uint32(to), headers)
+
+	log.Printf(util.CyanString("EXPLORER: Successfully served headers from=%d, to=%d query"), from, to)
 }
