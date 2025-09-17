@@ -7,18 +7,20 @@ import (
 
 	"github.com/andantan/vote-blockchain-server/config"
 	"github.com/andantan/vote-blockchain-server/core/blockchain"
+	"github.com/andantan/vote-blockchain-server/core/mempool"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
 type BlockChainExplorer struct {
 	chain            *blockchain.BlockChain
+	mempool          *mempool.MemPool
 	baseDir          string
 	blocksDir        string
 	ExplorerPort     uint16
 	ExplorerEndPoint string
 }
 
-func NewBlockChainExplorer(chain *blockchain.BlockChain) *BlockChainExplorer {
+func NewBlockChainExplorer(chain *blockchain.BlockChain, pool *mempool.MemPool) *BlockChainExplorer {
 	systemBlockchainStoreBaseDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BASE_DIR")
 	systemBlockchainStoreBlockDir := config.GetEnvVar("SYSTEM_BLOCKCHAIN_STORE_BLOCK_DIR")
 	connectionRestExplorerListenerPort := config.GetIntEnvVar("CONNECTION_REST_EXPLORER_LISTENER_PORT")
@@ -26,6 +28,7 @@ func NewBlockChainExplorer(chain *blockchain.BlockChain) *BlockChainExplorer {
 
 	return &BlockChainExplorer{
 		chain:            chain,
+		mempool:          pool,
 		baseDir:          systemBlockchainStoreBaseDir,
 		blocksDir:        systemBlockchainStoreBlockDir,
 		ExplorerPort:     uint16(connectionRestExplorerListenerPort),
@@ -37,6 +40,7 @@ func (e *BlockChainExplorer) Start() {
 	http.HandleFunc(e.ExplorerEndPoint+"/block", e.handleBlockQuery)
 	http.HandleFunc(e.ExplorerEndPoint+"/height", e.handleHeightQuery)
 	http.HandleFunc(e.ExplorerEndPoint+"/headers", e.handleHeadersQuery)
+	http.HandleFunc(e.ExplorerEndPoint+"/query", e.handleSpecQuery)
 
 	addr := fmt.Sprintf(":%d", e.ExplorerPort)
 

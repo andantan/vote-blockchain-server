@@ -163,3 +163,104 @@ func (e *BlockChainExplorer) handleHeadersQuery(w http.ResponseWriter, r *http.R
 
 	log.Printf(util.CyanString("EXPLORER: Successfully served headers from=%d, to=%d query"), from, to)
 }
+
+func (e *BlockChainExplorer) handleSpecQuery(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		errorMessage := fmt.Sprintf("%s method not allowed", r.Method)
+		wrappedError := werror.NewWrappedError("METHOD_NOT_ALLOWED", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusMethodNotAllowed, wrappedError)
+
+		return
+	}
+
+	targetFromStr := r.URL.Query().Get("target")
+
+	if targetFromStr == "" {
+		errorMessage := "Query parameter 'target' is required."
+		wrappedError := werror.NewWrappedError("EMPTY_QUERY_PARAMETER", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusBadRequest, wrappedError)
+
+		return
+	}
+
+	headers := e.chain.GetHeadersByRange(0, e.chain.Height())
+	resHeaders := make([]*block.Header, 0)
+	var queryTarget string
+	for _, h := range headers {
+		if targetFromStr == string(h.VotingID) {
+			queryTarget = "id"
+			resHeaders = append(resHeaders, h)
+		}
+
+		if targetFromStr == h.Hash().String() {
+			queryTarget = "block_hash"
+			resHeaders = append(resHeaders, h)
+			break
+		}
+
+		if targetFromStr == h.MerkleRoot.String() {
+			queryTarget = "merkle_root"
+			resHeaders = append(resHeaders, h)
+			break
+		}
+	}
+
+	if queryTarget == "" {
+		queryTarget = "null"
+	}
+
+	writer.WriteJSONSuccessSpecResponse(w, resHeaders, queryTarget)
+
+	log.Printf(util.CyanString("EXPLORER: Successfully served spec types=%s, len=%d query"), queryTarget, len(resHeaders))
+}
+
+type Pending struct {
+	Proposal string         `json:"proposal"`
+	Option   map[string]int `json:"opt_cache"`
+}
+
+type ExplorerPendingsAPIResponse struct {
+	Success  string    `json:"success"`
+	Message  string    `json:"message"`
+	Status   string    `json:"status"`
+	Pendings []Pending `json:"pendings"`
+}
+
+func (e *BlockChainExplorer) handlePendingsQuery(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		errorMessage := fmt.Sprintf("%s method not allowed", r.Method)
+		wrappedError := werror.NewWrappedError("METHOD_NOT_ALLOWED", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusMethodNotAllowed, wrappedError)
+
+		return
+	}
+
+	pendings := e.mempool.SeekPendings()
+
+	jsonResponse := &ExplorerPendingsAPIResponse{
+		Success:  "true",
+		Message:  "Operation successful",
+		Status:   "OK",
+		Pendings: make([]Pending, 0),
+	}
+
+	for proposal, pending := range *pendings {
+		p := Pending{
+			Proposal: string(proposal),
+			Option:   pending.OptCache,
+		}
+
+		jsonResponse.Pendings = append(jsonResponse.Pendings, p)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
+		log.Printf(util.RedString("EXPLORER: Failed to write JSON(ExplorerHeadersAPIResponse) success response: %v"), err)
+	}
+}

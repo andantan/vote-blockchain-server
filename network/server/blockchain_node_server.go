@@ -136,7 +136,7 @@ func (s *BlockChainServer) setEventDeliver() {
 func (s *BlockChainServer) Start() {
 	s.startgRPCListener()
 
-	explorer := explorer.NewBlockChainExplorer(s.blockChain)
+	explorer := explorer.NewBlockChainExplorer(s.blockChain, s.mempool)
 	go explorer.Start()
 
 	voteProposalCh := s.VoteProposalListener.Consume()

@@ -52,6 +52,7 @@ func WriteJSONSuccessHeightResponse(w http.ResponseWriter, height uint32) {
 	w.WriteHeader(http.StatusOK)
 
 	jsonResponse := ExplorerHeightAPIResponse{
+
 		Success: "true",
 		Message: "Operation successful",
 		Status:  "OK",
@@ -79,5 +80,23 @@ func WriteJSONSuccessHeadersResponse(w http.ResponseWriter, from, to uint32, hea
 
 	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
 		log.Printf(util.RedString("EXPLORER: Failed to write JSON(ExplorerHeadersAPIResponse) success response: %v"), err)
+	}
+}
+
+func WriteJSONSuccessSpecResponse(w http.ResponseWriter, th []*block.Header, types string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+
+	jsonResponse := ExplorerSpecAPIResponse{
+		Success: "true",
+		Message: "Operation successful",
+		Status:  "OK",
+		Type:    types,
+		Spec:    th,
+	}
+
+	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
+		log.Printf(util.RedString("EXPLORER: Failed to write JSON(WriteJSONSuccessSpecResponse) success response: %v"), err)
 	}
 }
