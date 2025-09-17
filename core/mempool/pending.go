@@ -18,9 +18,9 @@ type Pending struct {
 	pendingID types.Proposal // TopicID
 
 	mu       sync.RWMutex
-	txx      map[string]*transaction.Transaction
-	txCache  map[string]struct{}
-	optCache map[string]int
+	Txx      map[string]*transaction.Transaction
+	TxCache  map[string]struct{}
+	OptCache map[string]int
 
 	timeout bool // txCh flag
 	closed  bool
@@ -63,9 +63,9 @@ func NewPending(opts *PendingOpts) *Pending {
 
 	p := &Pending{
 		pendingID:              opts.pendingID,
-		txx:                    make(map[string]*transaction.Transaction),
-		txCache:                make(map[string]struct{}),
-		optCache:               make(map[string]int),
+		Txx:                    make(map[string]*transaction.Transaction),
+		TxCache:                make(map[string]struct{}),
+		OptCache:               make(map[string]int),
 		timeout:                false,
 		closed:                 false,
 		wg:                     &sync.WaitGroup{},
@@ -91,7 +91,7 @@ func NewPending(opts *PendingOpts) *Pending {
 
 func (p *Pending) Len() int {
 	p.mu.Lock()
-	l := len(p.txx)
+	l := len(p.Txx)
 	p.mu.Unlock()
 
 	return l
@@ -225,16 +225,16 @@ func (p *Pending) flush() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.txx = make(map[string]*transaction.Transaction)
+	p.Txx = make(map[string]*transaction.Transaction)
 }
 
 func (p *Pending) emitAndFlush() {
-	p.pendedCh <- NewPended(p.pendingID, p.txx)
+	p.pendedCh <- NewPended(p.pendingID, p.Txx)
 	p.flush()
 }
 
 func (p *Pending) emitExpiredPended() {
-	p.pendedCh <- NewExpiredPended(p.pendingID, len(p.txCache), p.optCache)
+	p.pendedCh <- NewExpiredPended(p.pendingID, len(p.TxCache), p.OptCache)
 }
 
 func (p *Pending) flushIfNotEmpty() {
@@ -256,7 +256,7 @@ func (p *Pending) processClosedTxCh() {
 func (p *Pending) seekTx(hash string) *transaction.Transaction {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	t, ok := p.txx[hash]
+	t, ok := p.Txx[hash]
 	if !ok {
 		return nil
 	}
@@ -273,7 +273,7 @@ func (p *Pending) seekTx(hash string) *transaction.Transaction {
 func (p *Pending) collision(tx *transaction.Transaction) bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	_, ok := p.txCache[tx.GetHashString()]
+	_, ok := p.TxCache[tx.GetHashString()]
 
 	return ok
 }
@@ -287,25 +287,25 @@ func (p *Pending) commitTx(tx *transaction.Transaction) {
 }
 
 func (p *Pending) commit(tx *transaction.Transaction) {
-	p.txx[tx.GetHashString()] = tx
+	p.Txx[tx.GetHashString()] = tx
 }
 
 func (p *Pending) cache(tx *transaction.Transaction) {
-	p.txCache[tx.GetHashString()] = struct{}{}
+	p.TxCache[tx.GetHashString()] = struct{}{}
 }
 
 func (p *Pending) cacheOption(tx *transaction.Transaction) {
-	p.optCache[tx.Option]++
+	p.OptCache[tx.Option]++
 }
 
 func (p *Pending) clearCache() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	log.Printf(util.PendingString("PENDING: %s | Cache { txCachedLength: %d, txCachedOption: %v }"), p.pendingID, len(p.txCache), p.optCache)
+	log.Printf(util.PendingString("PENDING: %s | Cache { txCachedLength: %d, txCachedOption: %v }"), p.pendingID, len(p.TxCache), p.OptCache)
 
-	p.txCache = make(map[string]struct{})
-	p.optCache = make(map[string]int)
+	p.TxCache = make(map[string]struct{})
+	p.OptCache = make(map[string]int)
 }
 
 func (p *Pending) timeoutPending() {

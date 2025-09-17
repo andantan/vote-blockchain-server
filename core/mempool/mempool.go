@@ -75,6 +75,10 @@ func (mp *MemPool) AddPending(pendingId types.Proposal, pendingTime time.Duratio
 	return nil
 }
 
+func (mp *MemPool) SeekPendings() *map[types.Proposal]*Pending {
+	return &mp.pendings
+}
+
 func (mp *MemPool) getPendingWithoutOpenCheck(pendingId types.Proposal) *Pending {
 	return mp.pendings[pendingId]
 }
