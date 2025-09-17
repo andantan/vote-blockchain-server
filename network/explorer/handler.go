@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/andantan/vote-blockchain-server/core/block"
 	werror "github.com/andantan/vote-blockchain-server/error"
@@ -185,8 +186,10 @@ func (e *BlockChainExplorer) handleSpecQuery(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	targetFromStr = strings.TrimPrefix(targetFromStr, "0x")
 	headers := e.chain.GetHeadersByRange(0, e.chain.Height())
 	resHeaders := make([]*block.Header, 0)
+
 	var queryTarget string
 	for _, h := range headers {
 		if targetFromStr == string(h.VotingID) {

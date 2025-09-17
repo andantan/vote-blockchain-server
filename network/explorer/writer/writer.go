@@ -69,13 +69,20 @@ func WriteJSONSuccessHeadersResponse(w http.ResponseWriter, from, to uint32, hea
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 
+	resHeaders := make([]*ResponseHeader, 0)
+
+	for _, h := range headers {
+		res := NewResponseHeader(h)
+		resHeaders = append(resHeaders, res)
+	}
+
 	jsonResponse := ExplorerHeadersAPIResponse{
 		Success: "true",
 		Message: "Operation successful",
 		Status:  "OK",
 		From:    from,
 		To:      to,
-		Headers: headers,
+		Headers: resHeaders,
 	}
 
 	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
@@ -88,12 +95,19 @@ func WriteJSONSuccessSpecResponse(w http.ResponseWriter, th []*block.Header, typ
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 
+	resHeaders := make([]*ResponseHeader, 0)
+
+	for _, h := range th {
+		res := NewResponseHeader(h)
+		resHeaders = append(resHeaders, res)
+	}
+
 	jsonResponse := ExplorerSpecAPIResponse{
 		Success: "true",
 		Message: "Operation successful",
 		Status:  "OK",
 		Type:    types,
-		Spec:    th,
+		Spec:    resHeaders,
 	}
 
 	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
