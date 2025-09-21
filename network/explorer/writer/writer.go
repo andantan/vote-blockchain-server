@@ -52,7 +52,6 @@ func WriteJSONSuccessHeightResponse(w http.ResponseWriter, height uint32) {
 	w.WriteHeader(http.StatusOK)
 
 	jsonResponse := ExplorerHeightAPIResponse{
-
 		Success: "true",
 		Message: "Operation successful",
 		Status:  "OK",

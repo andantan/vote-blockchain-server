@@ -24,7 +24,8 @@ const (
 type OpenProposalPendingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Topic         string                 `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
-	Duration      int64                  `protobuf:"varint,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	Proposer      string                 `protobuf:"bytes,2,opt,name=proposer,proto3" json:"proposer,omitempty"`
+	Duration      int64                  `protobuf:"varint,3,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,6 +63,13 @@ func (*OpenProposalPendingRequest) Descriptor() ([]byte, []int) {
 func (x *OpenProposalPendingRequest) GetTopic() string {
 	if x != nil {
 		return x.Topic
+	}
+	return ""
+}
+
+func (x *OpenProposalPendingRequest) GetProposer() string {
+	if x != nil {
+		return x.Proposer
 	}
 	return ""
 }
@@ -137,10 +145,11 @@ var File_vote_proposal_message_proto protoreflect.FileDescriptor
 
 const file_vote_proposal_message_proto_rawDesc = "" +
 	"\n" +
-	"\x1bvote_proposal_message.proto\x12\x15vote_proposal_message\"N\n" +
+	"\x1bvote_proposal_message.proto\x12\x15vote_proposal_message\"j\n" +
 	"\x1aOpenProposalPendingRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x1a\n" +
-	"\bduration\x18\x02 \x01(\x03R\bduration\"i\n" +
+	"\bproposer\x18\x02 \x01(\tR\bproposer\x12\x1a\n" +
+	"\bduration\x18\x03 \x01(\x03R\bduration\"i\n" +
 	"\x1bOpenProposalPendingResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x18\n" +

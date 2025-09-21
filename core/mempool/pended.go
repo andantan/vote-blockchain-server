@@ -21,14 +21,16 @@ func newPendingMetaData(expired bool, cachedLength int, cachedOption map[string]
 
 type Pended struct {
 	*pendingMetaData
-	pendingID types.Proposal
-	txx       map[string]*transaction.Transaction
+	pendingID       types.Proposal
+	pendingProposer types.Hash
+	txx             map[string]*transaction.Transaction
 }
 
-func NewPended(pendingID types.Proposal, txx map[string]*transaction.Transaction) *Pended {
+func NewPended(pendingID types.Proposal, proposer types.Hash, txx map[string]*transaction.Transaction) *Pended {
 	return &Pended{
 		pendingMetaData: newPendingMetaData(false, 0, nil),
 		pendingID:       pendingID,
+		pendingProposer: proposer,
 		txx:             txx,
 	}
 }
@@ -44,6 +46,10 @@ func NewExpiredPended(
 
 func (p *Pended) GetPendingID() types.Proposal {
 	return p.pendingID
+}
+
+func (p *Pended) GetPendingProposer() types.Hash {
+	return p.pendingProposer
 }
 
 func (p *Pended) GetTxx() map[string]*transaction.Transaction {

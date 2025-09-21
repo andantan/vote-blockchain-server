@@ -16,6 +16,7 @@ import (
 
 type Pending struct {
 	pendingID types.Proposal // TopicID
+	proposer  types.Hash
 
 	mu       sync.RWMutex
 	Txx      map[string]*transaction.Transaction
@@ -63,6 +64,7 @@ func NewPending(opts *PendingOpts) *Pending {
 
 	p := &Pending{
 		pendingID:              opts.pendingID,
+		proposer:               opts.pendingProposer,
 		Txx:                    make(map[string]*transaction.Transaction),
 		TxCache:                make(map[string]struct{}),
 		OptCache:               make(map[string]int),
@@ -229,7 +231,7 @@ func (p *Pending) flush() {
 }
 
 func (p *Pending) emitAndFlush() {
-	p.pendedCh <- NewPended(p.pendingID, p.Txx)
+	p.pendedCh <- NewPended(p.pendingID, p.proposer, p.Txx)
 	p.flush()
 }
 
@@ -251,23 +253,6 @@ func (p *Pending) processClosedTxCh() {
 
 		log.Printf(util.PendingString("PENDING: %s | Flushed remaining transaction during shutdown"), p.pendingID)
 	}
-}
-
-func (p *Pending) seekTx(hash string) *transaction.Transaction {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	t, ok := p.Txx[hash]
-	if !ok {
-		return nil
-	}
-
-	s := transaction.NewTransaction(
-		t.GetHash(),
-		t.GetOption(),
-		t.GetTimeStamp(),
-	)
-
-	return s
 }
 
 func (p *Pending) collision(tx *transaction.Transaction) bool {
@@ -379,4 +364,8 @@ func (p *Pending) stopCloseTimer() {
 	defer p.mu.Unlock()
 
 	p.closeTimer.Stop()
+}
+
+func (p *Pending) GetProposer() string {
+	return p.proposer.String()
 }

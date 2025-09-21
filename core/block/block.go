@@ -22,6 +22,7 @@ func NewBlock(h *Header, txx []*transaction.Transaction) *Block {
 func NewBlockFromPrevHeader(prevHeader *Header, pb *ProtoBlock) *Block {
 	header := &Header{
 		VotingID:      pb.VotingID,
+		Proposer:      pb.Proposer,
 		MerkleRoot:    pb.MerkleRoot,
 		Height:        prevHeader.Height + 1,
 		PrevBlockHash: prevHeader.Hash(),
@@ -36,6 +37,7 @@ func GenesisBlock() *Block {
 
 	gh := &Header{
 		VotingID:      "GENESIS",
+		Proposer:      types.ZeroHashCompact(),
 		MerkleRoot:    types.FFHashCompact(),
 		Height:        0,
 		PrevBlockHash: types.ZeroHashCompact(),

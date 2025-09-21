@@ -13,6 +13,7 @@ import (
 // Mapping request - response
 type VoteProposal struct {
 	Proposal   types.Proposal
+	Proposer   types.Hash
 	Duration   time.Duration
 	ResponseCh chan *VoteProposalResponse
 }
@@ -20,8 +21,11 @@ type VoteProposal struct {
 func NewVoteProposal(p *vote_proposal_message.OpenProposalPendingRequest) *VoteProposal {
 	systemProposalDurationIntervalUnit := int64(config.GetIntEnvVar("SYSTEM_PROPOSAL_DURATION_INTERVAL_UNIT"))
 
+	proposer, _ := types.HashFromHashString(p.Proposer)
+
 	return &VoteProposal{
 		Proposal: types.Proposal(p.GetTopic()),
+		Proposer: proposer,
 		Duration: time.Duration(p.GetDuration() * systemProposalDurationIntervalUnit),
 	}
 }
