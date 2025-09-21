@@ -297,7 +297,7 @@ func (e *BlockChainExplorer) handleMempoolTxxQuery(w http.ResponseWriter, r *htt
 	}
 
 	for _, tx := range p.Txx {
-		res.Pool[tx.GetHashString()] = tx.Option
+		res.Pool["0x"+tx.GetHashString()] = tx.Option
 	}
 
 	writer.WriteJSONSuccessTxxResponse(w, res)

@@ -72,7 +72,7 @@ type ExplorerPendingsAPIResponse struct {
 
 type ResponseTxx struct {
 	Proposal string            `json:"proposal"`
-	Proposer string            `json:"proposer`
+	Proposer string            `json:"proposer"`
 	Pool     map[string]string `json:"pool"`
 }
 
