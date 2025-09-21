@@ -114,3 +114,37 @@ func WriteJSONSuccessSpecResponse(w http.ResponseWriter, th []*block.Header, typ
 		log.Printf(util.RedString("EXPLORER: Failed to write JSON(WriteJSONSuccessSpecResponse) success response: %v"), err)
 	}
 }
+
+func WriteJSONSuccessPendingsResponse(w http.ResponseWriter, ps []ResponsePending) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+
+	jsonResponse := ExplorerPendingsAPIResponse{
+		Success:  "true",
+		Message:  "Operation successful",
+		Status:   "OK",
+		Pendings: ps,
+	}
+
+	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
+		log.Printf(util.RedString("EXPLORER: Failed to write JSON(WriteJSONSuccessSpecResponse) success response: %v"), err)
+	}
+}
+
+func WriteJSONSuccessTxxResponse(w http.ResponseWriter, txx ResponseTxx) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+
+	jsonResponse := ExplorerTxxAPIResponse{
+		Success: "true",
+		Message: "Operation successful",
+		Status:  "OK",
+		Txx:     txx,
+	}
+
+	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
+		log.Printf(util.RedString("EXPLORER: Failed to write JSON(WriteJSONSuccessSpecResponse) success response: %v"), err)
+	}
+}

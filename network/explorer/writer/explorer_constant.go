@@ -54,3 +54,27 @@ type ExplorerSpecAPIResponse struct {
 	Type string            `json:"type"`
 	Spec []*ResponseHeader `json:"headers"`
 }
+
+type ResponsePending struct {
+	Proposal string         `json:"proposal"`
+	Option   map[string]int `json:"opt_cache"`
+}
+
+type ExplorerPendingsAPIResponse struct {
+	Success  string            `json:"success"`
+	Message  string            `json:"message"`
+	Status   string            `json:"status"`
+	Pendings []ResponsePending `json:"pendings"`
+}
+
+type ResponseTxx struct {
+	Proposal string            `json:"proposal"`
+	Pool     map[string]string `json:"pool"`
+}
+
+type ExplorerTxxAPIResponse struct {
+	Success string      `json:"success"`
+	Message string      `json:"message"`
+	Status  string      `json:"status"`
+	Txx     ResponseTxx `json:"txx"`
+}
