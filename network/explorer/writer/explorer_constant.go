@@ -20,6 +20,7 @@ type ExplorerHeightAPIResponse struct {
 
 type ResponseHeader struct {
 	VotingID      string `json:"voting_id"`
+	Proposer      string `json:"proposer"`
 	Height        uint64 `json:"height"`
 	MerkleRoot    string `json:"merkle_root"`
 	BlockHash     string `json:"block_hash"`
@@ -29,6 +30,7 @@ type ResponseHeader struct {
 func NewResponseHeader(h *block.Header) *ResponseHeader {
 	return &ResponseHeader{
 		VotingID:      string(h.VotingID),
+		Proposer:      "0x" + h.Proposer.String(),
 		Height:        h.Height,
 		MerkleRoot:    "0x" + h.MerkleRoot.String(),
 		BlockHash:     "0x" + h.Hash().String(),
@@ -57,6 +59,7 @@ type ExplorerSpecAPIResponse struct {
 
 type ResponsePending struct {
 	Proposal string         `json:"proposal"`
+	Proposer string         `json:"proposer"`
 	Option   map[string]int `json:"opt_cache"`
 }
 
@@ -69,6 +72,7 @@ type ExplorerPendingsAPIResponse struct {
 
 type ResponseTxx struct {
 	Proposal string            `json:"proposal"`
+	Proposer string            `json:"proposer`
 	Pool     map[string]string `json:"pool"`
 }
 

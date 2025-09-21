@@ -56,21 +56,21 @@ func (mp *MemPool) Consume() <-chan *Pended {
 	return mp.pendedCh
 }
 
-func (mp *MemPool) AddPending(pendingId types.Proposal, pendingTime time.Duration) error {
+func (mp *MemPool) AddPending(pendingId types.Proposal, proposer types.Hash, pendingTime time.Duration) error {
 	if mp.IsOpen(pendingId) {
 		msg := fmt.Sprintf("Given proposal (%s) is already pending", pendingId)
 		return werror.NewWrappedError("PROPOSAL_ALREADY_OPEN", msg, nil)
 	}
 
-	pnOpts := NewPendingOpts(mp.MaxTxSize, mp.BlockTime, pendingId, pendingTime, mp.pendedCh)
+	pnOpts := NewPendingOpts(mp.MaxTxSize, mp.BlockTime, pendingId, proposer, pendingTime, mp.pendedCh)
 	pn := NewPending(pnOpts)
 
 	mp.openPending(pendingId, pn)
 
 	go pn.Activate()
 
-	log.Printf(util.MemPoolString("MEMPOOL: New pending { topic: %s, duration: %s }"),
-		pn.pendingID, pn.pendingTime)
+	log.Printf(util.MemPoolString("MEMPOOL: New pending { topic: %s, proposer: %s, duration: %s }"),
+		pn.pendingID, proposer, pn.pendingTime)
 
 	return nil
 }

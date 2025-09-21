@@ -151,6 +151,7 @@ const (
 	BLOCKCHAIN_NEW_CHAINED_BLOCK_LOG_MESSAGE = `BLOCKCHAIN: New block added to the chain.
 --------------------------------------------------------------------------------------
 | *H.VotingID      : %-80s
+| *H.Proposer	   : %-80s
 | *H.MerkleRoot    : %-80s
 | *H.Height        : %-80d
 | *H.PrevBlockHash : %-80s
@@ -180,6 +181,7 @@ func (bc *BlockChain) Activate() {
 
 		log.Printf(util.BlockChainString(BLOCKCHAIN_NEW_CHAINED_BLOCK_LOG_MESSAGE),
 			currentBlock.VotingID,
+			currentBlock.Proposer,
 			currentBlock.MerkleRoot.String(),
 			currentBlock.Height,
 			currentBlock.PrevBlockHash.String(),

@@ -198,6 +198,11 @@ func (e *BlockChainExplorer) handleSpecQuery(w http.ResponseWriter, r *http.Requ
 			resHeaders = append(resHeaders, h)
 		}
 
+		if targetFromStr == h.Proposer.String() {
+			queryTarget = "proposer"
+			resHeaders = append(resHeaders, h)
+		}
+
 		if targetFromStr == h.Hash().String() {
 			queryTarget = "block_hash"
 			resHeaders = append(resHeaders, h)
@@ -236,6 +241,7 @@ func (e *BlockChainExplorer) handleMempoolPendingsQuery(w http.ResponseWriter, r
 	for proposal, pending := range *pendings {
 		p := writer.ResponsePending{
 			Proposal: string(proposal),
+			Proposer: "0x" + pending.GetProposer(),
 			Option:   pending.OptCache,
 		}
 
@@ -274,6 +280,7 @@ func (e *BlockChainExplorer) handleMempoolTxxQuery(w http.ResponseWriter, r *htt
 	if !e.mempool.IsOpen(types.Proposal(idFromStr)) {
 		res := writer.ResponseTxx{
 			Proposal: "null",
+			Proposer: "0x" + types.ZeroHashCompact().String(),
 			Pool:     pool,
 		}
 
@@ -282,11 +289,12 @@ func (e *BlockChainExplorer) handleMempoolTxxQuery(w http.ResponseWriter, r *htt
 		return
 	}
 
+	p := (*pendings)[types.Proposal(idFromStr)]
 	res := writer.ResponseTxx{
 		Proposal: idFromStr,
+		Proposer: "0x" + p.GetProposer(),
 		Pool:     make(map[string]string),
 	}
-	p := (*pendings)[types.Proposal(idFromStr)]
 
 	for _, tx := range p.Txx {
 		res.Pool[tx.GetHashString()] = tx.Option

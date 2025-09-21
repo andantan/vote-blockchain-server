@@ -11,6 +11,7 @@ import (
 // Height 0 will be a genesis block
 type Header struct {
 	VotingID      types.Proposal `json:"voting_id"`
+	Proposer      types.Hash     `json:"proposer"`
 	MerkleRoot    types.Hash     `json:"merkle_root"`
 	Height        uint64         `json:"height"`
 	PrevBlockHash types.Hash     `json:"prev_block_hash"`
@@ -20,6 +21,11 @@ func (h *Header) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
 	buf.Write([]byte(h.VotingID))
+
+	if !h.Proposer.IsZero() {
+		buf.Write(h.Proposer.ToSlice())
+	}
+
 	buf.Write(h.MerkleRoot.ToSlice())
 
 	binary.Write(buf, binary.BigEndian, h.Height)

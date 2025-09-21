@@ -162,7 +162,7 @@ labelServer:
 				break labelServer
 			}
 
-			if err := s.mempool.AddPending(proposal.Proposal, proposal.Duration); err != nil {
+			if err := s.mempool.AddPending(proposal.Proposal, proposal.Proposer, proposal.Duration); err != nil {
 				proposal.ResponseCh <- gRPC.NewErrorVoteProposalResponse(err)
 				continue
 			}
@@ -207,7 +207,7 @@ func (s *BlockChainServer) startgRPCListener() {
 }
 
 func (s *BlockChainServer) createNewBlock(p *mempool.Pended) {
-	currentProtoBlock := block.NewProtoBlock(p.GetPendingID(), p.GetTxx())
+	currentProtoBlock := block.NewProtoBlock(p.GetPendingID(), p.GetPendingProposer(), p.GetTxx())
 
 	select {
 	case s.protoBlockCh <- currentProtoBlock:
