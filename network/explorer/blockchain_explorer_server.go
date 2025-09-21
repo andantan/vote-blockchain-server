@@ -41,6 +41,8 @@ func (e *BlockChainExplorer) Start() {
 	http.HandleFunc(e.ExplorerEndPoint+"/height", e.handleHeightQuery)
 	http.HandleFunc(e.ExplorerEndPoint+"/headers", e.handleHeadersQuery)
 	http.HandleFunc(e.ExplorerEndPoint+"/query", e.handleSpecQuery)
+	http.HandleFunc(e.ExplorerEndPoint+"/mempool/pending", e.handleMempoolPendingsQuery)
+	http.HandleFunc(e.ExplorerEndPoint+"/mempool/txx", e.handleMempoolTxxQuery)
 
 	addr := fmt.Sprintf(":%d", e.ExplorerPort)
 

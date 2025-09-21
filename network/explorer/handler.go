@@ -13,6 +13,7 @@ import (
 	"github.com/andantan/vote-blockchain-server/core/block"
 	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/network/explorer/writer"
+	"github.com/andantan/vote-blockchain-server/types"
 	"github.com/andantan/vote-blockchain-server/util"
 )
 
@@ -219,19 +220,7 @@ func (e *BlockChainExplorer) handleSpecQuery(w http.ResponseWriter, r *http.Requ
 	log.Printf(util.CyanString("EXPLORER: Successfully served spec types=%s, len=%d query"), queryTarget, len(resHeaders))
 }
 
-type Pending struct {
-	Proposal string         `json:"proposal"`
-	Option   map[string]int `json:"opt_cache"`
-}
-
-type ExplorerPendingsAPIResponse struct {
-	Success  string    `json:"success"`
-	Message  string    `json:"message"`
-	Status   string    `json:"status"`
-	Pendings []Pending `json:"pendings"`
-}
-
-func (e *BlockChainExplorer) handlePendingsQuery(w http.ResponseWriter, r *http.Request) {
+func (e *BlockChainExplorer) handleMempoolPendingsQuery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		errorMessage := fmt.Sprintf("%s method not allowed", r.Method)
 		wrappedError := werror.NewWrappedError("METHOD_NOT_ALLOWED", errorMessage, nil)
@@ -242,28 +231,69 @@ func (e *BlockChainExplorer) handlePendingsQuery(w http.ResponseWriter, r *http.
 	}
 
 	pendings := e.mempool.SeekPendings()
-
-	jsonResponse := &ExplorerPendingsAPIResponse{
-		Success:  "true",
-		Message:  "Operation successful",
-		Status:   "OK",
-		Pendings: make([]Pending, 0),
-	}
+	res := make([]writer.ResponsePending, 0)
 
 	for proposal, pending := range *pendings {
-		p := Pending{
+		p := writer.ResponsePending{
 			Proposal: string(proposal),
 			Option:   pending.OptCache,
 		}
 
-		jsonResponse.Pendings = append(jsonResponse.Pendings, p)
+		res = append(res, p)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(http.StatusOK)
+	writer.WriteJSONSuccessPendingsResponse(w, res)
 
-	if err := json.NewEncoder(w).Encode(jsonResponse); err != nil {
-		log.Printf(util.RedString("EXPLORER: Failed to write JSON(ExplorerHeadersAPIResponse) success response: %v"), err)
+	log.Printf(util.CyanString("EXPLORER: Successfully served pending len=%d query"), len(res))
+}
+
+func (e *BlockChainExplorer) handleMempoolTxxQuery(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		errorMessage := fmt.Sprintf("%s method not allowed", r.Method)
+		wrappedError := werror.NewWrappedError("METHOD_NOT_ALLOWED", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusMethodNotAllowed, wrappedError)
+
+		return
 	}
+
+	pendings := e.mempool.SeekPendings()
+	idFromStr := r.URL.Query().Get("id")
+
+	if idFromStr == "" {
+		errorMessage := "Query parameter 'id' is required."
+		wrappedError := werror.NewWrappedError("EMPTY_QUERY_PARAMETER", errorMessage, nil)
+
+		writer.WriteJSONErrorResponse(w, http.StatusBadRequest, wrappedError)
+
+		return
+	}
+
+	pool := make(map[string]string)
+
+	if !e.mempool.IsOpen(types.Proposal(idFromStr)) {
+		res := writer.ResponseTxx{
+			Proposal: "null",
+			Pool:     pool,
+		}
+
+		writer.WriteJSONSuccessTxxResponse(w, res)
+
+		return
+	}
+
+	res := writer.ResponseTxx{
+		Proposal: idFromStr,
+		Pool:     make(map[string]string),
+	}
+	p := (*pendings)[types.Proposal(idFromStr)]
+
+	for _, tx := range p.Txx {
+		res.Pool[tx.GetHashString()] = tx.Option
+	}
+
+	writer.WriteJSONSuccessTxxResponse(w, res)
+
+	log.Printf(util.CyanString("EXPLORER: Successfully served pending id=%s len=%d query"), idFromStr, len(res.Pool))
+
 }
