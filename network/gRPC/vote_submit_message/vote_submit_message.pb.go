@@ -26,6 +26,7 @@ type SubmitBallotTransactionRequest struct {
 	UserHash      string                 `protobuf:"bytes,1,opt,name=user_hash,json=userHash,proto3" json:"user_hash,omitempty"`
 	Option        string                 `protobuf:"bytes,2,opt,name=option,proto3" json:"option,omitempty"`
 	Topic         string                 `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
+	Salt          string                 `protobuf:"bytes,4,opt,name=salt,proto3" json:"salt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -77,6 +78,13 @@ func (x *SubmitBallotTransactionRequest) GetOption() string {
 func (x *SubmitBallotTransactionRequest) GetTopic() string {
 	if x != nil {
 		return x.Topic
+	}
+	return ""
+}
+
+func (x *SubmitBallotTransactionRequest) GetSalt() string {
+	if x != nil {
+		return x.Salt
 	}
 	return ""
 }
@@ -145,11 +153,12 @@ var File_vote_submit_message_proto protoreflect.FileDescriptor
 
 const file_vote_submit_message_proto_rawDesc = "" +
 	"\n" +
-	"\x19vote_submit_message.proto\x12\x13vote_submit_message\"k\n" +
+	"\x19vote_submit_message.proto\x12\x13vote_submit_message\"\x7f\n" +
 	"\x1eSubmitBallotTransactionRequest\x12\x1b\n" +
 	"\tuser_hash\x18\x01 \x01(\tR\buserHash\x12\x16\n" +
 	"\x06option\x18\x02 \x01(\tR\x06option\x12\x14\n" +
-	"\x05topic\x18\x03 \x01(\tR\x05topic\"p\n" +
+	"\x05topic\x18\x03 \x01(\tR\x05topic\x12\x12\n" +
+	"\x04salt\x18\x04 \x01(\tR\x04salt\"p\n" +
 	"\x1fSubmitBallotTransactionResponse\x12\x1b\n" +
 	"\tvote_hash\x18\x02 \x01(\tR\bvoteHash\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +

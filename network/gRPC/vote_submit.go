@@ -16,6 +16,7 @@ type VoteSubmit struct {
 	UserHash   types.Hash
 	Option     string
 	Topic      types.Proposal
+	Salt       string
 	ResponseCh chan *VoteSubmitResponse
 }
 
@@ -38,6 +39,7 @@ func NewVoteSubmit(v *vote_submit_message.SubmitBallotTransactionRequest) (*Vote
 		UserHash: h,
 		Option:   v.GetOption(),
 		Topic:    types.Proposal(v.GetTopic()),
+		Salt:     v.GetSalt(),
 	}, nil
 }
 
