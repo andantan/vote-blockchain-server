@@ -13,6 +13,7 @@ message SubmitBallotTransactionRequest {
   string user_hash = 1;
   string option = 2;
   string topic = 3;
+  string salt = 4;
 }
 
 message SubmitBallotTransactionResponse {
