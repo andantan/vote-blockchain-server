@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/andantan/vote-blockchain-server/core/block"
 	"github.com/andantan/vote-blockchain-server/core/blockchain"
 	"github.com/andantan/vote-blockchain-server/core/mempool"
+	werror "github.com/andantan/vote-blockchain-server/error"
 	"github.com/andantan/vote-blockchain-server/network/deliver"
 	"github.com/andantan/vote-blockchain-server/network/explorer"
 	"github.com/andantan/vote-blockchain-server/network/gRPC"
@@ -160,6 +162,13 @@ labelServer:
 				s.storer.Shutdown()
 
 				break labelServer
+			}
+
+			if proposal.Duration <= 0 {
+				msg := fmt.Sprintf("invalid duration: %d", proposal.Duration)
+				err := werror.NewWrappedError("INVALID_DURATION", msg, nil)
+				proposal.ResponseCh <- gRPC.NewErrorVoteProposalResponse(err)
+				continue
 			}
 
 			if err := s.mempool.AddPending(proposal.Proposal, proposal.Proposer, proposal.Duration); err != nil {
