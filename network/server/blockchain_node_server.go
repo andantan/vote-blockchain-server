@@ -164,7 +164,7 @@ labelServer:
 				break labelServer
 			}
 
-			if proposal.Duration <= 0 {
+			if proposal.Duration <= 1*time.Minute {
 				msg := fmt.Sprintf("invalid duration: %d", proposal.Duration)
 				err := werror.NewWrappedError("INVALID_DURATION", msg, nil)
 				proposal.ResponseCh <- gRPC.NewErrorVoteProposalResponse(err)
