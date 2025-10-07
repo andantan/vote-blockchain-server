@@ -214,6 +214,12 @@ func (e *BlockChainExplorer) handleSpecQuery(w http.ResponseWriter, r *http.Requ
 			resHeaders = append(resHeaders, h)
 			break
 		}
+
+		if targetFromStr == strconv.Itoa(int(h.Height)) {
+			queryTarget = "height"
+			resHeaders = append(resHeaders, h)
+			break
+		}
 	}
 
 	if queryTarget == "" {
