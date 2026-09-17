@@ -1,0 +1,8 @@
+.git
+.idea
+bin
+blocks
+temp
+impulse-client/data
+*.exe
+README.md
